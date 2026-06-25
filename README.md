@@ -9,7 +9,7 @@ How it works
 
 When you install the extension, it starts in Easy mode — allow all, which applies no restrictions and lets you observe the default browsing experience. From there you move the slider right to increase protection.
 
-Level 1 — Easy mode - allow all. At first start this extension uses Easy Mode (allow all) as startup mode. You can cahnge the startup mode in the right number by clicking on the one (1) in the green rounded square/rectangle in the upper right corner.
+Level 1 — Easy mode - allow all. At first start this extension uses Easy Mode (allow all) as startup mode. You can change the startup mode by clicking on the one (1) in the green rounded square/rectangle in the upper right corner.
 
 <img width="640" height="400" alt="screenshot_level_1" src="https://github.com/user-attachments/assets/ab0a9a12-101a-4441-a71f-23f5e64f0bf3" />
 
