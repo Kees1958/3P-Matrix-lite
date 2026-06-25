@@ -38,7 +38,7 @@ Level 5 — Medium mode is the strictest setting. All third-party scripts and fr
 <img width="640" height="400" alt="screenshot_level_5" src="https://github.com/user-attachments/assets/77987573-d9e6-42c2-88f5-8732ed52a5bb" />
 
 
-
+-
 
 When a site breaks
 
