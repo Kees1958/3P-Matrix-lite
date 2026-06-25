@@ -9,29 +9,34 @@ How it works
 
 When you install the extension, it starts in Easy mode — allow all, which applies no restrictions and lets you observe the default browsing experience. From there you move the slider right to increase protection.
 
-Level 1 — Easy mode - allow all.
+Level 1 — Easy mode - allow all. At first start this extension uses Easy Mode (allow all) as startup mode. You can cahnge the startup mode in the right number by clicking on the one (1) in the green rounded square/rectangle in the upper right corner.
 
-<img width="640" height="400" alt="screenshot_level_1" src="https://github.com/user-attachments/assets/d6fc79af-f7d6-4883-9e96-1075b05fac6d" />
+<img width="640" height="400" alt="screenshot_level_1" src="https://github.com/user-attachments/assets/ab0a9a12-101a-4441-a71f-23f5e64f0bf3" />
+
 
 
 Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. Whitelisted domains always pass through regardless of level.
 
-<img width="640" height="400" alt="screenshot_level_2" src="https://github.com/user-attachments/assets/ddede41a-3f00-4017-93cf-062c41e405d6" />
+<img width="640" height="400" alt="screenshot_level_2" src="https://github.com/user-attachments/assets/1ec09898-8e9d-47a2-9877-c30baf30ae11" />
+
 
 
 Level 3 — Easy medium mode adds script blocking on top of level 2. Only domains whose top-level domain is on your TLD whitelist are allowed to load scripts. On a fresh install your TLD whitelist is pre-populated with common TLDs (com, org, io, net etc.) and with the country TLDs of your browser's language settings — so a Dutch browser gets .nl added automatically.
 
-<img width="640" height="400" alt="screenshot_level_3" src="https://github.com/user-attachments/assets/0e9882d9-5ad5-4be8-8363-943e286fd93d" />
+<img width="640" height="400" alt="screenshot_level_3" src="https://github.com/user-attachments/assets/d72d8d56-0af8-4012-86da-608d9c612443" />
+
 
 
 Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path. This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level.
 
-<img width="640" height="400" alt="screenshot_level_4" src="https://github.com/user-attachments/assets/275b13d2-f004-490c-b5ec-205e2ff3e242" />
+<img width="640" height="400" alt="screenshot_level_4" src="https://github.com/user-attachments/assets/f6c47c10-4420-4837-aaad-372d2aa33298" />
+
 
 
 Level 5 — Medium mode is the strictest setting. All third-party scripts and frames are blocked. Only domains you have explicitly added to your domain whitelist are allowed through. Use this when you want maximum control and are prepared to whitelist what you need.
 
-<img width="640" height="400" alt="screenshot_level_5" src="https://github.com/user-attachments/assets/d134105a-fc0b-4964-81e8-9c871d768f98" />
+<img width="640" height="400" alt="screenshot_level_5" src="https://github.com/user-attachments/assets/77987573-d9e6-42c2-88f5-8732ed52a5bb" />
+
 
 
 
