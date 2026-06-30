@@ -16,7 +16,7 @@ Level 1 — Easy mode - allow all. At first start this extension uses Easy Mode 
 
 
 
-Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. It uses a build-in whitelist to allow 3p-frames from payment services, video embes and captcha's 
+Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. It uses a build-in whitelist to allow 3p-frames from payment services, video embeds and captcha's 
 
 <img width="423" height="462" alt="image" src="https://github.com/user-attachments/assets/0200cfa3-abae-4777-8929-8c4bf455c115" />
 
