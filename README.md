@@ -11,25 +11,28 @@ When you install the extension, it starts in Easy mode — allow all, which appl
 
 Level 1 — Easy mode - allow all. At first start this extension uses Easy Mode (allow all) as startup mode. You can change the startup mode by clicking on the one (1) in the green rounded square/rectangle in the upper right corner.
 
-<img width="640" height="400" alt="screenshot_level_1" src="https://github.com/user-attachments/assets/ab0a9a12-101a-4441-a71f-23f5e64f0bf3" />
+<img width="424" height="349" alt="image" src="https://github.com/user-attachments/assets/082e6653-18cb-4270-b74b-9200828fca1e" />
 
 
 
-Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. Whitelisted domains always pass through regardless of level.
 
-<img width="640" height="400" alt="screenshot_level_2" src="https://github.com/user-attachments/assets/1ec09898-8e9d-47a2-9877-c30baf30ae11" />
+Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. It uses a build-in whitelist to allow 3p-frames from payment services, video embes and captcha's 
 
-
-
-Level 3 — Easy medium mode adds script blocking on top of level 2. Only domains whose top-level domain is on your TLD whitelist are allowed to load scripts. On a fresh install your TLD whitelist is pre-populated with common TLDs (com, org, io, net etc.) and with the country TLDs of your browser's language settings — so a Dutch browser gets .nl added automatically.
-
-<img width="640" height="400" alt="screenshot_level_3" src="https://github.com/user-attachments/assets/d72d8d56-0af8-4012-86da-608d9c612443" />
+<img width="423" height="462" alt="image" src="https://github.com/user-attachments/assets/0200cfa3-abae-4777-8929-8c4bf455c115" />
 
 
 
-Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path. This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level.
 
-<img width="640" height="400" alt="screenshot_level_4" src="https://github.com/user-attachments/assets/f6c47c10-4420-4837-aaad-372d2aa33298" />
+Level 3 — Easy medium mode adds script blocking on top of level 2. Has the protections of level 2 plus it blocks 3p-scripts not on the TLD white list. The extension uses a build-in whitelist and looks at your browser language settings to add additional country code TLD's (which scope can be adjusted using a slider). This level lowers the third-party exposure considerably but works well on most (95%) of the websites people usually surf or in Europe and North America. 
+
+<img width="434" height="658" alt="image" src="https://github.com/user-attachments/assets/96c1cabe-d36f-4269-8d61-afdfd141893a" />
+
+
+
+Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path and uses the 3P-frame domain whitelist (explained earlier at level).  This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level. This mode reduces third-party risk considerably, ideal for safely watching adult websites. 
+
+<img width="442" height="660" alt="image" src="https://github.com/user-attachments/assets/a63fd0c8-24d9-4179-85a8-557301855b87" />
+
 
 
 
@@ -43,6 +46,8 @@ Level 5 — Medium mode is the strictest setting. All third-party scripts and fr
 When a site breaks
 
 That is where the built-in request logger comes in. When a site stops working correctly, click the yellow SHOW LOGS button in the popup. The current tab reloads, a full-page logger opens, and every request that the extension blocks is captured in real time with its calling domain, block reason, and URL.
-<img width="1919" height="713" alt="image" src="https://github.com/user-attachments/assets/6896823e-1a8d-4742-8a88-9cf737e71da5" />
+
+<img width="1544" height="739" alt="image" src="https://github.com/user-attachments/assets/61f71cce-cc7f-4cf1-9da6-cb529ca1aee9" />
+
 
 
