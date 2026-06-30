@@ -51,4 +51,22 @@ That is where the built-in request logger comes in. When a site stops working co
 <img width="1544" height="739" alt="image" src="https://github.com/user-attachments/assets/61f71cce-cc7f-4cf1-9da6-cb529ca1aee9" />
 
 
+Using the lock (pin level for website)
+
+You can pin the protection level up to 100 website either for allowing a website or always containing a website automatically
+(former users of uMatri will recognise the lock) :-) 
+
+<img width="954" height="619" alt="image" src="https://github.com/user-attachments/assets/195766a7-6306-4e87-8592-4fb9458ef17a" />
+
+
+SUGGESTED USE
+1. Keep startup mode in level 1 (allow all)
+2. Choose for random surfing mode 2 or 3 
+3. Choose for risky browsing mode 4
+   (uBlockorigin/uMatrix hard core users can use level 5)
+
+
+
+
+
 
