@@ -55,7 +55,8 @@ That is where the built-in request logger comes in. When a site stops working co
 Using the lock (pin security level for website)
 
 You can pin the protection level up to 100 website either for allowing a website or always containing a website automatically
-(former users of uMatrix will recognise the lock) :-) 
+The 100 maximum is fixed and uses a first in first out for keeping it at a maximum of 100. This FIFO approach is especially
+chosen so people can´t see what websites you want to contain in a 3P-Matrix-lite (uMatric users will recognise the lock :-) ) 
 
 <img width="954" height="619" alt="image" src="https://github.com/user-attachments/assets/195766a7-6306-4e87-8592-4fb9458ef17a" />
 
