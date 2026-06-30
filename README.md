@@ -64,7 +64,8 @@ SUGGESTED USE
 1. Keep startup mode in level 1 (allow all)
 2. Choose for random surfing mode 2 or 3 
 3. Choose for risky browsing mode 4
-   (uBlockorigin/uMatrix hard core users can use level 5)
+
+Level 5 is only added for hard core uBlockorigin/uMatrix users
 
 
 
