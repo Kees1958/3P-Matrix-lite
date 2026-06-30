@@ -16,20 +16,20 @@ Level 1 — Easy mode - allow all. At first start this extension uses Easy Mode 
 
 
 
-Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. It uses a build-in whitelist to allow 3p-frames from payment services, video embeds and captcha's 
+Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. It uses a build-in whitelist to allow 3p-frames from payment services, video embeds and captcha's. This mode increases security but works (hassle free) well on 99% of the websites in Europe and North America. 
 
 <img width="423" height="462" alt="image" src="https://github.com/user-attachments/assets/0200cfa3-abae-4777-8929-8c4bf455c115" />
 
 
 
 
-Level 3 — Easy medium mode adds script blocking on top of level 2. Has the protections of level 2 plus it blocks 3p-scripts not on the TLD white list. The extension uses a build-in TLD whitelist and looks at your browser language settings to add additional country code TLD's (which scope can be adjusted using a slider). This level lowers the third-party exposure considerably but works well on most (99%) of the websites people usually surf to in Europe and North America. 
+Level 3 — Easy medium mode adds script blocking on top of level 2. Has the protections of level 2 plus it blocks 3p-scripts not on the TLD white list. The extension uses a build-in TLD whitelist and looks at your browser language settings to add additional country code TLD's (which scope can be adjusted using a slider). This level lowers the third-party exposure considerably but works (hassle free) well on most (95%) of the websites people usually surf to in Europe and North America. 
 
 <img width="434" height="658" alt="image" src="https://github.com/user-attachments/assets/96c1cabe-d36f-4269-8d61-afdfd141893a" />
 
 
 
-Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path and uses the 3P-frame domain whitelist (explained earlier at level).  This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level. This mode reduces third-party risk considerably, ideal for safely watching adult websites. 
+Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path and uses the 3P-frame domain whitelist (explained earlier at level).  This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level. This mode reduces third-party risk considerably, but works well on 90% of the adult websites (without tweaking).
 
 <img width="442" height="660" alt="image" src="https://github.com/user-attachments/assets/a63fd0c8-24d9-4179-85a8-557301855b87" />
 
