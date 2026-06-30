@@ -54,7 +54,7 @@ That is where the built-in request logger comes in. When a site stops working co
 Using the lock (pin level for website)
 
 You can pin the protection level up to 100 website either for allowing a website or always containing a website automatically
-(former users of uMatri will recognise the lock) :-) 
+(former users of uMatrix will recognise the lock) :-) 
 
 <img width="954" height="619" alt="image" src="https://github.com/user-attachments/assets/195766a7-6306-4e87-8592-4fb9458ef17a" />
 
