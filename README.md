@@ -50,8 +50,9 @@ That is where the built-in request logger comes in. When a site stops working co
 
 <img width="1544" height="739" alt="image" src="https://github.com/user-attachments/assets/61f71cce-cc7f-4cf1-9da6-cb529ca1aee9" />
 
+-
 
-Using the lock (pin level for website)
+Using the lock (pin security level for website)
 
 You can pin the protection level up to 100 website either for allowing a website or always containing a website automatically
 (former users of uMatrix will recognise the lock) :-) 
