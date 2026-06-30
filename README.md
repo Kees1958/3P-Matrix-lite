@@ -23,7 +23,7 @@ Level 2 — Easy mode with enhanced security blocks the most obviously dangerous
 
 
 
-Level 3 — Easy medium mode adds script blocking on top of level 2. Has the protections of level 2 plus it blocks 3p-scripts not on the TLD white list. The extension uses a build-in whitelist and looks at your browser language settings to add additional country code TLD's (which scope can be adjusted using a slider). This level lowers the third-party exposure considerably but works well on most (95%) of the websites people usually surf or in Europe and North America. 
+Level 3 — Easy medium mode adds script blocking on top of level 2. Has the protections of level 2 plus it blocks 3p-scripts not on the TLD white list. The extension uses a build-in whitelist and looks at your browser language settings to add additional country code TLD's (which scope can be adjusted using a slider). This level lowers the third-party exposure considerably but works well on most (99%) of the websites people usually surf to in Europe and North America. 
 
 <img width="434" height="658" alt="image" src="https://github.com/user-attachments/assets/96c1cabe-d36f-4269-8d61-afdfd141893a" />
 
