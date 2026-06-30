@@ -38,7 +38,8 @@ Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5
 
 Level 5 — Medium mode is the strictest setting. All third-party scripts and frames are blocked. Only domains you have explicitly added to your domain whitelist are allowed through. Use this when you want maximum control and are prepared to whitelist what you need.
 
-<img width="640" height="400" alt="screenshot_level_5" src="https://github.com/user-attachments/assets/77987573-d9e6-42c2-88f5-8732ed52a5bb" />
+<img width="458" height="641" alt="image" src="https://github.com/user-attachments/assets/d7449431-3557-4a97-ab3a-605f05f31cee" />
+
 
 
 -
