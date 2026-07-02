@@ -36,11 +36,7 @@ Automatically add country code's feature
 
 Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path and uses the 3P-frame domain whitelist (explained earlier at level).  This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level. This mode reduces third-party risk considerably, but works well on 90% of the adult websites (without tweaking).
 
-<img width="442" height="660" alt="image" src="https://github.com/user-attachments/assets/a63fd0c8-24d9-4179-85a8-557301855b87" />
-
-Automatically add country code's feature
-<img width="1719" height="557" alt="image" src="https://github.com/user-attachments/assets/2730914f-5b87-4746-90aa-d03261384b8f" />
-
+<img width="399" height="588" alt="image" src="https://github.com/user-attachments/assets/0f28dd18-70b5-4d19-94a8-353f58d8036d" />
 
 
 
