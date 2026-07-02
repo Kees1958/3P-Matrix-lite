@@ -1,4 +1,4 @@
-rivacy Policy for 3P-Matrix-lite
+Privacy Policy for 3P-Matrix-lite
 
 Last Updated: June 2026
 
