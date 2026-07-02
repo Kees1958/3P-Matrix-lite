@@ -27,7 +27,9 @@ Level 3 — Easy medium mode adds script blocking on top of level 2. Has the pro
 
 <img width="402" height="561" alt="image" src="https://github.com/user-attachments/assets/f2191900-d9dd-484b-9086-f772101dd59d" />
 
-The 
+Automatically add country code's feature
+<img width="1719" height="557" alt="image" src="https://github.com/user-attachments/assets/b9301877-58c5-44bb-a8d6-e99b2155c531" />
+
 
 
 
