@@ -46,11 +46,6 @@ Level 5 — Medium mode is the strictest setting. All third-party scripts and fr
 <img width="399" height="491" alt="image" src="https://github.com/user-attachments/assets/a4e87901-06a9-45bf-b33e-192b79800342" />
 -
 
-With the collaps (up arrow) and expand (down arrow) the domain whitelist hides and appears.
-<img width="403" height="600" alt="image" src="https://github.com/user-attachments/assets/62b5ea0d-f17c-438a-aae1-bf78e4e3aba0" />
--
-
-
 
 When a site breaks
 
