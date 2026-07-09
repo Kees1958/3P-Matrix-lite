@@ -11,20 +11,21 @@ When you install the extension, it starts in Easy mode — allow all, which appl
 
 Level 1 — Easy mode - allow all. At first start this extension uses Easy Mode (allow all) as startup mode. You can change the startup mode by clicking on the one (1) in the green rounded square/rectangle in the upper right corner.
 
-<img width="424" height="349" alt="image" src="https://github.com/user-attachments/assets/082e6653-18cb-4270-b74b-9200828fca1e" />
+<img width="401" height="602" alt="image" src="https://github.com/user-attachments/assets/c2a366bd-a9b4-4490-b1ed-a6a177092500" />
 -
 
 
 Level 2 — Easy mode with enhanced security blocks the most obviously dangerous categories: third-party connections over plain HTTP, connections to raw IP addresses (a common sign of malicious infrastructure), connections on non-standard ports, and third-party frames. It uses a build-in whitelist to allow 3p-frames from payment services, video embeds and captcha's. This mode increases security but works (hassle free) well on 99% of the websites in Europe and North America. 
 
-<img width="401" height="602" alt="image" src="https://github.com/user-attachments/assets/c2a366bd-a9b4-4490-b1ed-a6a177092500" />
+<img width="403" height="603" alt="image" src="https://github.com/user-attachments/assets/751a35d4-dce2-4073-a58f-de3771eff0f1" />
 
 -
 
 
 Level 3 — Easy medium mode adds script blocking on top of level 2. Has the protections of level 2 plus it blocks 3p-scripts not on the TLD white list. The extension uses a build-in TLD whitelist and looks at your browser language settings to add additional country code TLD's (which scope can be adjusted using a slider). This level lowers the third-party exposure considerably but works (hassle free) well on most (95%) of the websites people usually surf to in Europe and North America. 
 
-<img width="403" height="603" alt="image" src="https://github.com/user-attachments/assets/751a35d4-dce2-4073-a58f-de3771eff0f1" />
+<img width="400" height="600" alt="image" src="https://github.com/user-attachments/assets/29444422-a4c9-4857-b772-c73c6ae72153" />
+
 
 
 Automatically add country code's feature
