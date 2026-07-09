@@ -35,7 +35,8 @@ Automatically add country code's feature
 
 Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path and uses the 3P-frame domain whitelist (explained earlier at level).  This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level. This mode reduces third-party risk considerably, but works well on 90% of the adult websites (without tweaking).
 
-<img width="399" height="588" alt="image" src="https://github.com/user-attachments/assets/0f28dd18-70b5-4d19-94a8-353f58d8036d" />
+<img width="402" height="599" alt="image" src="https://github.com/user-attachments/assets/f5d1a20d-76df-444e-8170-291747ae6e73" />
+
 -
 
 
@@ -45,14 +46,17 @@ Level 5 — Medium mode is the strictest setting. All third-party scripts and fr
 -
 
 With the collaps (up arrow) and expand (down arrow) the domain whitelist hides and appears.
-<img width="412" height="274" alt="image" src="https://github.com/user-attachments/assets/e40c80d2-cd16-4c14-a778-a770286ea628" />
+<img width="403" height="600" alt="image" src="https://github.com/user-attachments/assets/62b5ea0d-f17c-438a-aae1-bf78e4e3aba0" />
+-
+
 
 
 When a site breaks
 
-That is where the built-in request logger comes in. When a site stops working correctly, click the yellow SHOW LOGS button in the popup. The current tab reloads, a full-page logger opens, and every request that the extension blocks is captured in real time with its calling domain, block reason, and URL.
+When a site stops working correctly, click the yellow SHOW BLOCKS button in the popup. The current tab reloads, a popu-up opens, and every request that the extension blocks is captured in real time. Press PAUSE and the screen freezes, showing ALLOW buttons to add a doamin to the user Domain whitelist. Press RESUME and the current tab reloads to see the effects of the allow.
 
-<img width="1544" height="739" alt="image" src="https://github.com/user-attachments/assets/61f71cce-cc7f-4cf1-9da6-cb529ca1aee9" />
+<img width="403" height="600" alt="image" src="https://github.com/user-attachments/assets/efad55e3-0a9a-49d6-82b8-26dffac59e3b" />
+
 -
 
 Using the lock (pin security level for website)
