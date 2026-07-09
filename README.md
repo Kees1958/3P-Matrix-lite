@@ -49,7 +49,7 @@ Level 5 — Medium mode is the strictest setting. All third-party scripts and fr
 
 When a site breaks
 
-When a site stops working correctly, click the yellow SHOW BLOCKS button in the popup. The current tab reloads, a popu-up opens, and every request that the extension blocks is captured in real time. Press PAUSE and the screen freezes, showing ALLOW buttons to add a doamin to the user Domain whitelist. Press RESUME and the current tab reloads to see the effects of the allow.
+When a site stops working correctly, click the yellow SHOW BLOCKS button in the popup. The current tab reloads, a new pop-up panel opens, every request that the extension blocks is captured and shown. Press PAUSE and the screen freezes, showing ALLOW buttons to add a domain to the user Domain whitelist. Press RESUME and the current tab reloads to see the effects of the allow.
 
 <img width="1400" height="560" alt="image" src="https://github.com/user-attachments/assets/b15b68e3-5292-4137-af8a-68ef83e1087b" />
 
