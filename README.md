@@ -20,28 +20,10 @@ Level 2 — Easy mode with enhanced security blocks the most obviously dangerous
 Level 3 — Easy medium mode adds script blocking on top of level 2. Has the protections of level 2 plus it blocks 3p-scripts not on the TLD white list. The extension uses a build-in TLD whitelist and looks at your browser language settings to add additional country code TLD's (which scope can be adjusted using a slider). This level lowers the third-party exposure considerably but works (hassle free) well on most (95%) of the websites people usually surf to in Europe and North America. 
 
 
-
-
-Automatically add country code's feature
-<img width="1719" height="557" alt="image" src="https://github.com/user-attachments/assets/b9301877-58c5-44bb-a8d6-e99b2155c531" />
--
-
-
 Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path and uses the 3P-frame domain whitelist (explained earlier at level).  This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level. This mode reduces third-party risk considerably, but works well on 90% of the adult websites (without tweaking).
 
 
 Level 5 — Medium mode is the strictest setting. All third-party scripts and frames are blocked. Only domains you have explicitly added to your domain whitelist are allowed through. Use this when you want maximum control and are prepared to whitelist what you need.
-
-
-
-Using the lock (pin security level for website)
-
-You can pin the protection level up to 100 website either for allowing a website or always containing a website automatically.
-The 100 maximum is fixed and uses a first in first out to keep it at a maximum of 100. This FIFO approach is especially
-chosen so people can´t see what websites you want to contain in a 3P-Matrix-lite (uMatric users will recognise the lock :-).
-
-<img width="947" height="619" alt="image" src="https://github.com/user-attachments/assets/e59d8768-5f3f-4ecc-a9a4-56698cd219d6" />
--
 
 
 SUGGESTED USE
@@ -51,8 +33,17 @@ SUGGESTED USE
 
 Level 5 is only added for hard core uBlockorigin/uMatrix users
 
+Pictures
+<img width="1280" height="800" alt="3P-Matrix-lite" src="https://github.com/user-attachments/assets/92e1b0cf-cc81-4c65-b4e9-12668534cbba" />
 
+<img width="1280" height="800" alt="3P-Matrix-lite2" src="https://github.com/user-attachments/assets/75749941-f25e-4c3d-ad7d-8c476eebe782" />
 
+Automatically add country code's feature
+<img width="1719" height="557" alt="image" src="https://github.com/user-attachments/assets/b9301877-58c5-44bb-a8d6-e99b2155c531" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite3" src="https://github.com/user-attachments/assets/2323bb86-bdcc-4667-ba22-8aa89828b1bd" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite4" src="https://github.com/user-attachments/assets/87eaafe7-b2e0-4d03-a276-ccc41774152c" />
 
 
 
