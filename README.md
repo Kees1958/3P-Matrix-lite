@@ -7,7 +7,7 @@ Chrome webstore: https://chromewebstore.google.com/detail/3p-matrix-lite/oljiiik
 
 The idea is straightforward: most privacy and security problems on the web come from third-party scripts and frames that load silently in the background when you visit a page. Trackers, fingerprinting scripts, ad networks, and malicious injections all arrive this way. 3P-Matrix-lite lets you decide how much of that you allow, and makes it easy to dial it back when something breaks.
 
-HOW 3P-MATRX-LIT WORKS
+HOW 3P-MATRX-LITE WORKS
 
 When you install the extension, it starts in Easy mode — allow all, which applies no restrictions and lets you observe the default browsing experience. From there you move the slider right to increase protection.
 
