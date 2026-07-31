@@ -29,26 +29,10 @@ Automatically add country code's feature
 
 Level 4 — Medium mode — trust CDN's keeps the same blocking rules as level 5 but makes an exception for any URL that contains "cdn" in the hostname or path and uses the 3P-frame domain whitelist (explained earlier at level).  This is a practical compromise for sites that load their own assets from a CDN host rather than their own domain. Without this exception, many sites break even though their CDN is perfectly legitimate. Your domain whitelist applies at this level. This mode reduces third-party risk considerably, but works well on 90% of the adult websites (without tweaking).
 
-<img width="402" height="599" alt="image" src="https://github.com/user-attachments/assets/f5d1a20d-76df-444e-8170-291747ae6e73" />
-
--
-
 
 Level 5 — Medium mode is the strictest setting. All third-party scripts and frames are blocked. Only domains you have explicitly added to your domain whitelist are allowed through. Use this when you want maximum control and are prepared to whitelist what you need.
 
-<img width="403" height="600" alt="image" src="https://github.com/user-attachments/assets/efad55e3-0a9a-49d6-82b8-26dffac59e3b" />
 
--
-
-
-When a site breaks
-
-When a site stops working correctly, click the yellow SHOW BLOCKS button in the popup. The current tab reloads, a new pop-up panel opens, every request that the extension blocks is captured and shown. Press PAUSE and the screen freezes, showing ALLOW buttons to add a domain to the user Domain whitelist. Press RESUME and the current tab reloads to see the effects of the allow.
-
-<img width="1400" height="560" alt="image" src="https://github.com/user-attachments/assets/b15b68e3-5292-4137-af8a-68ef83e1087b" />
-
-
--
 
 Using the lock (pin security level for website)
 
