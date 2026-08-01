@@ -1,4 +1,4 @@
-# 3P-Matrix-lite
+# 3P-Matrix-lite (v3.7)
 uMatrix-style third-party traffic control via Declarative Net Request
 
 Chrome webstore: https://chromewebstore.google.com/detail/3p-matrix-lite/oljiiikeojepiiaoaicpddpgpfiloejj?pli=1
