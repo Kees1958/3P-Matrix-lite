@@ -8,7 +8,7 @@ Chrome webstore: https://chromewebstore.google.com/detail/3p-matrix-lite/oljiiik
 
 The idea is straightforward: most privacy and security problems on the web come from third-party scripts and frames that load silently in the background when you visit a page. Trackers, fingerprinting scripts, ad networks, and malicious injections all arrive this way. 3P-Matrix-lite lets you decide how much of that you allow, and makes it easy to dial it back when something breaks.
 
-3P-Matrix-lite has a killer feature called LOCK PROTECTION (the padlock), when you enable this, the next time you surf to this website the chosen protection level will be applied automatically!
+3P-Matrix-lite has a killer feature called LOCK PROTECTION (the padlock), when you enable this, the next time you surf to this website the CHOSEN PROTECTION LEVEL WILL BE APPLIED AUTOMATICALLY!
 
 
 HOW 3P-MATRX-LITE WORKS
