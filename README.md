@@ -42,7 +42,8 @@ Automatically add country code's feature
 <img width="1719" height="557" alt="image" src="https://github.com/user-attachments/assets/b9301877-58c5-44bb-a8d6-e99b2155c531" />
 
 Using the matrix to fine tune your setting
-<img width="1280" height="800" alt="3P-Matrix-lite3" src="https://github.com/user-attachments/assets/b432a716-d2e5-4084-a0cb-0a5453750d2c" />
+<img width="1394" height="678" alt="image" src="https://github.com/user-attachments/assets/009e03a6-f254-4bd9-a4ef-34fd7f4ab2a3" />
+
 
 
 
