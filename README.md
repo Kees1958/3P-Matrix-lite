@@ -34,11 +34,9 @@ SUGGESTED USE
 Level 5 is only added for hard core uBlockorigin/uMatrix users
 
 Pictures
-<img width="1280" height="800" alt="3P-Matrix-lite" src="https://github.com/user-attachments/assets/92e1b0cf-cc81-4c65-b4e9-12668534cbba" />
-
-<img width="1280" height="800" alt="3P-Matrix-lite2" src="https://github.com/user-attachments/assets/684056ab-020e-4f5b-9f62-ec3bc751df0d" />
 <img width="1280" height="670" alt="image" src="https://github.com/user-attachments/assets/8ab3d9f5-32f5-48c8-8753-1decdef0fb1b" />
 
+<img width="1280" height="800" alt="3P-Matrix-lite2" src="https://github.com/user-attachments/assets/684056ab-020e-4f5b-9f62-ec3bc751df0d" />
 
 Automatically add country code's feature
 <img width="1719" height="557" alt="image" src="https://github.com/user-attachments/assets/b9301877-58c5-44bb-a8d6-e99b2155c531" />
