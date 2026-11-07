@@ -42,21 +42,17 @@ SUGGESTED USE
 Level 5 is only added for former hard core uMatrix users
 
 Pictures
-<img width="1280" height="800" alt="3P-Matrix-lite" src="https://github.com/user-attachments/assets/64902c7b-8957-4379-af2b-9c8ec140307a" />
+<img width="1280" height="800" alt="3P-Matrix-lite" src="https://github.com/user-attachments/assets/083f9581-0275-48df-b39b-1bde24ad48da" />
 
+<img width="1280" height="800" alt="3P-Matrix-lite2" src="https://github.com/user-attachments/assets/9e3a8bb3-0b91-437c-9503-28dcdffd4822" />
 
-.
-<img width="1280" height="800" alt="3P-Matrix-lite2" src="https://github.com/user-attachments/assets/abeb53b8-b114-4b7f-bd35-134f8cda1a56" />
+<img width="1280" height="800" alt="3P-Matrix-lite3" src="https://github.com/user-attachments/assets/c4602521-973f-4882-abda-4a2cca2a363a" />
 
+<img width="1280" height="800" alt="3P-Matrix-lite4" src="https://github.com/user-attachments/assets/b967b56c-30d6-4e57-8ab0-49324a50bddc" />
 
+<img width="1280" height="800" alt="3P-Matrix-lite5" src="https://github.com/user-attachments/assets/bf9d1790-fcc5-4fb4-8e3e-b34e7a6ad262" />
 
-.
-<img width="1280" height="800" alt="3P-Matrix-lite3" src="https://github.com/user-attachments/assets/ff9cbb0d-0c72-4eeb-8afd-ee0014c29f7c" />
-
-
-
-
-
+<img width="1280" height="800" alt="image" src="https://github.com/user-attachments/assets/6c78d895-6415-4de5-a2fa-84d76ec46a6a" />
 
 
 
