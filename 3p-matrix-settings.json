@@ -1,0 +1,109 @@
+{
+  "format": "3p-matrix-settings",
+  "formatVersion": 2,
+  "extensionVersion": "5.0.0",
+  "stateSchema": 5,
+  "savedAt": "2026-11-07T07:38:18.970Z",
+  "settings": {
+    "startupLevel": 3,
+    "protections": {
+      "disabled": []
+    },
+    "saferRegions": {
+      "addedTlds": [],
+      "removedTlds": [
+        "im",
+        "ch",
+        "mt",
+        "lu",
+        "li",
+        "at",
+        "be",
+        "de",
+        "nz",
+        "ca",
+        "au",
+        "ie",
+        "us",
+        "tv",
+        "cloud",
+        "app",
+        "tech",
+        "co",
+        "info"
+      ],
+      "activeTlds": [
+        "com",
+        "net",
+        "org",
+        "io",
+        "ai",
+        "edu",
+        "gov",
+        "nl",
+        "uk",
+        "eu"
+      ]
+    },
+    "allowList": [
+      "192.168.0.1",
+      "afasinsite.nl",
+      "tio.nl",
+      "adyen.com",
+      "afasonline.com",
+      "ans.app",
+      "openai.com",
+      "belastingdienst.nl",
+      "buku.app",
+      "buku.io",
+      "claude.ai",
+      "educator.eu",
+      "netflix.com",
+      "stichtingpraktijkleren.nl",
+      "surfconext.nl",
+      "videoland.com",
+      "hogeschooltio.sharepoint.com",
+      "hogeschooltio-my.sharepoint.com"
+    ],
+    "lockedSites": {
+      "eporner.com": 5,
+      "pornhub.com": 4,
+      "xvideos.com": 4,
+      "xgroovy.com": 4,
+      "xnxx.com": 4,
+      "redtube.com": 4,
+      "tube8.com": 4,
+      "porntrex.com": 4,
+      "xhamster.com": 4,
+      "freepornvideos.xxx": 4,
+      "youporn.com": 4,
+      "fullvideosporn.com": 4
+    },
+    "showMatrixRules": {},
+    "onlineChecks": {
+      "firstDns": "controld",
+      "secondDns": "dns4eu"
+    },
+    "downloads": {
+      "vtApiKey": "77d5f33579f82b78a28ef1f3ec2d6f3204299e9c1dff07bb0103b8ec9fe0035a",
+      "vtEnabled": true,
+      "silentWhenInconclusive": true,
+      "autoAllow": true,
+      "autoAllowThreshold": 80,
+      "fpReductionLevel": "MEDIUM",
+      "trustedDomains": [
+        "sharepoint.com",
+        "claude.ai",
+        "tio.nl",
+        "hogeschooltio.sharepoint.com"
+      ],
+      "warningColor": {
+        "r": 179,
+        "g": 38,
+        "b": 30
+      },
+      "warningTitle": "",
+      "vtKeyPromptDismissed": false
+    }
+  }
+}
