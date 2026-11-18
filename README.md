@@ -13,10 +13,10 @@ Level 1 — Allow all.
 At first start this extension uses Easy Mode (allow all) as startup mode. You can change the startup mode by clicking on the one (1) in the green rounded square/rectangle in the upper right corner.
 
 Level 2 — Mild protection. 
-This mode ads 11 security protections. It uses a build-in whitelist to allow 3p-frames from payment services, video embeds and captcha's. This mode increases security but works  well on all websites.
+This mode adds 11 security protections. It uses a build-in whitelist to allow 3p-frames from payment services, video embeds and captcha's. This mode increases security but works  well on all websites.
 
 Level 3 — Medium protection. 
-This mode ads (on top of the above 11) 5 additional first-party protections and adds third-party script and frame blocking of domains outside the safer-regions. The safer-regions is a Top Level Domain list automatically determined based on your browser language settings.
+This mode adds (on top of the above 11) 5 additional first-party protections and adds third-party script and frame blocking of domains outside the safer-regions. The safer-regions is a Top Level Domain list automatically determined based on your browser language settings.
 
 Level 4 —High mode. 
 On top of the 16 protections it blocks ALL third-party scripts and frames EXCEPT domains with CDN (Content Delivey Network) in name. This mode reduces third-party risk considerably, but works well on 90% of the adult websites (without tweaking).
