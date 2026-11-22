@@ -1,0 +1,14 @@
+{
+  "root": true,
+  "env": { "browser": true, "es2022": true },
+  "parserOptions": { "ecmaVersion": 2022, "sourceType": "module" },
+  "globals": { "chrome": "readonly", "Navigation": "readonly", "NavigateEvent": "readonly", "NavigationDestination": "readonly", "NavigationHistoryEntry": "readonly" },
+  "rules": {
+    "no-undef": "error",
+    "no-unused-vars": ["error", { "args": "none", "caughtErrors": "none" }],
+    "func-style": ["error", "declaration"]
+  },
+  "overrides": [
+    { "files": ["**/security/*.js"], "parserOptions": { "sourceType": "script" } }
+  ]
+}

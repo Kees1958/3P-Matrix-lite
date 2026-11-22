@@ -1,0 +1,128 @@
+/* ── ui/protections.css (4.7.0; based on the retired ui/options.css) ─────────── */
+/* 1320px (widened from 880px, 4.7.1): the Browsing Protection list is now two side-by-side columns of
+   protection labels — at the old width most labels wrapped to two lines; this gives each column enough
+   room for the longest label ("Block notification prompts that appear without a click") on one line. */
+/* 4.7.2: trimmed vertical padding/gap (28px/16px, was 40px/24px) so the Download Protection Options
+   tab — the tallest of the three — fits a normal laptop screen (≈900px viewport) without scrolling. */
+.page { max-width: 1320px; margin: 0 auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ── VT-key status line (above the tabs) ──────────────────────────────────── */
+.vt-line { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); margin: -8px 0 0; }
+.vt-line.set { color: var(--mint); }
+.vt-line a { color: var(--accent); }
+
+/* ── Tab bar ───────────────────────────────────────────────────────────────── */
+.tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+.tab-btn { background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-size: 13px; font-weight: 600; padding: 10px 14px; cursor: pointer; }
+.tab-btn[aria-selected="true"] { color: var(--bright); border-bottom-color: var(--accent, #FACC15); }
+.tab-btn:focus-visible { outline: 2px solid var(--accent, #FACC15); outline-offset: 2px; }
+.tab-panel[hidden] { display: none; }
+.tab-panel { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Protections list (adapted from ui/popup.css .prot-*) ─────────────────── */
+/* 4.7.0: one row, two columns — ui/protections.js renderProtList() puts the first group (level 2) in
+   the left column and stacks every other group (level 3, 4–5) in the right column. No explicit
+   align-items here: the default "stretch" makes both columns the height of the taller one (the left
+   column), so the bottom-alignment rule below has a full column to push the last right-hand group into. */
+.prot-list { display: flex; gap: 14px; }
+.prot-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+/* Bottom-align the right column's last group with the left column's last row (e.g. the level 4–5 group
+   with its WebSocket/WebTransport/WebAssembly rows): margin-top: auto only applies when the column holds more than one group (it is
+   the last child but NOT also the first), so a single-group column — the left one — is unaffected. */
+.prot-col > .prot-group:not(:first-child):last-child { margin-top: auto; }
+.prot-group { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.prot-group-head { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow); }
+.prot-group-head .from { font-family: var(--mono); color: var(--muted); }
+.prot-item { position: relative; display: flex; align-items: flex-start; gap: 8px; min-height: 28px; padding: 3px 0; font-size: 13px; line-height: 1.4; cursor: pointer; color: var(--bright); accent-color: var(--mint); }
+.prot-item input { width: 16px; height: 16px; margin-top: 1px; flex-shrink: 0; }
+.prot-item .p-num { font-family: var(--mono); font-size: 11px; color: var(--dim); width: 20px; text-align: right; flex-shrink: 0; margin-top: 2px; }
+.prot-item .p-label { min-width: 0; }
+/* Hover/focus tooltip (ui/protections.js buildProtGroup()): one declared place for its size — 280px wide,
+   capped to 3 lines via -webkit-line-clamp as a guard in case a description ever runs long. Hidden by
+   default (opacity + pointer-events, not display:none, so the fade transition can play) and shown on
+   :hover/:focus-within of the row so it's reachable by keyboard (tabbing to the checkbox) too. */
+.prot-item .p-tip {
+  position: absolute; left: 0; top: 100%; margin-top: 4px; z-index: 20;
+  width: 280px; max-width: 280px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 8px 10px; font-size: 11px; line-height: 1.4; color: var(--bright);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  opacity: 0; pointer-events: none; transition: opacity 0.12s ease;
+}
+.prot-item:hover .p-tip, .prot-item:focus-within .p-tip { opacity: 1; }
+.prot-empty { font-size: 12px; color: var(--dim); }
+.opt-hdr { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.opt-hdr h1 { margin: 0; display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; color: var(--bright); }
+.opt-hdr img { border-radius: 4px; }
+.yellow { color: #FACC15; }
+.hint { font-size: 11px; }
+/* 4.7.2: padding 16px (was 20px), gap 10px (was 14px) — part of the laptop-screen density pass. */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.card h2 { margin: 0; }
+.card p { margin: 0; line-height: 1.55; }
+/* 4.7.3 (user request): card heading + its one-line intro text share a row instead of stacking —
+   wraps to stacked at narrow widths via flex-wrap. */
+.card-head-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.card-head-row h2 { flex-shrink: 0; }
+.card-head-row p { flex: 1 1 320px; min-width: 0; text-align: right; }
+@media (max-width: 640px) { .card-head-row p { text-align: left; } }
+.two-col { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+.info { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; }
+.info strong, .note strong, .field { color: var(--bright); }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+select { background: var(--bg); color: var(--bright); border: 1px solid var(--border); border-radius: var(--radius); height: 38px; padding: 0 10px; font-size: 13px; }
+.note { display: flex; flex-direction: column; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; line-height: 1.5; }
+code { font-family: var(--mono); color: var(--bright); }
+textarea { width: 100%; background: var(--bg); color: var(--bright); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; line-height: 1.6; resize: vertical; }
+/* Allow-list textarea: rows="20" in protections.html (doubled from 10) gives the baseline height; this cap
+   keeps the footer (Reset/Restore/Save settings) on-screen on a 1080p window even with a long list — the
+   textarea scrolls its own overflow past this, same as it already did at the shorter height. */
+#allowList { max-height: 50vh; }
+.row-end { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.btn-primary, .btn-ghost, .btn-danger { border-radius: var(--radius); padding: 0 16px; height: 36px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn-primary { background: #FACC15; color: #0F1117; border: none; font-weight: 700; }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border-2); }
+.btn-danger { background: transparent; color: var(--block); border: 1px solid var(--block); }
+/* 4.7.3: min-height 0 (was 1em) — an empty status line (the normal case: #dnsStatus, #vtKeyStatus) was
+   reserving a full blank text row, which read as a dead gap above "Download settings" and above
+   "Silent when inconclusive". It still grows to fit a message the moment one is shown. */
+.status { min-height: 0; font-size: 12px; color: var(--mint); margin: 0; }
+/* ── Download protection card (4.3.0) ─────────────────────────────────────── */
+.sub-title { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: var(--bright); }
+.api-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.grow { flex: 1; min-width: 240px; }
+.text-input, .num-input { background: var(--bg); color: var(--bright); border: 1px solid var(--border); border-radius: var(--radius); height: 36px; padding: 0 10px; font-size: 13px; }
+.text-input { width: 100%; }
+.num-input { width: 72px; }
+.text-input.invalid { border-color: var(--block); }
+.check { display: flex; align-items: center; gap: 8px; color: var(--bright); cursor: pointer; }
+.check input { accent-color: var(--mint); }
+/* 4.7.2: gap 12px (was 18px) between option blocks; .opt-block gap 5px (was 8px) within one — same
+   density pass as .card/.page above. */
+.dl-options { display: flex; flex-direction: column; gap: 12px; }
+.opt-block { display: flex; flex-direction: column; gap: 5px; }
+/* 4.7.5: no more per-line .bright override (tried --bright, then --muted — neither stuck) — the fix
+   that actually holds is common.css's --dim token itself, raised to a comfortable WCAG AA margin
+   (see its comment there). Every .hint-line benefits automatically, not just these two. */
+.hint-line { margin: 0; font-size: 11px; line-height: 1.4; color: var(--dim); }
+/* 4.7.2: "Trust app stores" + the always-skipped domain list, condensed onto one row — baseline-aligned
+   so the bold label and the smaller dim text sit on the same text line, with a fixed gap between them
+   instead of relying on inline whitespace, and wrapping cleanly at narrow widths. */
+.trust-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.inline-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* 4.7.2: label + slider on one row. --fp-row-label-width is declared once, in :root below, and read
+   by both rules that need it — the label column's own width, and the value-labels row's matching
+   indent — so the two stay in lockstep with a single edit. */
+:root { --fp-row-label-width: 160px; }
+.fp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.fp-row .field { flex: 0 0 var(--fp-row-label-width); margin: 0; }
+.fp-slider { width: 100%; max-width: 420px; accent-color: var(--accent); }
+/* 4.7.3 (user request): the two hint lines moved from below the slider to beside it. */
+.fp-hint-col { flex: 1 1 260px; min-width: 220px; display: flex; flex-direction: column; gap: 4px; }
+.fp-labels { display: flex; justify-content: space-between; max-width: 420px; margin-left: calc(var(--fp-row-label-width) + 12px); font-size: 11px; font-weight: 700; color: var(--dim); }
+.fp-labels .active { color: var(--accent); }
+.domain-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 640px) { .domain-grid { grid-template-columns: minmax(0, 1fr); } }
+.color-preview { width: 36px; height: 36px; border-radius: var(--radius); border: 1px solid var(--border-2); }

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get a free VirusTotal API Key</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="vt-key-prompt.css">
+</head>
+<!-- warnRiskyDownloads — DownloadSentinel 3.2.0's startup nudge (pages/vtkeyprompt/VtKeyPrompt.html), 3P Matrix theme.
+     Opened by core/download-guard.js offerVtKey() at browser start when no key is set and it was not
+     switched off ("don't show this warning again"). -->
+<body>
+<section class="vk-card">
+  <header class="vk-banner">
+    <img src="../icons/icon_1_32.png" alt="" width="28" height="28">
+    <span>Get a free VirusTotal API Key</span>
+  </header>
+  <div class="vk-body">
+    <p>3P Matrix can check every download against <strong>70+ antivirus engines</strong> — but only once you've added a free VirusTotal API key. Without one, downloads are still screened by the built-in heuristics and DNS threat-intel checks, just not by VirusTotal.</p>
+    <p>Joining VirusTotal, getting your free API key and copying it into the OPTIONS only takes a minute and costs nothing.</p>
+    <label class="vk-dont-show">
+      <input type="checkbox" id="dontShowAgain">
+      <span>I understand — don't show this warning again</span>
+    </label>
+    <div class="vk-buttons">
+      <button id="ignoreBtn" class="btn-ghost" type="button">Ignore</button>
+      <button id="requestBtn" class="btn-primary" type="button">Request</button>
+    </div>
+    <p id="vkStatus" class="status-line" role="status" hidden></p>
+  </div>
+</section>
+<script src="vt-key-prompt.js" type="module"></script>
+</body>
+</html>

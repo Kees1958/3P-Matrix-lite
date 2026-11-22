@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3P Matrix — download warning</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="download-warning.css">
+</head>
+<!-- warnRiskyDownloads — DownloadSentinel 3.2.0's warning page (pages/warning/WarningPage.html), same layout and
+     sections, in the 3P Matrix dark theme. Opened by core/download-guard.js in a maximized popup window
+     for one download (?downloadId=). The page background is the colour chosen in Options. -->
+<body>
+
+<!-- ── Banner ── -->
+<header class="dw-banner">
+  <img src="../icons/icon_3_32.png" alt="" width="32" height="32">
+  <span class="mono">3P Matrix — content firewall</span>
+  <span class="dw-banner-sub">download check</span>
+</header>
+
+<main class="dw-content">
+  <section class="dw-card" role="alertdialog" aria-labelledby="warningTitle" aria-describedby="warningSubtitle">
+
+    <h1 id="warningTitle"></h1>
+    <p id="warningSubtitle" class="dw-subtitle">The file type is either an executable or an archive which could harm your PC when malicious. The download URL and its host have been checked for known threats. Review the results.</p>
+
+    <!-- ── Basic info ── -->
+    <div class="dw-box">
+      <span class="dw-label">Detected file type</span>
+      <span class="dw-value mono" id="reasonText">Loading…</span>
+    </div>
+    <div class="dw-box">
+      <span class="dw-label">Downloaded from</span>
+      <span class="dw-value mono" id="srcUrl">Loading…</span>
+    </div>
+
+    <!-- ── Download URL reputation (summary) ── -->
+    <div class="dw-box" id="hostBox" hidden>
+      <span class="dw-label" id="hostLabel">Download URL reputation</span>
+      <span class="dw-value dw-prominent" id="hostResult">Checking…</span>
+    </div>
+
+    <!-- ── VirusTotal ── -->
+    <div class="dw-box" id="vtBox" hidden>
+      <span class="dw-label">VirusTotal URL reputation check</span>
+      <div id="vtUnknownLine" class="dw-unknown" hidden>Unknown to VirusTotal</div>
+      <div id="vtNoKey" class="dw-nokey" hidden>
+        <span>Reputation lookup at VirusTotal skipped</span>
+        <a id="vtKeyLink" href="#">Request a free (no cost) key at VirusTotal</a>
+      </div>
+      <ul class="dw-list" id="vtDetailsList"></ul>
+      <span class="dw-value dw-classification" id="vtClassificationLine" hidden></span>
+      <div id="vtScoreRow" class="dw-score-row" hidden>Confidence: <span id="vtScoreValue" class="dw-score-value"></span></div>
+    </div>
+
+    <!-- ── Heuristics ── -->
+    <div class="dw-box" id="heuristicsBox" hidden>
+      <span class="dw-label">Download URL heuristics</span>
+      <ul class="dw-list" id="hostDetailsList"></ul>
+      <div id="hostScoreRow" class="dw-score-row" hidden>Confidence: <span id="hostConfidenceValue" class="dw-score-value"></span></div>
+    </div>
+
+    <!-- ── Overall risk score ── -->
+    <div class="dw-box" id="worstScoreBox" hidden>
+      <span class="dw-label">Overall risk score</span>
+      <div class="dw-bar-row">
+        <span class="dw-bar-value mono" id="worstScoreValue">—</span>
+        <div class="dw-bar-track"><div class="dw-bar-fill" id="worstScoreBarFill"></div></div>
+      </div>
+    </div>
+
+    <!-- ── Actions ── -->
+    <div class="dw-actions">
+      <button id="btnVt" class="btn btn-safe" type="button">Check download at VT</button>
+      <button id="btnOk" class="btn btn-risky" type="button">Proceed anyway</button>
+    </div>
+    <p id="dwStatus" class="status-line" role="status" hidden></p>
+    <p class="dw-disclaimer" id="disclaimerText" hidden></p>
+  </section>
+</main>
+
+<script type="module" src="focus-ring.js"></script>
+
+<script src="download-warning.js" type="module"></script>
+</body>
+</html>

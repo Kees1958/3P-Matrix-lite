@@ -1,0 +1,87 @@
+/* ── ui/matrix.css — Show Matrix panel ────────────────────────────────────────
+   Layout and look ported from 3P-Matrix-lite 4.0.2 ui/matrix-panel.html (4.2.1). Shared tokens
+   (--bg, --surface, --border, --muted, --bright, --yellow, --font, --mono, --pad, --radius)
+   come from common.css; panel-only tokens are declared here, once. */
+:root {
+  --level-color:    #38BDF8;   /* set per level by matrix.js (LEVEL_INFO colour) */
+  --mx-green:       #4ADE80;   /* allow */
+  --mx-red:         #F87171;   /* block */
+  --mx-grey:        #9CA3AF;   /* overridden / not deciding */
+  --mx-square:      22px;      /* status square size (4.2.2: was lite's 14px) */
+  --mx-square-radius: 5px;
+  --mx-square-font: 13px;
+  --mx-head-row-h:  32px;      /* header row height (two-line labels) */
+  --mx-table-chrome: 230px;    /* header + intro + note + footer height, subtracted from the scroll area */
+}
+
+body { width: 100%; min-height: 480px; padding: 0 18px; font-size: 13px; user-select: none; overflow-x: hidden; }
+
+/* Header */
+.panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px var(--pad); background: var(--surface); border-bottom: 1px solid var(--border); }
+.header-left { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.panel-title { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--level-color);
+  text-transform: uppercase; letter-spacing: 0.08em; }
+.panel-host { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--bright);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel-stats { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.hdr-btn { background: transparent; color: var(--level-color); border: 1px solid var(--level-color);
+  border-radius: var(--radius); font-size: 11px; font-weight: 600; padding: 6px 12px; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0; transition: opacity 0.15s; }
+.hdr-btn:hover { opacity: 0.82; color: var(--bright); border-color: var(--bright); }
+.timer-wrap { display: flex; align-items: center; gap: 6px; }
+.timer-icon { font-size: 14px; line-height: 1; }
+.timer-display { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--level-color);
+  min-width: 52px; text-align: right; transition: color 0.3s; }
+.timer-display.warning { color: var(--yellow); }
+.timer-display.expired { color: var(--mx-red); }
+
+/* Intro / level note */
+.panel-intro { padding: 8px var(--pad); font-size: 10px; font-weight: 700; line-height: 1.5; color: var(--bright);
+  border-bottom: 1px solid var(--border); background: var(--surface); }
+.intro-line { color: var(--yellow); text-transform: uppercase; }   /* 4.2.2: same paragraph, yellow */
+
+/* Table */
+.table-scroll { overflow-y: auto; max-height: calc(100vh - var(--mx-table-chrome)); min-height: 200px; }
+.entry-table { width: 100%; border-collapse: collapse; }
+.entry-table thead th { padding: 5px 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted); text-align: center; border-bottom: 1px solid var(--border);
+  background: var(--surface); position: sticky; z-index: 1; white-space: nowrap;
+  height: var(--mx-head-row-h); }
+.entry-table thead th { top: 0; }
+.entry-table thead th.th-domain { text-align: left; padding-left: var(--pad); }
+.entry-table th.group-start, .entry-table td.group-start { border-left: 1px solid var(--border); }
+.th-line { display: block; line-height: 1.4; }
+.entry-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+.entry-table tbody tr:hover { background: var(--surface); }
+.entry-table td { padding: 7px 8px; font-size: 12px; vertical-align: middle; text-align: center; }
+.entry-table td.td-domain { font-family: var(--mono); font-size: 12px; color: var(--bright); word-break: break-all;
+  text-align: left; padding-left: var(--pad) !important; }
+.td-check { color: var(--mx-green); font-size: 16px; font-weight: 700; }
+/* 4.7.6: was color: var(--border) — a divider token used as text, 1.19:1 against --surface (fails even
+   the 3:1 non-text bar, let alone 4.5:1). --dim is the project's one verified de-emphasis-text token
+   (6.89:1 on --surface / 7.63:1 on --bg, see common.css) — reuse it here instead of a second ad-hoc value. */
+.td-check.empty { color: var(--dim); font-weight: 400; }
+.td-num { font-family: var(--mono); color: var(--muted); }
+
+/* Status squares (whitelist, level mode, script, frame) */
+.mini-square { display: inline-flex; align-items: center; justify-content: center;
+  width: var(--mx-square); height: var(--mx-square); border-radius: var(--mx-square-radius);
+  border: 1px solid var(--border-2); background: transparent; font-size: var(--mx-square-font);
+  font-weight: 800; line-height: 1; color: var(--muted); }
+.mini-square.filled { border-color: transparent; color: var(--bg); }
+.mini-square.fill-red { color: var(--bright); }                   /* white ✕ on red */
+.mini-square.fill-green { background: var(--mx-green); }
+.mini-square.fill-red   { background: var(--mx-red); }
+.mini-square.fill-grey  { background: var(--mx-grey); }
+.td-status.clickable { cursor: pointer; }
+.td-status.clickable:hover .mini-square { outline: 1px solid var(--bright); }
+
+/* Footer totals */
+.mx-foot { padding: 8px var(--pad); border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+
+/* Empty state */
+.empty-state { padding: 40px var(--pad); text-align: center; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.empty-state .empty-icon { font-size: 28px; margin-bottom: 8px; }
+.empty-state .empty-sub { font-size: 11px; }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3P Matrix — Show Matrix</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="matrix.css">
+</head>
+<body>
+<!-- Layout ported from 3P-Matrix-lite 4.0.2 ui/matrix-panel.html (4.2.1). -->
+
+<!-- ── Header: title, host, stats | timer, Reload, Close ── -->
+<header class="panel-header">
+  <div class="header-left">
+    <div class="panel-title">Show Matrix</div>
+    <div class="panel-host" id="panelHost">—</div>
+    <div class="panel-stats" id="panelStats">—</div>
+  </div>
+  <div class="header-right">
+    <div class="timer-wrap">
+      <span class="timer-icon" id="timerIcon" aria-hidden="true"></span><!-- set by matrix.js (TIMER_RUNNING / TIMER_STOPPED) -->
+      <span class="timer-display" id="timerDisplay">--:--</span>
+    </div>
+    <button class="hdr-btn" id="btnReload" type="button">Reload page</button>
+    <button class="hdr-btn" id="btnClose" type="button">Close</button>
+  </div>
+</header>
+
+<!-- ── Intro: how to use the panel ── -->
+<div class="panel-intro">
+  Click a SCRIPT or FRAME square to allow or block that domain's scripts or frames; click again to undo.
+  INTERNAL WHITELIST and LEVEL MODE are informational and turn grey when a script or frame setting overrides them.
+  <span class="intro-line">Rules apply on every site, not just this one; reload the page to see the effect.</span>
+</div>
+
+<!-- ── Level note: level-dependent text, set by matrix.js ── -->
+<div class="panel-intro" id="levelNote" hidden></div>
+
+<!-- ── Table: thead and tbody both built by matrix.js from one column model ── -->
+<div class="table-scroll" id="tableScroll">
+  <table class="entry-table">
+    <thead id="matrixThead"></thead>
+    <tbody id="entryBody"></tbody>
+  </table>
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon" aria-hidden="true">🔎</div>
+    No connections observed yet…<br>
+    <span class="empty-sub" id="emptySub">Third-party connections appear here as the page loads.</span>
+  </div>
+</div>
+
+<!-- ── Footer: totals ── -->
+<footer class="mx-foot"><span id="mxStats"></span> <span id="mxStatus" class="status-line" role="status" hidden></span></footer>
+
+<script src="matrix.js" type="module"></script>
+</body>
+</html>

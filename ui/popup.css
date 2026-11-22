@@ -1,0 +1,78 @@
+/* ── ui/popup.css ──────────────────────────────────────────────────────────── */
+/* Popup size — one place. Height follows the content (Chrome caps a popup at 600px and scrolls
+   the whole popup beyond that); the safer-regions tag box itself never scrolls. 4.2: no forced
+   taller height at level 3 — the expanded panel already exceeds 600px, so it only added blank
+   space when the panel was collapsed. */
+:root { --popup-w: 440px;   /* 4.7.0: one "Protections" button replaced the old "Protections ▼" + "Options" pair; width kept the same (Show Matrix + Protections still want the room) */ --popup-min-h: 420px;
+  --tick-h: 78px;        /* 5.0.4: slider tick = dot + number + level name (was 64px without the name) */ }
+body { width: var(--popup-w); min-height: var(--popup-min-h); }
+.accent-text { color: var(--accent); }
+
+.hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px var(--pad); border-bottom: 1px solid var(--border); }
+.brand { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.brand img { border-radius: 3px; }
+.brand-name { font-size: 13px; font-weight: 600; color: var(--bright); }
+.tagline { font-size: 10px; font-weight: 500; color: var(--muted); }
+.startup { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--bright); }
+.startup select { background: var(--surface); color: var(--bright); border: 2px solid var(--accent); border-radius: var(--radius);
+  font-family: var(--mono); font-weight: 700; font-size: 13px; height: 30px; width: 44px; text-align: center; }
+
+.site-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px var(--pad); border-bottom: 1px solid var(--border); }
+.site-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.site-host { font-size: 14px; font-weight: 700; color: var(--bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.site-zone { font-size: 10px; font-weight: 600; letter-spacing: 0.04em; }
+.site-zone.in { color: #4ADE80; } .site-zone.out { color: var(--yellow); }
+.lock-btn { width: 44px; height: 44px; border: none; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--surface); }
+.lock-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.slider-zone { padding: 16px var(--pad) 6px; border-bottom: 1px solid var(--border); }
+.level-label { display: flex; align-items: center; gap: 12px; }
+.level-num { font-size: 36px; font-weight: 600; line-height: 1; }
+.level-name-wrap { display: flex; flex-direction: column; gap: 3px; }
+.level-name { font-size: 15px; font-weight: 600; color: var(--bright); }
+.lock-hint { font-size: 10px; font-weight: 600; letter-spacing: 0.04em; }
+.ticks { position: relative; margin-top: 8px; height: var(--tick-h); }
+.track { position: absolute; left: 22px; right: 22px; top: 20px; height: 4px; border-radius: 2px; background: var(--border); }
+.track-fill { position: absolute; left: 22px; top: 20px; height: 4px; border-radius: 2px; background: var(--accent); }
+.tick-row { position: absolute; inset: 0 0 auto 0; display: flex; justify-content: space-between; }
+.tick { width: 44px; height: var(--tick-h); background: none; border: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.tick:disabled { cursor: not-allowed; }
+.tick .dot { width: 18px; height: 18px; margin-top: 13px; border-radius: 50%; border: 2px solid #3A4152; background: var(--bg); }
+.tick .dot.past { background: var(--accent); border-color: var(--accent); }
+.tick .dot.current { border: 3px solid var(--accent); }
+.tick .num { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.tick .num.current { color: var(--accent); font-weight: 700; }
+/* 5.0.4 — the level's one-word name under its number (LEVEL_INFO.short) */
+.tick .caption { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tick .short { font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.tick .short.current { color: var(--accent); font-weight: 700; }
+
+.policy { padding: 12px var(--pad) 14px; border-bottom: 1px solid var(--border); }
+.policy-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.policy-actions { display: flex; gap: 6px; }
+.action-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; padding: 0 10px; height: 28px; cursor: pointer; }
+.action-btn[aria-expanded="true"] { background: var(--accent); color: var(--bg); }
+.action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.bullets { display: flex; flex-direction: column; }
+.bullet { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; font-size: 12px; line-height: 1.45; color: var(--bright); }
+.bullet .b-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; position: relative; top: -1px; }
+.bullet .b-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+
+.safer-regions { padding: 4px var(--pad) 12px; border-bottom: 1px solid var(--border); }
+.safe-toggle { width: 100%; background: none; border: none; border-bottom: 1px solid var(--border); color: var(--yellow); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-align: left; height: 40px; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+.safe-body { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; }
+.safe-intro { margin: 0; font-size: 11px; line-height: 1.5; color: var(--bright); }
+.add-row { display: flex; gap: 6px; }
+.add-label { flex: 1; display: flex; }
+.tld-input { flex: 1; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 34px; font-size: 12px; color: var(--bright); }
+.add-btn { border: none; border-radius: var(--radius); padding: 0 14px; height: 34px; font-size: 12px; font-weight: 600; color: var(--bg); background: var(--accent); cursor: pointer; }
+.default-btn { background: transparent; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 10px; height: 34px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; }
+/* No max-height / inner scroll: every safer-region TLD is visible at once (0.2.4 — was capped at 110px). */
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { display: flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 4px 2px 8px; font-family: var(--mono); font-size: 11px; color: var(--bright); }
+.tag button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 0 4px; }
+.tag button:hover { color: var(--block); }
+
+.popup-status { padding: 0 var(--pad); }
+.foot { display: flex; justify-content: space-between; align-items: center; padding: 10px var(--pad); font-size: 11px; }
+.foot a { font-weight: 600; }

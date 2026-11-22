@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3P Matrix — download blocked</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="warning.css">
+<link rel="stylesheet" href="download-blocked.css">
+</head>
+<!-- blockRiskyDownloads notice (4.3.2): a risky download was cancelled. Same dialog look as the site warning
+     (warning.css, C21). Opened by core/download-guard.js in a small popup window for one download
+     (?downloadId=); the service worker reads the id from this page's URL (C28). -->
+<body>
+<div class="backdrop">
+  <section class="dialog" role="alertdialog" aria-labelledby="dbTitle" aria-describedby="dbReason">
+    <div class="dlg-head">
+      <div class="dlg-brand">
+        <img src="../icons/icon_4_32.png" alt="" width="32" height="32">
+        <span class="mono">3P Matrix — content firewall</span>
+      </div>
+    </div>
+    <h1 id="dbTitle">Download blocked</h1>
+    <div class="dlg-site">
+      <span id="dbFile" class="mono dlg-host">…</span>
+      <ul class="dlg-signals">
+        <li id="dbFrom"></li>
+        <li id="dbReason"></li>
+      </ul>
+    </div>
+    <div class="dlg-actions">
+      <button id="btnOk" class="btn btn-safe" type="button">OK, cancel</button>
+      <button id="btnAnyway" class="btn btn-risky" type="button">Download anyway</button>
+    </div>
+    <p id="dbStatus" class="status-line" role="status" hidden></p>
+    <p class="dlg-note">This is protection <span data-derived="protection-num-block-download"></span>, “<span data-derived="protection-label-block-download"></span>”. The download is paused until you choose: “OK, cancel” deletes it, “Download anyway” continues it and then checks it (protection <span data-derived="protection-num-download"></span>).</p>
+  </section>
+</div>
+<script type="module" src="focus-ring.js"></script>
+<script src="download-blocked.js" type="module"></script>
+</body>
+</html>

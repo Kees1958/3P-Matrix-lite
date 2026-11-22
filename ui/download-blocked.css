@@ -1,0 +1,6 @@
+/* ── ui/download-blocked.css — blockRiskyDownloads notice: warning.css dialog, smaller for a popup window ── */
+:root { --sev: var(--block); }
+.backdrop { padding: 12px; }
+.dialog { padding: 18px 20px; gap: 12px; }
+h1 { font-size: 20px; }
+.btn { height: 38px; font-size: 13px; padding: 0 16px; }

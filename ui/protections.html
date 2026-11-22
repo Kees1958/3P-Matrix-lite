@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3P Matrix — Protections</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="protections.css">
+</head>
+<body>
+<div class="page">
+  <header class="opt-hdr">
+    <h1 class="mono"><img src="../icons/icon_2_32.png" alt="" width="28" height="28"><span>3P<span class="yellow"> Matrix</span> — Protections</span></h1>
+    <span class="hint">Browsing protections, download protection and your allow list, in one place.</span>
+  </header>
+
+  <p id="vtLine" class="vt-line" role="status">
+    <span id="vtLineSet" hidden>VirusTotal API key saved — also checks the links (URL's) of executable downloads.</span>
+    <span id="vtLineUnset" hidden>No VirusTotal API key yet — <a id="vtJoinLink" href="#">request a free API key</a> to also check the links (URL's) of executable downloads.</span>
+  </p>
+
+  <div class="tab-bar" role="tablist" aria-label="Protections">
+    <button id="tabBrowsing" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelBrowsing">Browsing Protection</button>
+    <button id="tabDownload" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelDownload">Download Protection Options</button>
+    <button id="tabAllow" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelAllow">Allow whitelist</button>
+  </div>
+
+  <!-- ── Browsing Protection ─────────────────────────────────────────────── -->
+  <section id="panelBrowsing" class="tab-panel" role="tabpanel" aria-labelledby="tabBrowsing">
+    <div id="browsingList" class="prot-list"></div>
+  </section>
+
+  <!-- ── Download Protection ─────────────────────────────────────────────── -->
+  <section id="panelDownload" class="tab-panel" role="tabpanel" aria-labelledby="tabDownload" hidden>
+    <!-- 4.7.0: warnRiskyDownloads (warn) and blockRiskyDownloads (block) moved to the Browsing Protection tab's list,
+         alongside every other protection — this tab now holds only the download-specific settings. -->
+    <section class="card" aria-labelledby="onlineH">
+      <div class="card-head-row">
+        <h2 id="onlineH" class="section-title">Online checks for suspicious sites and downloads</h2>
+        <p class="hint-line">Pick two you do <em>not</em> already use as your own DNS. Make sure your DNS does not block other DNS (e.g. NextDNS bypass protection).</p>
+      </div>
+      <div class="two-col">
+        <label class="field">First DNS check <select id="dnsFirst"></select></label>
+        <label class="field">Second DNS check <select id="dnsSecond"></select></label>
+      </div>
+      <p id="dnsStatus" class="status" role="status"></p>
+    </section>
+
+    <section class="card" aria-labelledby="dlH">
+      <div class="card-head-row">
+        <h2 id="dlH" class="section-title">Download settings</h2>
+        <p>Enter your free VirusTotal API key (<a id="vtJoinLink2" href="#">get one at VirusTotal</a>).</p>
+      </div>
+      <div class="api-row">
+        <label class="grow"><span class="sr-only">VirusTotal API key</span>
+          <input type="password" id="vtApiKeyInput" class="text-input mono" placeholder="Paste your VT API key (64 hex characters)…" autocomplete="off" spellcheck="false">
+        </label>
+        <button id="vtKeyClear" class="btn-ghost" type="button">Clear</button>
+        <button id="vtKeySave" class="btn-primary" type="button">Save</button>
+      </div>
+      <!-- 4.7.2: the separate "Check at VirusTotal" checkbox was removed as redundant — saving a key
+           turns the check on, clearing it turns the check off (core/download-settings.js setVtKey()). -->
+      <p id="vtKeyStatus" class="status" role="status"></p>
+
+      <div class="dl-options">
+        <div class="two-col">
+          <div class="opt-block">
+            <label class="check"><input type="checkbox" id="silentWhenInconclusive"> <strong>Silent when inconclusive</strong></label>
+            <p class="hint-line">Below the false-positive threshold (see below), stays quiet instead of warning.</p>
+          </div>
+
+          <div class="opt-block">
+            <label class="check"><input type="checkbox" id="autoAllow"> <strong>Silent when probably safe</strong></label>
+            <div id="autoAllowRow" class="inline-row">
+              <span class="hint-line">No warning at or above</span>
+              <label class="inline-row"><span class="sr-only">Minimum risk score</span>
+                <input type="number" id="autoAllowThreshold" class="num-input"> %</label>
+              <span class="hint-line">(<span data-derived="auto-allow-min"></span>–<span data-derived="auto-allow-max"></span>, default <span data-derived="auto-allow-default"></span>)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="opt-block">
+          <!-- 4.7.2: "Trusted downloads" heading, "Trust app stores" and the always-skipped domain list
+               condensed onto one line (user request) — was 3 lines across 2 nested blocks. -->
+          <div class="trust-row">
+            <strong>Trust app stores</strong>
+            <span class="hint-line">(not checked) — <span class="mono" data-derived="trusted-download-builtin"></span></span>
+          </div>
+          <p class="hint-line">Your own trusted domains — up to <span data-derived="trusted-download-max"></span> (format: <span class="mono">domain.tld</span>).</p>
+          <div id="trustedInputs" class="domain-grid"></div>
+        </div>
+
+        <div class="opt-block">
+          <!-- 4.7.2: label + slider share one line (fp-row) instead of stacking — the value labels
+               (HIGH/MEDIUM/LOW/NONE) stay on their own line directly under the slider track. -->
+          <div class="fp-row">
+            <strong class="field">False positive reduction</strong>
+            <label class="grow"><span class="sr-only">False positive reduction</span><input type="range" id="fpSlider" class="fp-slider"></label>
+            <div class="fp-hint-col">
+              <p class="hint-line">Higher = fewer false alarms: filters VirusTotal results and sets from which score a download gets a warning window.</p>
+            </div>
+          </div>
+          <div id="fpLabels" class="fp-labels"></div>
+        </div>
+
+        <div class="opt-block">
+          <label class="check"><input type="checkbox" id="personalize"> <strong>Personalize the download warning page</strong></label>
+          <div id="personalizeBox" class="opt-block" hidden>
+            <p class="hint-line">Background colour — default <span data-derived="warning-color-default"></span> (Google Red):</p>
+            <div class="inline-row">
+              <label class="inline-row">Red <input type="number" id="colorR" class="num-input"></label>
+              <label class="inline-row">Green <input type="number" id="colorG" class="num-input"></label>
+              <label class="inline-row">Blue <input type="number" id="colorB" class="num-input"></label>
+              <span id="colorPreview" class="color-preview" title="Preview"></span>
+            </div>
+            <label class="field">Page title
+              <input type="text" id="warningTitle" class="text-input" autocomplete="off" spellcheck="false">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="row-end">
+        <button id="dlRevert" class="btn-ghost" type="button">Revert</button>
+        <button id="dlSave" class="btn-primary" type="button">Save</button>
+      </div>
+      <p id="dlStatus" class="status" role="status"></p>
+    </section>
+  </section>
+
+  <!-- ── Allow whitelist ─────────────────────────────────────────────────── -->
+  <section id="panelAllow" class="tab-panel" role="tabpanel" aria-labelledby="tabAllow" hidden>
+    <section class="card" aria-labelledby="allowH">
+      <h2 id="allowH" class="section-title">Allow list — locked at level <span data-derived="level-allow-all"></span></h2>
+      <p>One domain per line. Sites here get no protections and no warnings. “Trust this site” in the warning dialog adds to this list.</p>
+      <label><span class="sr-only">Allow list domains</span>
+        <textarea id="allowList" rows="20" spellcheck="false" class="mono"></textarea>
+      </label>
+      <div class="row-end">
+        <button id="allowImport" class="btn-ghost" type="button">Import…</button>
+        <button id="allowExport" class="btn-ghost" type="button">Export</button>
+        <input id="allowImportFile" type="file" accept="text/plain,.txt" hidden>
+        <button id="allowRevert" class="btn-ghost" type="button">Revert</button>
+        <button id="allowSave" class="btn-primary" type="button">Save</button>
+      </div>
+      <p id="allowStatus" class="status" role="status"></p>
+    </section>
+  </section>
+
+  <!-- ── Footer: Backup / Restore / Reset (applies under every tab) ──────── -->
+  <div class="row-end">
+    <button id="resetAll" class="btn-danger" type="button">Reset to defaults</button>
+    <button id="importAll" class="btn-ghost" type="button">Restore settings</button>
+    <button id="exportAll" class="btn-ghost" type="button">Save settings</button>
+    <input id="importFile" type="file" accept="application/json,.json" hidden>
+  </div>
+  <p id="ioStatus" class="status" role="status"></p>
+</div>
+<script src="protections.js" type="module"></script>
+</body>
+</html>

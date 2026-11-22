@@ -1,0 +1,1774 @@
+{
+  "extension": "3P Matrix — content firewall",
+  "version": "4.6.0",
+  "generated": "2026-11-06T10:31:46.087Z",
+  "entries": 337,
+  "categories": {
+    "Payment": [
+      {
+        "host": "2checkout.com",
+        "type": "both",
+        "reason": "2Checkout / Verifone billing"
+      },
+      {
+        "host": "adyen.com",
+        "type": "both",
+        "reason": "Adyen payment platform"
+      },
+      {
+        "host": "aexp-static.com",
+        "type": "both",
+        "reason": "American Express checkout / 3-D Secure assets"
+      },
+      {
+        "host": "affirm.com",
+        "type": "both",
+        "reason": "Affirm buy-now-pay-later"
+      },
+      {
+        "host": "airwallex.com",
+        "type": "both",
+        "reason": "Airwallex payments"
+      },
+      {
+        "host": "amazonpay.com",
+        "type": "both",
+        "reason": "Amazon Pay"
+      },
+      {
+        "host": "americanexpress.com",
+        "type": "both",
+        "reason": "American Express card network / 3-D Secure (kept: user decision 2026-11-04)"
+      },
+      {
+        "host": "apple-pay-gateway-nc-pod.apple.com",
+        "type": "both",
+        "reason": "Apple Pay merchant gateway"
+      },
+      {
+        "host": "apple-pay-gateway.apple.com",
+        "type": "both",
+        "reason": "Apple Pay merchant gateway"
+      },
+      {
+        "host": "assets.braintreegateway.com",
+        "type": "both",
+        "reason": "Braintree (PayPal) checkout assets"
+      },
+      {
+        "host": "authorize.net",
+        "type": "both",
+        "reason": "Authorize.Net payment gateway (Visa)"
+      },
+      {
+        "host": "avangate.com",
+        "type": "both",
+        "reason": "Avangate (2Checkout) billing"
+      },
+      {
+        "host": "avangate.net",
+        "type": "both",
+        "reason": "Avangate (2Checkout) billing assets"
+      },
+      {
+        "host": "axepta.it",
+        "type": "both",
+        "reason": "Axepta (BNL / Worldline) payments (IT)"
+      },
+      {
+        "host": "axerve.com",
+        "type": "both",
+        "reason": "Axerve payment gateway (IT)"
+      },
+      {
+        "host": "bac-assets.com",
+        "type": "both",
+        "reason": "Bank of America 3-D Secure / checkout assets (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "bambora.com",
+        "type": "both",
+        "reason": "Bambora / Worldline payment gateway"
+      },
+      {
+        "host": "bancontact.com",
+        "type": "both",
+        "reason": "Bancontact (Belgian bank-payment scheme)"
+      },
+      {
+        "host": "banked.com",
+        "type": "both",
+        "reason": "Banked pay-by-bank"
+      },
+      {
+        "host": "bb.com.br",
+        "type": "both",
+        "reason": "Banco do Brasil 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "beanstream.com",
+        "type": "both",
+        "reason": "Beanstream / Bambora gateway (Canada)"
+      },
+      {
+        "host": "billink.nl",
+        "type": "both",
+        "reason": "Billink pay-later (NL)"
+      },
+      {
+        "host": "bizum.es",
+        "type": "both",
+        "reason": "Bizum mobile payments (ES)"
+      },
+      {
+        "host": "bluesnap.com",
+        "type": "both",
+        "reason": "BlueSnap payments"
+      },
+      {
+        "host": "bluesnap.net",
+        "type": "both",
+        "reason": "BlueSnap payment assets"
+      },
+      {
+        "host": "bnlpositivity.it",
+        "type": "both",
+        "reason": "BNL bank 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "bradesco.com.br",
+        "type": "both",
+        "reason": "Bradesco 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "braintree-api.com",
+        "type": "both",
+        "reason": "Braintree API"
+      },
+      {
+        "host": "braintreegateway.com",
+        "type": "both",
+        "reason": "Braintree gateway"
+      },
+      {
+        "host": "buckaroo.nl",
+        "type": "both",
+        "reason": "Buckaroo payment service provider (NL)"
+      },
+      {
+        "host": "cardinalcommerce.com",
+        "type": "both",
+        "reason": "Cardinal Commerce 3-D Secure (Visa)"
+      },
+      {
+        "host": "cardinaltrusted.com",
+        "type": "both",
+        "reason": "Cardinal Commerce 3-D Secure (Visa)"
+      },
+      {
+        "host": "ccv.eu",
+        "type": "both",
+        "reason": "CCV payment terminals and online payments (NL)"
+      },
+      {
+        "host": "cdn.checkout.com",
+        "type": "both",
+        "reason": "Checkout.com hosted fields assets"
+      },
+      {
+        "host": "chargebee.com",
+        "type": "both",
+        "reason": "Chargebee subscription billing"
+      },
+      {
+        "host": "chargebeestatic.com",
+        "type": "both",
+        "reason": "Chargebee checkout assets"
+      },
+      {
+        "host": "chargebeestaticv2.com",
+        "type": "both",
+        "reason": "Chargebee checkout assets"
+      },
+      {
+        "host": "chasecdn.com",
+        "type": "both",
+        "reason": "Chase 3-D Secure / checkout assets (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "chasepaymentech.com",
+        "type": "both",
+        "reason": "Chase Paymentech acquiring"
+      },
+      {
+        "host": "checkout.com",
+        "type": "both",
+        "reason": "Checkout.com payment platform"
+      },
+      {
+        "host": "checkout.stripe.com",
+        "type": "both",
+        "reason": "Stripe hosted checkout"
+      },
+      {
+        "host": "checkoutshopper-live.adyen.com",
+        "type": "both",
+        "reason": "Adyen hosted checkout components"
+      },
+      {
+        "host": "cielo.com.br",
+        "type": "both",
+        "reason": "Cielo card acquirer (BR)"
+      },
+      {
+        "host": "cleverbridge.com",
+        "type": "both",
+        "reason": "Cleverbridge billing"
+      },
+      {
+        "host": "clover.com",
+        "type": "both",
+        "reason": "Clover (Fiserv) point-of-sale and online payments"
+      },
+      {
+        "host": "cm.com",
+        "type": "both",
+        "reason": "CM.com payments (also messaging; payment pages run here)"
+      },
+      {
+        "host": "comgate.cz",
+        "type": "both",
+        "reason": "Comgate payment gateway (CZ)"
+      },
+      {
+        "host": "computop.com",
+        "type": "both",
+        "reason": "Computop payment platform (DE)"
+      },
+      {
+        "host": "convergepay.com",
+        "type": "both",
+        "reason": "Elavon Converge gateway"
+      },
+      {
+        "host": "cybersource.com",
+        "type": "both",
+        "reason": "Cybersource gateway / 3-D Secure (Visa)"
+      },
+      {
+        "host": "dalenys.com",
+        "type": "both",
+        "reason": "Dalenys payments (FR)"
+      },
+      {
+        "host": "discover.com",
+        "type": "both",
+        "reason": "Discover card network / 3-D Secure (kept: user decision 2026-11-04)"
+      },
+      {
+        "host": "elavon.com",
+        "type": "both",
+        "reason": "Elavon card acquiring"
+      },
+      {
+        "host": "eps-ueberweisung.at",
+        "type": "both",
+        "reason": "EPS bank transfer scheme (AT)"
+      },
+      {
+        "host": "euplatesc.ro",
+        "type": "both",
+        "reason": "EuPlătesc payment gateway (RO)"
+      },
+      {
+        "host": "every-pay.com",
+        "type": "both",
+        "reason": "EveryPay payment gateway (Baltics)"
+      },
+      {
+        "host": "fastspringresources.com",
+        "type": "both",
+        "reason": "FastSpring checkout assets"
+      },
+      {
+        "host": "firstdata.com",
+        "type": "both",
+        "reason": "First Data (Fiserv) processing"
+      },
+      {
+        "host": "fiserv.com",
+        "type": "both",
+        "reason": "Fiserv payment processing"
+      },
+      {
+        "host": "fisglobal.com",
+        "type": "both",
+        "reason": "FIS / Worldpay payment processing"
+      },
+      {
+        "host": "gestpay.it",
+        "type": "both",
+        "reason": "Gestpay / Axerve gateway (IT)"
+      },
+      {
+        "host": "gestpay.net",
+        "type": "both",
+        "reason": "Gestpay / Axerve gateway (IT)"
+      },
+      {
+        "host": "getnet.com.br",
+        "type": "both",
+        "reason": "GetNet (Santander) card acquirer (BR)"
+      },
+      {
+        "host": "getswish.se",
+        "type": "both",
+        "reason": "Swish mobile payments (SE)"
+      },
+      {
+        "host": "globalpay.com",
+        "type": "both",
+        "reason": "Global Payments gateway"
+      },
+      {
+        "host": "globalpaymentsinc.com",
+        "type": "both",
+        "reason": "Global Payments"
+      },
+      {
+        "host": "gocardless.com",
+        "type": "both",
+        "reason": "GoCardless direct debit"
+      },
+      {
+        "host": "googlepay.com",
+        "type": "both",
+        "reason": "Google Pay"
+      },
+      {
+        "host": "gopay.com",
+        "type": "both",
+        "reason": "GoPay payment gateway (CZ)"
+      },
+      {
+        "host": "gpwebpay.com",
+        "type": "both",
+        "reason": "GP webpay gateway (CZ)"
+      },
+      {
+        "host": "heidelpay.com",
+        "type": "both",
+        "reason": "Heidelpay / Unzer (DE)"
+      },
+      {
+        "host": "helcim.com",
+        "type": "both",
+        "reason": "Helcim payment processing"
+      },
+      {
+        "host": "hipay-tpp.com",
+        "type": "both",
+        "reason": "HiPay payments"
+      },
+      {
+        "host": "hooks.stripe.com",
+        "type": "both",
+        "reason": "Stripe 3-D Secure redirect / webhooks endpoint"
+      },
+      {
+        "host": "ideal-checkout.nl",
+        "type": "both",
+        "reason": "iDEAL checkout plug-in (NL)"
+      },
+      {
+        "host": "ideal.nl",
+        "type": "both",
+        "reason": "iDEAL — Dutch bank-payment scheme"
+      },
+      {
+        "host": "ingenico.com",
+        "type": "both",
+        "reason": "Ingenico / Worldline payments"
+      },
+      {
+        "host": "itau.com.br",
+        "type": "both",
+        "reason": "Itaú Unibanco 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "js.braintreegateway.com",
+        "type": "script",
+        "reason": "Braintree drop-in script"
+      },
+      {
+        "host": "js.mollie.com",
+        "type": "both",
+        "reason": "Mollie components script"
+      },
+      {
+        "host": "js.squareup.com",
+        "type": "script",
+        "reason": "Square web payments script"
+      },
+      {
+        "host": "js.stripe.com",
+        "type": "script",
+        "reason": "Stripe.js"
+      },
+      {
+        "host": "js.stripe.network",
+        "type": "script",
+        "reason": "Stripe.js network helper"
+      },
+      {
+        "host": "klarna.com",
+        "type": "both",
+        "reason": "Klarna buy-now-pay-later and checkout"
+      },
+      {
+        "host": "klarnacdn.net",
+        "type": "both",
+        "reason": "Klarna checkout assets"
+      },
+      {
+        "host": "klarnaservices.com",
+        "type": "both",
+        "reason": "Klarna checkout services"
+      },
+      {
+        "host": "lyra.com",
+        "type": "both",
+        "reason": "Lyra payment platform (FR)"
+      },
+      {
+        "host": "m.stripe.network",
+        "type": "both",
+        "reason": "Stripe fraud-signal frame (Stripe.js)"
+      },
+      {
+        "host": "makecommerce.net",
+        "type": "both",
+        "reason": "MakeCommerce payment gateway (Baltics)"
+      },
+      {
+        "host": "mastercard.com",
+        "type": "both",
+        "reason": "Mastercard network / 3-D Secure (kept: user decision 2026-11-04)"
+      },
+      {
+        "host": "memberful.com",
+        "type": "both",
+        "reason": "Memberful membership billing"
+      },
+      {
+        "host": "mercadopago.cl",
+        "type": "both",
+        "reason": "Mercado Pago checkout (CL)"
+      },
+      {
+        "host": "mercadopago.com.ar",
+        "type": "both",
+        "reason": "Mercado Pago checkout (AR)"
+      },
+      {
+        "host": "mercadopago.com.br",
+        "type": "both",
+        "reason": "Mercado Pago checkout (BR)"
+      },
+      {
+        "host": "mercadopago.com.co",
+        "type": "both",
+        "reason": "Mercado Pago checkout (CO)"
+      },
+      {
+        "host": "mercadopago.com.mx",
+        "type": "both",
+        "reason": "Mercado Pago checkout (MX)"
+      },
+      {
+        "host": "mercurypayments.it",
+        "type": "both",
+        "reason": "Mercury Payments (Nexi) (IT)"
+      },
+      {
+        "host": "mobilepay.dk",
+        "type": "both",
+        "reason": "MobilePay (DK/FI)"
+      },
+      {
+        "host": "mollie.com",
+        "type": "both",
+        "reason": "Mollie payment service provider (NL)"
+      },
+      {
+        "host": "moneris.com",
+        "type": "both",
+        "reason": "Moneris payment processing (CA)"
+      },
+      {
+        "host": "monetaonline.it",
+        "type": "both",
+        "reason": "Moneta Online (Nexi) gateway (IT)"
+      },
+      {
+        "host": "multi-safepay.com",
+        "type": "both",
+        "reason": "MultiSafepay payment service provider (NL)"
+      },
+      {
+        "host": "netopia-payments.com",
+        "type": "both",
+        "reason": "Netopia payment gateway (RO)"
+      },
+      {
+        "host": "nexi.it",
+        "type": "both",
+        "reason": "Nexi payments (IT)"
+      },
+      {
+        "host": "nexigroup.com",
+        "type": "both",
+        "reason": "Nexi Group payments"
+      },
+      {
+        "host": "noda.live",
+        "type": "both",
+        "reason": "Noda open-banking payments"
+      },
+      {
+        "host": "nordpayments.com",
+        "type": "both",
+        "reason": "Nord Payments (DK)"
+      },
+      {
+        "host": "nubank.com.br",
+        "type": "both",
+        "reason": "Nubank 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "nuvei.com",
+        "type": "both",
+        "reason": "Nuvei payments"
+      },
+      {
+        "host": "ogone.com",
+        "type": "both",
+        "reason": "Ogone (Ingenico / Worldline) gateway"
+      },
+      {
+        "host": "onfastspring.com",
+        "type": "both",
+        "reason": "FastSpring checkout"
+      },
+      {
+        "host": "onlinepaymentplatform.nl",
+        "type": "both",
+        "reason": "Online Payment Platform (NL)"
+      },
+      {
+        "host": "opayo.co.uk",
+        "type": "both",
+        "reason": "Opayo (Elavon, formerly Sage Pay) gateway (UK)"
+      },
+      {
+        "host": "orbitalpaymentech.com",
+        "type": "both",
+        "reason": "Chase Orbital gateway"
+      },
+      {
+        "host": "paddle.com",
+        "type": "both",
+        "reason": "Paddle billing / merchant of record"
+      },
+      {
+        "host": "paddle.net",
+        "type": "both",
+        "reason": "Paddle checkout assets"
+      },
+      {
+        "host": "pagbank.com.br",
+        "type": "both",
+        "reason": "PagBank payments / 3-D Secure (BR) (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "pagseguro.com.br",
+        "type": "both",
+        "reason": "PagSeguro payments (BR)"
+      },
+      {
+        "host": "pay.google.com",
+        "type": "both",
+        "reason": "Google Pay sheet"
+      },
+      {
+        "host": "pay.nl",
+        "type": "both",
+        "reason": "Pay.nl payment service provider (NL)"
+      },
+      {
+        "host": "paybox.com",
+        "type": "both",
+        "reason": "Paybox / Verifone gateway (FR)"
+      },
+      {
+        "host": "payments-amazon.com",
+        "type": "both",
+        "reason": "Amazon Pay checkout"
+      },
+      {
+        "host": "payone.com",
+        "type": "both",
+        "reason": "Payone payment provider (DE)"
+      },
+      {
+        "host": "paypal.com",
+        "type": "both",
+        "reason": "PayPal checkout"
+      },
+      {
+        "host": "paypalobjects.com",
+        "type": "both",
+        "reason": "PayPal checkout assets"
+      },
+      {
+        "host": "payplug.com",
+        "type": "both",
+        "reason": "PayPlug payment gateway (FR)"
+      },
+      {
+        "host": "payu.com",
+        "type": "both",
+        "reason": "PayU payment gateway"
+      },
+      {
+        "host": "payu.pl",
+        "type": "both",
+        "reason": "PayU payment gateway (PL)"
+      },
+      {
+        "host": "plaid.com",
+        "type": "both",
+        "reason": "Plaid bank-account linking for payments"
+      },
+      {
+        "host": "plugandpay.io",
+        "type": "both",
+        "reason": "Plug&Pay checkout (NL)"
+      },
+      {
+        "host": "postepay.it",
+        "type": "both",
+        "reason": "Postepay (Poste Italiane) payments"
+      },
+      {
+        "host": "pronamicpay.com",
+        "type": "both",
+        "reason": "Pronamic Pay checkout plug-in (NL)"
+      },
+      {
+        "host": "przelewy24.pl",
+        "type": "both",
+        "reason": "Przelewy24 bank transfers (PL)"
+      },
+      {
+        "host": "pse.com.co",
+        "type": "both",
+        "reason": "PSE bank-transfer scheme (CO)"
+      },
+      {
+        "host": "ratepay.com",
+        "type": "both",
+        "reason": "Ratepay buy-now-pay-later (DE)"
+      },
+      {
+        "host": "recurly.com",
+        "type": "both",
+        "reason": "Recurly subscription billing"
+      },
+      {
+        "host": "redsys.es",
+        "type": "both",
+        "reason": "Redsys card gateway / 3-D Secure (ES)"
+      },
+      {
+        "host": "revolut.com",
+        "type": "both",
+        "reason": "Revolut Pay / 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "riverty.com",
+        "type": "both",
+        "reason": "Riverty (Afterpay) pay-later (NL/DE)"
+      },
+      {
+        "host": "safecharge.com",
+        "type": "both",
+        "reason": "SafeCharge (Nuvei) gateway"
+      },
+      {
+        "host": "sagepay.com",
+        "type": "both",
+        "reason": "Sage Pay / Opayo gateway (UK)"
+      },
+      {
+        "host": "satispay.com",
+        "type": "both",
+        "reason": "Satispay mobile payments (IT)"
+      },
+      {
+        "host": "scalapay.com",
+        "type": "both",
+        "reason": "Scalapay buy-now-pay-later (IT)"
+      },
+      {
+        "host": "sella.it",
+        "type": "both",
+        "reason": "Banca Sella payments / 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "sia.eu",
+        "type": "both",
+        "reason": "SIA (Nexi) payment infrastructure"
+      },
+      {
+        "host": "siirto.fi",
+        "type": "both",
+        "reason": "Siirto mobile payments (FI)"
+      },
+      {
+        "host": "sisow.nl",
+        "type": "both",
+        "reason": "Sisow / Buckaroo payments (NL)"
+      },
+      {
+        "host": "squarecdn.com",
+        "type": "both",
+        "reason": "Square checkout assets"
+      },
+      {
+        "host": "squareup.com",
+        "type": "both",
+        "reason": "Square payments"
+      },
+      {
+        "host": "stripe.com",
+        "type": "both",
+        "reason": "Stripe payments"
+      },
+      {
+        "host": "stripe.network",
+        "type": "both",
+        "reason": "Stripe network helper"
+      },
+      {
+        "host": "stripecdn.com",
+        "type": "both",
+        "reason": "Stripe assets"
+      },
+      {
+        "host": "swish.nu",
+        "type": "both",
+        "reason": "Swish mobile payments (SE)"
+      },
+      {
+        "host": "tikkie.nl",
+        "type": "both",
+        "reason": "Tikkie payment requests (ABN AMRO, NL)"
+      },
+      {
+        "host": "tink.com",
+        "type": "both",
+        "reason": "Tink open-banking payments (Visa)"
+      },
+      {
+        "host": "tpay.com",
+        "type": "both",
+        "reason": "Tpay payment gateway (PL)"
+      },
+      {
+        "host": "transbank.cl",
+        "type": "both",
+        "reason": "Transbank card payments (CL)"
+      },
+      {
+        "host": "truelayer.com",
+        "type": "both",
+        "reason": "TrueLayer open-banking payments"
+      },
+      {
+        "host": "trustly.com",
+        "type": "both",
+        "reason": "Trustly pay-by-bank"
+      },
+      {
+        "host": "tsys.com",
+        "type": "both",
+        "reason": "TSYS (Global Payments) processing"
+      },
+      {
+        "host": "twint.ch",
+        "type": "both",
+        "reason": "TWINT mobile payments (CH)"
+      },
+      {
+        "host": "unicredit.it",
+        "type": "both",
+        "reason": "UniCredit 3-D Secure (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "unzer.com",
+        "type": "both",
+        "reason": "Unzer payment platform (DE)"
+      },
+      {
+        "host": "verifone.cloud",
+        "type": "both",
+        "reason": "Verifone online checkout"
+      },
+      {
+        "host": "verifone.com",
+        "type": "both",
+        "reason": "Verifone payments"
+      },
+      {
+        "host": "vipps.no",
+        "type": "both",
+        "reason": "Vipps mobile payments (NO)"
+      },
+      {
+        "host": "vippsmobilepay.com",
+        "type": "both",
+        "reason": "Vipps MobilePay checkout"
+      },
+      {
+        "host": "visa.com",
+        "type": "both",
+        "reason": "Visa network / 3-D Secure (kept: user decision 2026-11-04)"
+      },
+      {
+        "host": "vyne.co.uk",
+        "type": "both",
+        "reason": "Vyne pay-by-bank (UK)"
+      },
+      {
+        "host": "walleypay.com",
+        "type": "both",
+        "reason": "Walley pay-later (Nordics)"
+      },
+      {
+        "host": "wero-wallet.eu",
+        "type": "both",
+        "reason": "Wero (European Payments Initiative) wallet"
+      },
+      {
+        "host": "wf.com",
+        "type": "both",
+        "reason": "Wells Fargo 3-D Secure / merchant services (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "wfinterface.com",
+        "type": "both",
+        "reason": "Wells Fargo merchant interface (kept: banks, user decision 2026-11-04)"
+      },
+      {
+        "host": "worldline.com",
+        "type": "both",
+        "reason": "Worldline payment platform"
+      },
+      {
+        "host": "worldpay.com",
+        "type": "both",
+        "reason": "Worldpay payment gateway"
+      },
+      {
+        "host": "worldpaypayments.com",
+        "type": "both",
+        "reason": "Worldpay checkout"
+      },
+      {
+        "host": "x.klarnacdn.net",
+        "type": "both",
+        "reason": "Klarna checkout assets"
+      }
+    ],
+    "Sign-in": [
+      {
+        "host": "account.microsoft.com",
+        "type": "frame",
+        "reason": "Microsoft account frame"
+      },
+      {
+        "host": "accounts.google.com",
+        "type": "both",
+        "reason": "Google account sign-in"
+      },
+      {
+        "host": "appleid.apple.com",
+        "type": "frame",
+        "reason": "Sign in with Apple"
+      },
+      {
+        "host": "auth0.com",
+        "type": "both",
+        "reason": "Auth0 (Okta) hosted sign-in"
+      },
+      {
+        "host": "bankid.com",
+        "type": "both",
+        "reason": "BankID — Nordic bank-grade digital identity"
+      },
+      {
+        "host": "clerk.com",
+        "type": "both",
+        "reason": "Clerk hosted sign-in"
+      },
+      {
+        "host": "cloudflareaccess.com",
+        "type": "both",
+        "reason": "Cloudflare Access sign-in"
+      },
+      {
+        "host": "descope.com",
+        "type": "both",
+        "reason": "Descope hosted sign-in"
+      },
+      {
+        "host": "descopecdn.com",
+        "type": "both",
+        "reason": "Descope sign-in assets"
+      },
+      {
+        "host": "digid.nl",
+        "type": "both",
+        "reason": "DigiD — Dutch government digital identity"
+      },
+      {
+        "host": "duosecurity.com",
+        "type": "both",
+        "reason": "Duo Security (Cisco) two-factor frame"
+      },
+      {
+        "host": "eherkenning.nl",
+        "type": "both",
+        "reason": "eHerkenning — Dutch business digital identity"
+      },
+      {
+        "host": "idmsa.apple.com",
+        "type": "frame",
+        "reason": "Apple ID sign-in service"
+      },
+      {
+        "host": "itsme-id.com",
+        "type": "both",
+        "reason": "itsme — Belgian digital identity app"
+      },
+      {
+        "host": "login.live.com",
+        "type": "frame",
+        "reason": "Microsoft account sign-in"
+      },
+      {
+        "host": "login.microsoftonline.com",
+        "type": "frame",
+        "reason": "Microsoft Entra ID sign-in"
+      },
+      {
+        "host": "login.windows.net",
+        "type": "frame",
+        "reason": "Microsoft Entra ID sign-in (legacy host)"
+      },
+      {
+        "host": "mitid.dk",
+        "type": "both",
+        "reason": "MitID — Danish government digital identity"
+      },
+      {
+        "host": "msauth.net",
+        "type": "both",
+        "reason": "Microsoft sign-in assets"
+      },
+      {
+        "host": "msftauth.net",
+        "type": "both",
+        "reason": "Microsoft sign-in assets"
+      },
+      {
+        "host": "okta.com",
+        "type": "both",
+        "reason": "Okta single sign-on"
+      },
+      {
+        "host": "onelogin.com",
+        "type": "both",
+        "reason": "OneLogin single sign-on"
+      },
+      {
+        "host": "passport.com",
+        "type": "both",
+        "reason": "Microsoft account (legacy Passport host)"
+      },
+      {
+        "host": "pingone.com",
+        "type": "both",
+        "reason": "PingOne (Ping Identity) hosted sign-in"
+      },
+      {
+        "host": "stytch.com",
+        "type": "both",
+        "reason": "Stytch hosted sign-in"
+      },
+      {
+        "host": "workos.com",
+        "type": "both",
+        "reason": "WorkOS enterprise sign-in"
+      }
+    ],
+    "CAPTCHA or bot protection": [
+      {
+        "host": "altcha.org",
+        "type": "both",
+        "reason": "ALTCHA proof-of-work CAPTCHA"
+      },
+      {
+        "host": "arkoselabs.com",
+        "type": "both",
+        "reason": "Arkose Labs challenge"
+      },
+      {
+        "host": "awswaf.com",
+        "type": "both",
+        "reason": "AWS WAF CAPTCHA / challenge"
+      },
+      {
+        "host": "captcha-delivery.com",
+        "type": "both",
+        "reason": "DataDome challenge pages"
+      },
+      {
+        "host": "captcha-open-b.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud CAPTCHA"
+      },
+      {
+        "host": "captcha-open-southeast-b.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud CAPTCHA (SE Asia)"
+      },
+      {
+        "host": "captcha-open-southeast.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud CAPTCHA (SE Asia)"
+      },
+      {
+        "host": "captcha-open.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud CAPTCHA"
+      },
+      {
+        "host": "captcha.eu",
+        "type": "both",
+        "reason": "captcha.eu (EU-hosted CAPTCHA)"
+      },
+      {
+        "host": "captchafox.com",
+        "type": "both",
+        "reason": "CaptchaFox"
+      },
+      {
+        "host": "cdn.privatecaptcha.com",
+        "type": "both",
+        "reason": "Private Captcha"
+      },
+      {
+        "host": "challenges.cloudflare.com",
+        "type": "both",
+        "reason": "Cloudflare challenge pages"
+      },
+      {
+        "host": "client-api.arkoselabs.com",
+        "type": "both",
+        "reason": "Arkose Labs challenge API"
+      },
+      {
+        "host": "datadome.co",
+        "type": "both",
+        "reason": "DataDome bot protection"
+      },
+      {
+        "host": "frcapi.com",
+        "type": "both",
+        "reason": "Friendly Captcha API"
+      },
+      {
+        "host": "friendlycaptcha.com",
+        "type": "both",
+        "reason": "Friendly Captcha"
+      },
+      {
+        "host": "geetest.com",
+        "type": "both",
+        "reason": "GeeTest CAPTCHA"
+      },
+      {
+        "host": "hcaptcha.com",
+        "type": "frame",
+        "reason": "hCaptcha challenge frame"
+      },
+      {
+        "host": "js.hcaptcha.com",
+        "type": "script",
+        "reason": "hCaptcha script"
+      },
+      {
+        "host": "moderate.cleantalk.org",
+        "type": "both",
+        "reason": "CleanTalk form anti-spam"
+      },
+      {
+        "host": "protechts.net",
+        "type": "both",
+        "reason": "HUMAN (PerimeterX) bot defence"
+      },
+      {
+        "host": "px-cdn.net",
+        "type": "both",
+        "reason": "HUMAN (PerimeterX) bot defence assets"
+      },
+      {
+        "host": "px-cloud.net",
+        "type": "both",
+        "reason": "HUMAN (PerimeterX) bot defence"
+      },
+      {
+        "host": "recaptcha.net",
+        "type": "both",
+        "reason": "Google reCAPTCHA"
+      },
+      {
+        "host": "static-captcha-sgp.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud CAPTCHA assets (Singapore)"
+      },
+      {
+        "host": "static-captcha.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud CAPTCHA assets"
+      },
+      {
+        "host": "static.geetest.com",
+        "type": "both",
+        "reason": "GeeTest CAPTCHA assets"
+      },
+      {
+        "host": "turnstile.cloudflare.com",
+        "type": "both",
+        "reason": "Cloudflare Turnstile"
+      }
+    ],
+    "Fraud prevention": [
+      {
+        "host": "cloudauth-device-dualstack.cn-shanghai.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud device risk check"
+      },
+      {
+        "host": "cloudauth-device.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud device risk check"
+      },
+      {
+        "host": "cloudauth-device.ap-southeast-1.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud device risk check (SE Asia)"
+      },
+      {
+        "host": "device.saf.aliyuncs.com",
+        "type": "both",
+        "reason": "Alibaba Cloud fraud detection"
+      },
+      {
+        "host": "forter.com",
+        "type": "both",
+        "reason": "Forter checkout fraud prevention"
+      },
+      {
+        "host": "incognia.com",
+        "type": "both",
+        "reason": "Incognia fraud prevention"
+      },
+      {
+        "host": "iovation.com",
+        "type": "both",
+        "reason": "iovation (TransUnion) fraud prevention"
+      },
+      {
+        "host": "riskified.com",
+        "type": "both",
+        "reason": "Riskified checkout fraud prevention"
+      },
+      {
+        "host": "seon.io",
+        "type": "both",
+        "reason": "SEON fraud prevention"
+      },
+      {
+        "host": "sift.com",
+        "type": "both",
+        "reason": "Sift fraud prevention"
+      },
+      {
+        "host": "signifyd.com",
+        "type": "both",
+        "reason": "Signifyd checkout fraud prevention"
+      },
+      {
+        "host": "withpersona.com",
+        "type": "both",
+        "reason": "Persona identity verification"
+      }
+    ],
+    "Video or audio player": [
+      {
+        "host": "bcove.video",
+        "type": "both",
+        "reason": "Brightcove player"
+      },
+      {
+        "host": "brightcove.com",
+        "type": "both",
+        "reason": "Brightcove video platform"
+      },
+      {
+        "host": "cdn.fluidplayer.com",
+        "type": "both",
+        "reason": "Fluid Player (open-source HTML5 player)"
+      },
+      {
+        "host": "cdn.jwplayer.com",
+        "type": "both",
+        "reason": "JW Player"
+      },
+      {
+        "host": "cdn.jwpltx.com",
+        "type": "both",
+        "reason": "JW Player analytics-free assets"
+      },
+      {
+        "host": "cdn.plyr.io",
+        "type": "both",
+        "reason": "Plyr (open-source HTML5 player)"
+      },
+      {
+        "host": "cloudflarestream.com",
+        "type": "both",
+        "reason": "Cloudflare Stream player"
+      },
+      {
+        "host": "content.jwplatform.com",
+        "type": "both",
+        "reason": "JW Player content"
+      },
+      {
+        "host": "dailymotion.com",
+        "type": "both",
+        "reason": "Dailymotion embeds"
+      },
+      {
+        "host": "dmcdn.net",
+        "type": "both",
+        "reason": "Dailymotion assets"
+      },
+      {
+        "host": "dmxleo.dailymotion.com",
+        "type": "both",
+        "reason": "Dailymotion player"
+      },
+      {
+        "host": "embed.mychannels.video",
+        "type": "both",
+        "reason": "MyChannels video embeds (NL publishers)"
+      },
+      {
+        "host": "ext-twitch.tv",
+        "type": "both",
+        "reason": "Twitch extensions"
+      },
+      {
+        "host": "f.vimeocdn.com",
+        "type": "both",
+        "reason": "Vimeo player assets"
+      },
+      {
+        "host": "fast.wistia.com",
+        "type": "both",
+        "reason": "Wistia player"
+      },
+      {
+        "host": "geo.dailymotion.com",
+        "type": "both",
+        "reason": "Dailymotion player"
+      },
+      {
+        "host": "googlevideo.com",
+        "type": "both",
+        "reason": "YouTube video streams"
+      },
+      {
+        "host": "i.vimeocdn.com",
+        "type": "both",
+        "reason": "Vimeo thumbnails"
+      },
+      {
+        "host": "jtvnw.net",
+        "type": "both",
+        "reason": "Twitch video assets"
+      },
+      {
+        "host": "jwpcdn.com",
+        "type": "both",
+        "reason": "JW Player assets"
+      },
+      {
+        "host": "jwplatform.com",
+        "type": "both",
+        "reason": "JW Player platform"
+      },
+      {
+        "host": "jwplayer.com",
+        "type": "both",
+        "reason": "JW Player"
+      },
+      {
+        "host": "kaltura.com",
+        "type": "both",
+        "reason": "Kaltura video platform"
+      },
+      {
+        "host": "loom.com",
+        "type": "both",
+        "reason": "Loom video embeds"
+      },
+      {
+        "host": "loomcdn.com",
+        "type": "both",
+        "reason": "Loom assets"
+      },
+      {
+        "host": "mux.com",
+        "type": "both",
+        "reason": "Mux video player"
+      },
+      {
+        "host": "panopto.com",
+        "type": "both",
+        "reason": "Panopto lecture video"
+      },
+      {
+        "host": "play.vidyard.com",
+        "type": "frame",
+        "reason": "Vidyard player"
+      },
+      {
+        "host": "player.captivate.fm",
+        "type": "both",
+        "reason": "Captivate podcast player"
+      },
+      {
+        "host": "player.twitch.tv",
+        "type": "frame",
+        "reason": "Twitch embedded player"
+      },
+      {
+        "host": "player.vimeo.com",
+        "type": "frame",
+        "reason": "Vimeo embedded player"
+      },
+      {
+        "host": "players.brightcove.net",
+        "type": "both",
+        "reason": "Brightcove player"
+      },
+      {
+        "host": "releases.flowplayer.org",
+        "type": "both",
+        "reason": "Flowplayer"
+      },
+      {
+        "host": "rumble.com",
+        "type": "both",
+        "reason": "Rumble video embeds"
+      },
+      {
+        "host": "sproutvideo.com",
+        "type": "both",
+        "reason": "SproutVideo player"
+      },
+      {
+        "host": "ted.com",
+        "type": "both",
+        "reason": "TED talk embeds"
+      },
+      {
+        "host": "twitchcdn.net",
+        "type": "both",
+        "reason": "Twitch assets"
+      },
+      {
+        "host": "videodelivery.net",
+        "type": "both",
+        "reason": "Cloudflare Stream delivery"
+      },
+      {
+        "host": "vimeocdn.com",
+        "type": "both",
+        "reason": "Vimeo assets"
+      },
+      {
+        "host": "vjs.zencdn.net",
+        "type": "both",
+        "reason": "Video.js"
+      },
+      {
+        "host": "wistia.com",
+        "type": "both",
+        "reason": "Wistia video"
+      },
+      {
+        "host": "wistia.net",
+        "type": "both",
+        "reason": "Wistia assets"
+      },
+      {
+        "host": "youtu.be",
+        "type": "both",
+        "reason": "YouTube short links"
+      },
+      {
+        "host": "youtube-nocookie.com",
+        "type": "both",
+        "reason": "YouTube privacy-enhanced embeds"
+      },
+      {
+        "host": "youtube.com",
+        "type": "both",
+        "reason": "YouTube embeds"
+      },
+      {
+        "host": "ytimg.com",
+        "type": "both",
+        "reason": "YouTube thumbnails / player assets"
+      }
+    ],
+    "Streaming embed": [
+      {
+        "host": "deezer.com",
+        "type": "frame",
+        "reason": "Deezer embed widget"
+      },
+      {
+        "host": "mixcloud.com",
+        "type": "frame",
+        "reason": "Mixcloud embed widget"
+      },
+      {
+        "host": "music.apple.com",
+        "type": "frame",
+        "reason": "Apple Music embed widget"
+      },
+      {
+        "host": "scdn.co",
+        "type": "both",
+        "reason": "Spotify embed assets"
+      },
+      {
+        "host": "soundcloud.com",
+        "type": "both",
+        "reason": "SoundCloud embed widget"
+      },
+      {
+        "host": "spotify.com",
+        "type": "both",
+        "reason": "Spotify embed widget (open.spotify.com)"
+      },
+      {
+        "host": "spotifycdn.com",
+        "type": "both",
+        "reason": "Spotify embed assets (moved from the player group, 4.5.6)"
+      }
+    ],
+    "Meeting embed": [
+      {
+        "host": "8x8.vc",
+        "type": "both",
+        "reason": "8x8 Jitsi-based meeting embed"
+      },
+      {
+        "host": "daily.co",
+        "type": "both",
+        "reason": "Daily video-call embed (built for third-party embedding)"
+      },
+      {
+        "host": "goto.com",
+        "type": "both",
+        "reason": "GoTo (LogMeIn) meeting platform"
+      },
+      {
+        "host": "gotomeeting.com",
+        "type": "both",
+        "reason": "GoTo Meeting"
+      },
+      {
+        "host": "jitsi.org",
+        "type": "both",
+        "reason": "Jitsi Meet (open-source meeting platform)"
+      },
+      {
+        "host": "livestorm.co",
+        "type": "both",
+        "reason": "Livestorm webinar / meeting embed"
+      },
+      {
+        "host": "meet.google.com",
+        "type": "both",
+        "reason": "Google Meet"
+      },
+      {
+        "host": "meet.jit.si",
+        "type": "both",
+        "reason": "Jitsi Meet hosted instance (iframe API)"
+      },
+      {
+        "host": "teams.live.com",
+        "type": "both",
+        "reason": "Microsoft Teams (consumer) meeting embed"
+      },
+      {
+        "host": "teams.microsoft.com",
+        "type": "both",
+        "reason": "Microsoft Teams meeting embed"
+      },
+      {
+        "host": "webex.com",
+        "type": "both",
+        "reason": "Webex meeting embed"
+      },
+      {
+        "host": "whereby.com",
+        "type": "both",
+        "reason": "Whereby meeting embed"
+      },
+      {
+        "host": "zoom.com",
+        "type": "both",
+        "reason": "Zoom (secondary domain of zoom.us)"
+      },
+      {
+        "host": "zoom.us",
+        "type": "both",
+        "reason": "Zoom Web SDK meeting embed"
+      },
+      {
+        "host": "zoomgov.com",
+        "type": "both",
+        "reason": "Zoom for Government meeting embed"
+      }
+    ],
+    "Gaming embed": [
+      {
+        "host": "steampowered.com",
+        "type": "both",
+        "reason": "Steam store widget (store.steampowered.com/widget) — official Valve store"
+      }
+    ],
+    "Social post embed": [
+      {
+        "host": "embed.reddit.com",
+        "type": "both",
+        "reason": "Reddit post embeds (moved from the player group, 4.5.6)"
+      }
+    ],
+    "Map or translation widget": [
+      {
+        "host": "maps.googleapis.com",
+        "type": "both",
+        "reason": "Google Maps embeds"
+      },
+      {
+        "host": "translate.googleapis.com",
+        "type": "both",
+        "reason": "Google Translate website widget"
+      }
+    ],
+    "JS / CSS / font library": [
+      {
+        "host": "ajax.googleapis.com",
+        "type": "both",
+        "reason": "Google Hosted Libraries"
+      },
+      {
+        "host": "ajax.microsoft.com",
+        "type": "script",
+        "reason": "Microsoft Ajax CDN"
+      },
+      {
+        "host": "aspnetcdn.com",
+        "type": "script",
+        "reason": "Microsoft Ajax CDN (moved from platform assets, 4.5.6)"
+      },
+      {
+        "host": "bootstrapcdn.com",
+        "type": "script",
+        "reason": "Bootstrap CDN"
+      },
+      {
+        "host": "cdn.datatables.net",
+        "type": "script",
+        "reason": "DataTables"
+      },
+      {
+        "host": "cdn.materialdesignicons.com",
+        "type": "script",
+        "reason": "Material Design Icons"
+      },
+      {
+        "host": "cdn.plot.ly",
+        "type": "script",
+        "reason": "Plotly"
+      },
+      {
+        "host": "cdn.tailwindcss.com",
+        "type": "script",
+        "reason": "Tailwind CSS play CDN"
+      },
+      {
+        "host": "cdnjs.cloudflare.com",
+        "type": "script",
+        "reason": "cdnjs (curated: every library reviewed before publishing)"
+      },
+      {
+        "host": "code.jquery.com",
+        "type": "script",
+        "reason": "jQuery CDN"
+      },
+      {
+        "host": "d3js.org",
+        "type": "script",
+        "reason": "D3.js"
+      },
+      {
+        "host": "fontawesome.com",
+        "type": "script",
+        "reason": "Font Awesome"
+      },
+      {
+        "host": "fonts.googleapis.com",
+        "type": "both",
+        "reason": "Google Fonts"
+      },
+      {
+        "host": "threejs.org",
+        "type": "script",
+        "reason": "three.js"
+      },
+      {
+        "host": "use.typekit.net",
+        "type": "script",
+        "reason": "Adobe Fonts"
+      }
+    ],
+    "Platform vendor assets": [
+      {
+        "host": "awsstatic.com",
+        "type": "script",
+        "reason": "Amazon Web Services static assets"
+      },
+      {
+        "host": "cdn-apple.com",
+        "type": "script",
+        "reason": "Apple static assets"
+      },
+      {
+        "host": "dropboxstatic.com",
+        "type": "script",
+        "reason": "Dropbox static assets (never user files — dropboxusercontent.com is not listed)"
+      },
+      {
+        "host": "gfx.ms",
+        "type": "script",
+        "reason": "Microsoft sign-in / Office static assets"
+      },
+      {
+        "host": "githubassets.com",
+        "type": "script",
+        "reason": "GitHub static assets (never user files)"
+      },
+      {
+        "host": "gstatic.com",
+        "type": "both",
+        "reason": "Google static assets (reCAPTCHA, fonts, sign-in)"
+      },
+      {
+        "host": "office.net",
+        "type": "script",
+        "reason": "Microsoft Office CDN"
+      }
+    ]
+  },
+  "removed": {
+    "discord.com": "Chat / community platform, not a meeting app; its attachment hosts deliver malware unchecked (real report 2026-11-04)",
+    "discordapp.com": "Discord attachment CDN (cdn.discordapp.com) — user-uploaded files; on the download risk list",
+    "discordapp.net": "Discord media CDN (media.discordapp.net) — user-uploaded files; on the download risk list",
+    "itch.io": "Self-service marketplace: anyone uploads games (executables) — breaks the no-self-publish rule",
+    "openai.com": "AI assistant, not sign-in/CAPTCHA/video/library; the AI category was removed in 4.3.6",
+    "allianzdirect.com": "Insurer, not a payment provider",
+    "profitwell.com": "Subscription analytics (Paddle), not payment",
+    "fpjscdn.net": "FingerprintJS device fingerprinting — not trusted in a privacy firewall (user decision 2026-11-04)",
+    "steamcommunity.com": "User-generated community pages, most-phished gaming domain (user decision 2026-11-04)",
+    "slack.com": "Chat platform with user file uploads (files.slack.com) — the same hole as Discord",
+    "bluejeans.com": "Service shut down (BlueJeans, 2024)",
+    "skype.com": "Service shut down (Skype, May 2025)",
+    "chime.aws": "Service shut down (Amazon Chime, February 2026)",
+    "epicgames.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "battle.net": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "blizzard.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "xbox.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "xboxlive.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "playstation.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "playstation.net": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "nintendo.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "ea.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "ubisoft.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "riotgames.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "rockstargames.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "gog.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "minecraft.net": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "mojang.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "square-enix.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "capcom.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "konami.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "sega.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "bandainamcoent.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "nexon.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "ncsoft.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "netmarble.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "krafton.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "pubg.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "pearlabyss.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "smilegate.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "hoyoverse.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "mihoyo.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "garena.com": "Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "roblox.com": "User-generated games and a common malware / scam lure — Whole publisher / store site, not an embeddable widget — the Gaming category holds official store widgets only (4.5.6)",
+    "accounts.youtube.com": "Already covered by youtube.com (Video or audio player)",
+    "pingidentity.com": "Ping Identity's company site; its sign-in runs on pingone.com (added instead)",
+    "gov.br": "Covers thousands of Brazilian government sites; tax/ID lookups run on the merchant's server, not in the browser",
+    "sii.cl": "Tax authority; RUT lookups run on the merchant's server, not in the browser",
+    "afip.gob.ar": "Tax authority; CUIT lookups run on the merchant's server, not in the browser",
+    "sat.gob.mx": "Tax authority; RFC lookups run on the merchant's server, not in the browser",
+    "whatsapp.com": "Consumer messaging app, no embed; click-to-chat buttons are plain links that need no whitelist",
+    "whatsapp.net": "WhatsApp media host — user-uploaded files",
+    "telegram.org": "On DownloadSentinel's malware-delivery list (check-whitelist.mjs refuses it); click-to-chat is a plain link",
+    "signal.org": "Consumer messaging app, no embed; click-to-chat buttons are plain links",
+    "viber.com": "Consumer messaging app, no embed; click-to-chat buttons are plain links"
+  }
+}
