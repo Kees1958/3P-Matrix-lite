@@ -1,0 +1,34 @@
+{
+  "extension": {
+    "hash": "bba86e329bdd0f962543ada2fd33244c282d8891864741caa51a20cb97dc8001",
+    "version": "5.0.8",
+    "files": 169,
+    "shippedPermissions": {
+      "permissions": [
+        "alarms",
+        "declarativeNetRequest",
+        "downloads",
+        "scripting",
+        "storage",
+        "tabs",
+        "webNavigation",
+        "webRequest"
+      ],
+      "host_permissions": [
+        "<all_urls>"
+      ],
+      "optional_permissions": [],
+      "optional_host_permissions": []
+    }
+  },
+  "tools": {
+    "hash": "db305dda4a2f80751f1192bf9589ca1ea2800f3493b73a814342d70f392212ea",
+    "version": "5.0.8",
+    "files": 58
+  },
+  "docs": {
+    "hash": "b2d77c83c01a7426fadda6515d08ceab001eb469501994324192963a69cfb2a9",
+    "version": "5.0.8",
+    "files": 12
+  }
+}

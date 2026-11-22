@@ -1,0 +1,20 @@
+{
+  "name": "3p-matrix-tools",
+  "version": "5.0.8",
+  "private": true,
+  "type": "module",
+  "description": "Build, verification and release tools for 3P Matrix — content firewall (never shipped).",
+  "scripts": {
+    "check": "node complete-check.mjs --extension ../3P-Matrix --docs ../3P-Matrix-docs",
+    "build:spam-tlds": "node build-spam-tlds.mjs",
+    "update:top-sites": "node update-top-sites.mjs"
+  },
+  "devDependencies": {
+    "acorn": "^8.12.1",
+    "acorn-walk": "^8.3.4",
+    "eslint": "8.57.0",
+    "eslint-scope": "7.2.2",
+    "espree": "^9.6.1",
+    "playwright": "1.47.2"
+  }
+}

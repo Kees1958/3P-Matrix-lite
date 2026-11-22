@@ -1,0 +1,83 @@
+/* ── ui/download-warning.css — warnRiskyDownloads warning page (DownloadSentinel layout, 3P Matrix theme) ──
+   1. Tokens (risk colours = DownloadSentinel's, so the page reads the same as in DS)
+   2. Page + banner
+   3. Card, boxes, lists
+   4. Risk classes + score bar
+   5. Actions
+   6. Narrow screens
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* 1. Tokens ──────────────────────────────────────────────────────────────── */
+:root {
+  --dw-page:         rgb(179, 38, 30);   /* replaced at runtime by the Options colour (state.downloads.warningColor) */
+  --risk-safe:       #34D399;
+  --risk-questionable: #60A5FA;
+  --risk-suspicious: #FBBF24;
+  --risk-malicious:  #EF4444;
+  --risk-unknown:    var(--bright);
+  --track:           #0B0F17;
+  --vt-accent:       #F3BA22;            /* link in the VirusTotal-key hint (DownloadSentinel's yellow) */
+}
+
+/* 2. Page + banner ───────────────────────────────────────────────────────── */
+body { min-height: 100vh; display: flex; flex-direction: column; background: var(--dw-page); color: var(--muted); }
+.dw-banner { height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: var(--bg); border-bottom: 1px solid var(--border); color: var(--bright); font-size: 13px; font-weight: 600; }
+.dw-banner img { border-radius: 4px; }
+.dw-banner-sub { color: var(--dim); font-weight: 400; }
+
+/* 3. Card, boxes, lists ──────────────────────────────────────────────────── */
+.dw-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.dw-card { width: 100%; max-width: 600px; background: var(--bg); border: 1px solid var(--border-2); border-radius: 10px; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35); }
+h1 { margin: 0; font-size: 20px; line-height: 1.25; color: var(--risk-questionable); transition: color 0.3s ease; }
+.dw-subtitle { margin: 0; line-height: 1.5; font-size: 13px; }
+.dw-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; }
+.dw-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow); }
+.dw-value { color: var(--block); word-break: break-all; font-size: 13px; }
+.dw-prominent { font-family: var(--font); font-size: 14px; font-weight: 700; word-break: normal; }
+.dw-list { margin: 0; padding-left: 18px; color: var(--bright); font-family: var(--mono); font-size: 12px; line-height: 1.5; }
+.dw-list .dw-empty { color: var(--risk-safe); }
+.dw-list .dw-explained { color: var(--dim); }        /* 4.4.0: route quirk explained by a delivery pattern (not counted) */
+.dw-list .dw-credit { color: var(--risk-safe); }     /* 4.4.0: "established, well-known site" credit */
+.dw-unknown { color: var(--dim); }
+.dw-nokey { display: flex; flex-direction: column; gap: 2px; color: var(--muted); }   /* 4.3.4: no VirusTotal key (DS item 3) */
+.dw-nokey a { color: var(--vt-accent); }
+.dw-classification { font-family: var(--font); word-break: normal; }
+.dw-score-row { font-size: 12px; color: var(--dim); }
+.dw-score-value { font-family: var(--mono); font-weight: 700; }
+.dw-ec-label { color: var(--dim); margin-right: 4px; }
+.dw-ec-num { font-weight: 700; margin-right: 12px; }
+.dw-ec-suffix { color: var(--dim); }
+.dw-ec-harmless { color: var(--risk-safe); }
+.dw-ec-unknown { color: var(--muted); }
+.dw-ec-suspicious { color: var(--risk-suspicious); }
+.dw-ec-malicious { color: var(--risk-malicious); }
+
+/* 4. Risk classes + score bar ────────────────────────────────────────────── */
+.risk-safe { color: var(--risk-safe); }
+.risk-questionable { color: var(--risk-questionable); }
+.risk-suspicious { color: var(--risk-suspicious); }
+.risk-malicious { color: var(--risk-malicious); }
+.risk-unknown { color: var(--risk-unknown); }
+.dw-bar-row { display: flex; align-items: center; gap: 12px; }
+.dw-bar-value { min-width: 48px; font-weight: 700; }
+.dw-bar-value.positive { color: var(--risk-safe); }
+.dw-bar-value.negative { color: var(--risk-malicious); }
+.dw-bar-track { flex: 1; height: 14px; background: var(--track); border-radius: var(--radius); overflow: hidden; }
+.dw-bar-fill { height: 100%; width: 0; border-radius: var(--radius); transition: width 0.3s ease; }
+.dw-bar-fill.positive { background: var(--risk-safe); }
+.dw-bar-fill.negative { background: var(--risk-malicious); }
+
+/* 5. Actions ─────────────────────────────────────────────────────────────── */
+.dw-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.btn { border-radius: var(--radius); font-size: 13px; font-weight: 700; padding: 0 16px; height: 36px; cursor: pointer; }
+.btn:disabled { opacity: 0.5; cursor: wait; }
+.dw-disclaimer { margin: 0; font-size: 12px; line-height: 1.5; color: var(--bright); }
+
+/* 6. Narrow screens ──────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .dw-content { padding: 16px; }
+  .dw-card { padding: 20px; }
+  h1 { font-size: 22px; }
+  .dw-actions { flex-direction: column; }
+  .btn { width: 100%; }
+}

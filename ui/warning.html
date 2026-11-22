@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3P Matrix — warning</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="warning.css">
+</head>
+<body>
+<div class="backdrop">
+  <section id="dialog" class="dialog" role="alertdialog" aria-labelledby="warnTitle" aria-describedby="warnIntro">
+    <div class="dlg-head">
+      <div class="dlg-brand">
+        <img id="warnIcon" src="../icons/icon_3_32.png" alt="" width="32" height="32">
+        <span class="mono">3P Matrix — content firewall</span>
+      </div>
+      <span id="warnScore" class="mono dlg-score">checking…</span>
+    </div>
+    <h1 id="warnTitle">This site needs your attention</h1>
+    <p id="warnIntro" class="dlg-intro">The address shows signs that are common on scam and phishing sites. Check the address carefully before you log in or pay.</p>
+    <div class="dlg-site">
+      <span id="warnHost" class="mono dlg-host"></span>
+      <ul id="warnSignals" class="dlg-signals"></ul>
+      <p id="warnChecking" class="dlg-checking">Checking domain age and threat-intel DNS…</p>
+    </div>
+    <div class="dlg-actions">
+      <button id="btnBack" class="btn btn-safe" type="button">Go back</button>
+      <button id="btnContinue" class="btn btn-careful" type="button">Continue once</button>
+      <button id="btnTrust" class="btn btn-risky" type="button">Trust this site</button>
+    </div>
+    <p id="warnStatus" class="status-line" role="status" hidden></p>
+    <p id="warnNote" class="dlg-note">“Trust this site” adds it to your allow list and locks it at level <span data-derived="level-allow-all"></span> — no warnings, no protections. “Continue once” opens it for this visit only. Change the online checks in <a id="optionsLink" href="#">Options</a>.</p>
+  </section>
+</div>
+<script type="module" src="focus-ring.js"></script>
+<script src="warning.js" type="module"></script>
+</body>
+</html>

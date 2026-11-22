@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>3P Matrix</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<header class="hdr">
+  <div class="brand">
+    <img id="levelIcon" src="../icons/icon_1_32.png" alt="" width="22" height="22">
+    <span class="mono brand-name">3P<span class="accent-text"> Matrix</span></span>
+    <span class="tagline">content firewall</span>
+  </div>
+  <label class="startup">Startup level
+    <select id="startupSelect" aria-label="Startup level">
+      <!-- options built by popup.js from LEVEL_MIN … LEVEL_MAX -->
+    </select>
+  </label>
+</header>
+
+<div class="site-bar">
+  <div class="site-text">
+    <span id="siteHost" class="mono site-host">—</span>
+    <span id="siteZone" class="site-zone"></span>
+  </div>
+  <button id="lockBtn" class="lock-btn" type="button" aria-label="Lock level for this site"></button>
+</div>
+
+<section class="slider-zone" aria-label="Protection level">
+  <div class="level-label">
+    <div id="levelNum" class="mono level-num accent-text"></div>
+    <div class="level-name-wrap">
+      <div id="levelName" class="level-name"></div>
+      <div id="lockHint" class="lock-hint" hidden>Locked for this site — click the lock to change</div>
+    </div>
+  </div>
+  <div class="ticks" role="group" aria-label="Protection level">
+    <div class="track"></div>
+    <div id="trackFill" class="track-fill"></div>
+    <div id="tickRow" class="tick-row"></div>
+  </div>
+</section>
+
+<section class="policy">
+  <div class="policy-head">
+    <span class="section-title">Active policy</span>
+    <div class="policy-actions">
+      <button id="matrixBtn" class="action-btn" type="button" title="See which third parties this page connects to">Show Matrix</button>
+      <button id="protectionsBtn" class="action-btn" type="button" title="Browsing/download protections, online checks, allow list, backup">Protections</button>
+    </div>
+  </div>
+  <div id="bullets" class="bullets"></div>
+</section>
+
+<section id="safeZone" class="safer-regions" hidden>
+  <button id="safeToggle" class="safe-toggle mono" type="button" aria-expanded="false">
+    <span id="safeTitle">Safer regions</span><span id="safeArrow" aria-hidden="true">▼</span>
+  </button>
+  <div id="safeBody" class="safe-body" hidden>
+    <div class="add-row">
+      <label class="add-label"><span class="sr-only">Add a TLD</span>
+        <input id="tldInput" class="mono tld-input" type="text" placeholder="e.g. fr" maxlength="63" spellcheck="false">
+      </label>
+      <button id="tldAdd" class="add-btn" type="button">Add</button>
+      <button id="tldDefault" class="default-btn" type="button">Default</button>
+    </div>
+    <div id="tldTags" class="tags"></div>
+    <p class="safe-intro">Sites on these TLDs are trusted: no safer-region restrictions, and at level <span data-derived="safer-regions-levels"></span> their third-party scripts and frames are allowed.</p>
+    <p class="safe-intro">Default: common TLDs plus the country codes of your continent that speak your browser’s languages.</p>
+  </div>
+</section>
+
+<p id="popupStatus" class="status-line popup-status" role="status" hidden></p>
+
+<footer class="foot">
+  <span id="blockedText"></span>
+</footer>
+
+<script src="popup.js" type="module"></script>
+</body>
+</html>

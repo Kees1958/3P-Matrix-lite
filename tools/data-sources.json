@@ -1,0 +1,147 @@
+{
+  "_about": "Register of the third-party data lists shipped in the extension: where each comes from, which tool rebuilds it, and the extension version (major.minor) it was last rebuilt for. updateOn \"minor\" = rebuild once per minor release (4.2 → 4.3), never required for a patch (4.3.1 → 4.3.2). Enforced by check-list-freshness.mjs (complete-check step list-freshness). Updated by each list's tool — do not edit by hand except to add a list. 4.5.4: EVERY shipped list file (data/spam-tlds.js and every lib/downloadsentinel/util/*.default.js) must be registered here and rebuilt by a tool in this package — check-list-freshness.mjs fails on an unregistered list. Lists without updateOn are curated (rebuilt when their source is edited). sameSnapshotAs: two lists built from one raw snapshot must record the same sourceRelease.",
+  "lists": {
+    "top-sites": {
+      "what": "Chrome UX Report origins ranked ≤ 100,000 → registered domains, + brand websites + GovSuffixes (gen-brands-data.mjs) → Bloom filter (look-alike check; DownloadSentinel 3.2.0 method since 4.3.0)",
+      "file": "lib/downloadsentinel/util/TopSitesFilter.default.js",
+      "tool": "update-top-sites.mjs",
+      "updateOn": "minor",
+      "source": "https://raw.githubusercontent.com/zakird/crux-top-lists/main/data/global/current.csv.gz",
+      "licence": "CC BY 4.0 — Chrome UX Report by Google",
+      "sourceRelease": "202609",
+      "entries": 80140,
+      "updatedForVersion": "5.0",
+      "updatedAt": "2026-11-06"
+    },
+    "platform-suffixes": {
+      "what": "Public Suffix List PRIVATE section — platforms where anyone gets a subdomain (no domain age for those sites)",
+      "file": "lib/downloadsentinel/util/PlatformSuffixes.default.js",
+      "tool": "update-domain-age-lists.mjs",
+      "updateOn": "minor",
+      "source": "https://publicsuffix.org/list/public_suffix_list.dat",
+      "licence": "MPL 2.0 — Public Suffix List (Mozilla)",
+      "sourceRelease": "snapshot sha256:762b6cbdd2da",
+      "entries": 3458,
+      "updatedForVersion": "5.0",
+      "updatedAt": "2026-11-06",
+      "sameSnapshotAs": "public-suffix-list"
+    },
+    "rdap-cctlds": {
+      "what": "Two-letter ccTLDs with an RDAP service (IANA RDAP bootstrap) — others have no domain age",
+      "file": "lib/downloadsentinel/util/RdapCctlds.default.js",
+      "tool": "update-domain-age-lists.mjs",
+      "updateOn": "minor",
+      "source": "https://data.iana.org/rdap/dns.json",
+      "licence": "IANA public registry data",
+      "sourceRelease": "2026-10-22T23:00:04Z",
+      "entries": 73,
+      "updatedForVersion": "5.0",
+      "updatedAt": "2026-11-06"
+    },
+    "abused-tlds": {
+      "what": "HaGeZi 'The World's Most Abused TLDs' — 3P scripts/frames blocked from level 2 up; first-party visit = heuristics signal only (core/site-scorer.js SPAM_TLDS check)",
+      "file": "data/spam-tlds.js",
+      "tool": "build-spam-tlds.mjs",
+      "updateOn": "minor",
+      "source": "https://github.com/hagezi/dns-blocklists (adblock/spam-tlds-ublock.txt)",
+      "licence": "GPLv3 — HaGeZi DNS blocklists",
+      "sourceRelease": "2026.1105.1706.37",
+      "entries": 445,
+      "updatedForVersion": "5.0",
+      "updatedAt": "2026-11-06",
+      "_note": "Added to this register in the 4.5.1 audit (was shipped but unregistered since first introduced — C39a gap). Rebuilt with build-spam-tlds.mjs (from the already-cached spam-tlds-ublock.txt — same 445 TLDs / 1039 exceptions, source release unchanged) to confirm the register and the shipped file actually match, not just to bump the version stamp."
+    },
+    "host-list": {
+      "what": "Merged, deduplicated host-risk table: HaGeZi DynDNS + HaGeZi Badware Hoster + Kees1958 'Suspicious websites' (risk score only, never a block — feeds core/site-scorer.js's site-visit check AND core/download-guard.js's download check via BrowserProtection.js/ScoringEngineV2.js). Kees1958's entries here are a SEPARATE snapshot from data/suspicious-hosting.js's own Kees1958 ingestion (that one is a hard block, protection 6) — see each file's header; this register entry does not cover data/suspicious-hosting.js, which carries no update tool of its own in this project's tools artifact (see README/THIRD_PARTY_LICENSES for that gap).",
+      "file": "lib/downloadsentinel/util/HostList.default.js",
+      "tool": "rebuild-host-list.mjs",
+      "updateOn": "minor",
+      "source": "https://github.com/hagezi/dns-blocklists (wildcard/dyndns-onlydomains.txt, wildcard/hoster-onlydomains.txt); https://github.com/Kees1958/W3C_annual_most_used_survey_blocklist (Suspicious websites.txt)",
+      "licence": "GPLv3 — HaGeZi DNS blocklists; Kees1958 repository has no LICENSE file on file (confirmed 2026-10-21)",
+      "sourceRelease": "merge generated 2026-11-06",
+      "entries": 2636,
+      "updatedForVersion": "5.0",
+      "updatedAt": "2026-11-06",
+      "_note": "Added to this register in the 4.5.1 audit (C39a gap — this list was shipped, consumed by two separate check paths, but had no register entry, and the only script that rebuilt it was DownloadSentinel's own update-lists.mjs, which hardcodes an EXT_ROOT = REPO_ROOT/EXTENSION sibling-folder layout matching neither the DS tools artifact nor this project's actual lib/downloadsentinel/{util,...} tree). Closed in the same audit by rebuild-host-list.mjs — a native 3P-Matrix-tools script that ports the identical merge logic (same sources, same scores, same overlap exclusion against this extension's own SuspiciousDomains.js/RiskyHostingSites.js) against this project's own file paths, per the user's 'don't touch DS' instruction. Rebuilt result: still 2642 domains (was 2642) — same data, now actually produced by a tool this project owns."
+    },
+    "public-suffix-list": {
+      "what": "Public Suffix List — registrable-domain boundaries (site, download and look-alike checks); same snapshot as platform-suffixes",
+      "file": "lib/downloadsentinel/util/PublicSuffixList.default.js",
+      "tool": "update-psl.mjs",
+      "updateOn": "minor",
+      "source": "https://publicsuffix.org/list/public_suffix_list.dat",
+      "licence": "MPL-2.0",
+      "sameSnapshotAs": "platform-suffixes",
+      "sourceRelease": "snapshot sha256:762b6cbdd2da",
+      "entries": 10406,
+      "updatedForVersion": "5.0",
+      "updatedAt": "2026-11-06"
+    },
+    "brands": {
+      "what": "Brand keyword → real websites (look-alike + brand-impersonation checks)",
+      "file": "lib/downloadsentinel/util/Brands.default.js",
+      "tool": "gen-brands-data.mjs",
+      "source": "curated (tables in tools/gen-brands-data.mjs)",
+      "licence": "n/a — curated by this project",
+      "sourceRelease": "curated",
+      "entries": 539,
+      "updatedForVersion": "4.5",
+      "updatedAt": "2026-11-03"
+    },
+    "gov-suffixes": {
+      "what": "Shared government suffixes — real sites, never a brand; unioned into top-sites",
+      "file": "lib/downloadsentinel/util/GovSuffixes.default.js",
+      "tool": "gen-brands-data.mjs",
+      "source": "curated (tables in tools/gen-brands-data.mjs)",
+      "licence": "n/a — curated by this project",
+      "sourceRelease": "curated",
+      "entries": 6,
+      "updatedForVersion": "4.5",
+      "updatedAt": "2026-11-03"
+    },
+    "suspicious-domains": {
+      "what": "Risk scores for domains frequently used in malware delivery",
+      "file": "lib/downloadsentinel/util/SuspiciousDomains.default.js",
+      "tool": "build-curated-lists.mjs",
+      "source": "curated (tools/lists-src/SuspiciousDomains.json)",
+      "licence": "n/a — curated by this project",
+      "sourceRelease": "curated",
+      "entries": 48,
+      "updatedForVersion": "4.5",
+      "updatedAt": "2026-11-03"
+    },
+    "suspicious-tlds": {
+      "what": "Risk scores for abused TLDs",
+      "file": "lib/downloadsentinel/util/SuspiciousTlds.default.js",
+      "tool": "build-curated-lists.mjs",
+      "source": "curated (tools/lists-src/SuspiciousTlds.json)",
+      "licence": "n/a — curated by this project",
+      "sourceRelease": "curated",
+      "entries": 27,
+      "updatedForVersion": "4.5",
+      "updatedAt": "2026-11-03"
+    },
+    "risky-hosting-sites": {
+      "what": "User-upload / file-sharing platforms with a risk score",
+      "file": "lib/downloadsentinel/util/RiskyHostingSites.default.js",
+      "tool": "build-curated-lists.mjs",
+      "source": "curated (tools/lists-src/RiskyHostingSites.json)",
+      "licence": "n/a — curated by this project",
+      "sourceRelease": "curated",
+      "entries": 59,
+      "updatedForVersion": "4.5",
+      "updatedAt": "2026-11-03"
+    },
+    "url-shorteners": {
+      "what": "URL-shortener domains (informational signal)",
+      "file": "lib/downloadsentinel/util/UrlShorteners.default.js",
+      "tool": "build-curated-lists.mjs",
+      "source": "curated (tools/lists-src/UrlShorteners.json)",
+      "licence": "n/a — curated by this project",
+      "sourceRelease": "curated",
+      "entries": 20,
+      "updatedForVersion": "4.5",
+      "updatedAt": "2026-11-03"
+    }
+  }
+}
