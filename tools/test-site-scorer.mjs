@@ -19,8 +19,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { join, resolve, dirname } from "node:path";
+import { pathToFileURL, fileURLToPath } from "node:url";
+import { defaultRoots } from "./repo-layout.mjs";
+const HERE_DIR = dirname(fileURLToPath(import.meta.url));
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const EXIT = Object.freeze({ OK: 0, FAILED: 1, DID_NOT_RUN: 2 });
@@ -78,7 +80,7 @@ const LEVEL_CASES = Object.freeze([
 const DIALOG_MARK = "D";
 
 function arg(name) { const i = process.argv.indexOf(`--${name}`); return i === -1 ? null : process.argv[i + 1]; }
-const ext = resolve(arg("extension") || join("..", "3P-Matrix"));
+const ext = resolve(arg("extension") || defaultRoots(HERE_DIR).extension);   // 5.0.9: repo-layout.mjs
 if (!existsSync(join(ext, "manifest.json"))) {
   console.error(`test-site-scorer: DID NOT RUN — not an extension folder: ${ext}`);
   process.exit(EXIT.DID_NOT_RUN);

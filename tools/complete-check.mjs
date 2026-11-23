@@ -6,8 +6,9 @@
 // "Did not run" is never a pass. A step can be skipped on purpose with --skip <id>, but the suite then
 // ends INCOMPLETE (exit 3), so a skipped check can never be mistaken for a passed one.
 //
-// Usage:  node complete-check.mjs --extension ../3P-Matrix --docs ../3P-Matrix-docs [--skip e2e-flows] [--chromium <path>]
-//         (--docs: 5.0.7, for the steps that read the docs folder; without it those steps DID NOT RUN)
+// Usage:  node complete-check.mjs [--extension <folder>] [--docs <folder>] [--skip e2e-flows] [--chromium <path>]
+//         (5.0.9: without --extension / --docs, repo-layout.mjs defaultRoots() decides — the repo root in the GitHub
+//          layout, ../3P-Matrix and ../3P-Matrix-docs when the three release zips are unpacked side by side)
 //         (npm run check  — from this folder, after npm install)
 // Exit:   0 = every step passed · 1 = a step failed · 2 = a step did not run · 3 = incomplete (skipped)
 //
@@ -16,9 +17,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { spawnSync } from "node:child_process";
-import { readdirSync, existsSync, statSync, readFileSync } from "node:fs";
+import { readdirSync, existsSync, readFileSync } from "node:fs";
 import { join, resolve, dirname, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { defaultRoots, listExtensionFiles } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -31,6 +33,7 @@ const ESLINT_CONFIG = join(HERE, "eslint.config.json");
 // Vendored DownloadSentinel code. 4.3.0: was "lib/**", which ESLint resolves against the tools folder
 // (the cwd), so it never matched ../3P-Matrix/lib — it only passed because the old subset had no hits.
 const SKIP_LIB_PATTERN = "**/lib/downloadsentinel/**";
+const VENDORED_DIR = "lib";                                     // first-party walks skip the vendored library
 const SCRIPT_DIRS = Object.freeze(["security"]);                    // classic scripts, not modules
 const SYNTAX_ERROR_LINES = 3;                                       // lines of node's error kept per file
 
@@ -108,12 +111,9 @@ function exec(cmd, args) {
   return { status: r.error ? EXIT.DID_NOT_RUN : r.status, output: `${r.stdout || ""}${r.stderr || ""}${r.error ? r.error.message : ""}` };
 }
 
+// 5.0.9: the extension's own files only (repo layout: tools/ and the documents are left out — repo-layout.mjs).
 function listFirstPartyJs(dir) {
-  return readdirSync(dir).flatMap((n) => {
-    const p = join(dir, n);
-    if (statSync(p).isDirectory()) return n === "lib" ? [] : listFirstPartyJs(p);
-    return p.endsWith(".js") ? [p] : [];
-  });
+  return listExtensionFiles(dir, { skipDirs: [VENDORED_DIR], exts: [".js"] });
 }
 
 // Syntax only — nothing is executed: modules are fed to `node --check --input-type=module` on stdin,
@@ -144,6 +144,9 @@ function unwiredScripts() {
 
 function main() {
   const opts = parseArgs(process.argv.slice(2));
+  const fallback = defaultRoots(HERE);
+  opts.extension = opts.extension || fallback.extension;
+  opts.docs = opts.docs || fallback.docs;
   if (!opts.extension || !existsSync(join(opts.extension, "manifest.json"))) {
     console.error("complete-check: DID NOT RUN — missing or invalid --extension <folder>");
     process.exit(EXIT.DID_NOT_RUN);

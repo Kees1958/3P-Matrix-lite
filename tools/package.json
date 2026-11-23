@@ -1,11 +1,11 @@
 {
   "name": "3p-matrix-tools",
-  "version": "5.0.8",
+  "version": "5.0.9",
   "private": true,
   "type": "module",
   "description": "Build, verification and release tools for 3P Matrix — content firewall (never shipped).",
   "scripts": {
-    "check": "node complete-check.mjs --extension ../3P-Matrix --docs ../3P-Matrix-docs",
+    "check": "node complete-check.mjs",
     "build:spam-tlds": "node build-spam-tlds.mjs",
     "update:top-sites": "node update-top-sites.mjs"
   },

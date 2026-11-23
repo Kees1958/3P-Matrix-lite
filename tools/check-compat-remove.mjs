@@ -18,6 +18,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, dirname, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { NON_EXTENSION_DIR_NAMES } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -25,7 +26,7 @@ const EXIT = Object.freeze({ OK: 0, FOUND: 1, DID_NOT_RUN: 2 });
 const TAG_RE = /COMPAT-REMOVE\s*≥\s*(\d+)\.(\d+)/g;
 const VERSION_RE = /^(\d+)\.(\d+)/;
 const SCANNED_EXT = Object.freeze([".js", ".mjs"]);
-const SKIP_DIRS = new Set(["node_modules", ".git", "downloadsentinel"]);
+const SKIP_DIRS = new Set([...NON_EXTENSION_DIR_NAMES, "downloadsentinel"]);   // 5.0.9: in the repo layout the extension folder also holds tools/ and the documents — skipped via repo-layout.mjs.
 
 function didNotRun(msg) { console.error(`check-compat-remove: DID NOT RUN — ${msg}`); process.exit(EXIT.DID_NOT_RUN); }
 function arg(name) { const i = process.argv.indexOf(`--${name}`); return i === -1 ? null : process.argv[i + 1]; }

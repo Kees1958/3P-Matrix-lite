@@ -12,6 +12,43 @@ analysis documents in this folder.
 
 ---
 
+## 5.0.9
+
+**Working from:** 3P Matrix 5.0.8 (GitHub, repo layout) together with DownloadSentinel 3.6.0.
+**Zips changed:** all three — extension (comments only, in `lib/downloadsentinel/util/*.js`), tools (repo
+layout), docs (this entry, CHANGELOG.md).
+
+**tools 5.0.9:** new `repo-layout.mjs`; defaults and tree walkers follow it; shared `check-mv3.mjs` re-synced with
+DownloadSentinel 3.6.0; `list-modules.mjs` header template says `tools/`.
+
+### The tools now run in the repo layout too (C21 — one declaration of where things are)
+- **What:** since the repo holds the unpacked source (5.0.8 "lay out like uBlock Dynamic"), `tools/` and the
+  documents sit inside the extension folder. Run from the repo, the suite defaulted to `../3P-Matrix` (not
+  there), and with `--extension .. --docs ..` three steps failed: protection-refs and shipped-terms scanned the
+  documents and tools as if they were shipped, and release-contents counted them as extension files.
+- **How:** `tools/repo-layout.mjs` declares both layouts — release (three sibling folders) and repo (the
+  extension is the repo root; top-level files other than `EXTENSION_ROOT_FILES` are documents; `README.md`,
+  `privacy.md` and the principles PDF are repo-only; `ARCHITECTURE.md` is the docs zip's `README.md`;
+  `tools/`, `node_modules/`, `.git/` are never extension code). `defaultRoots()` picks the layout; every default
+  folder (complete-check, package-release, the seven list builders, two tests) and every walker of the extension
+  (complete-check syntax, protection-refs, shipped-terms, magic-numbers, no-eval, compat-remove) uses it.
+  `package-release.mjs releaseTrees()` cuts the three file lists once; `package-release-state.mjs` hashes exactly
+  those. `npm run check` = `node complete-check.mjs` (the defaults decide).
+- **Proof:** from the repo, releaseTrees() reproduces the recorded 5.0.8 release: extension (169 files), docs (12)
+  and tools (58, from the 5.0.8 tools tree) give the same SHA-256 as `package-release-state.json`.
+  complete-check from the repo: 35 passed, 0 failed (e2e with the installed Chromium).
+- **check-mv3.mjs** (shared with DownloadSentinel, copied unchanged): default extension folder = the folder above
+  `tools/` (both repos), `tools` never scanned; the release layout passes `--ext` as before.
+
+### Library comments (extension zip, comments only)
+- The vendored DownloadSentinel modules said "EXTENSION/data/… paths below describe DownloadSentinel's own
+  repository layout" — DS 3.6.0 has no EXTENSION/ folder any more: now `data/…` (DS's own data/ folder, not
+  3P Matrix's), and the generated headers name `tools/…` instead of `3P-Matrix-tools/…`.
+
+**Consumers checked:** every `DEFAULT_EXTENSION` / `join("..", "3P-Matrix")` default and every directory walker in
+tools/ (grep on `readdirSync`), package.json scripts, the list-module header template, both projects' check-mv3.mjs
+(identical: `cmp`), DS references to 3P Matrix paths (none stale).
+
 ---
 
 ## 5.0.8

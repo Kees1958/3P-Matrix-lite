@@ -20,11 +20,12 @@ import { existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeListModule, recordList } from "./list-modules.mjs";
+import { defaultRoots } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXIT = Object.freeze({ OK: 0, DID_NOT_RUN: 2 });
-const DEFAULT_EXTENSION = join(HERE, "..", "3P-Matrix");
+const DEFAULT_EXTENSION = defaultRoots(HERE).extension;   // 5.0.9: repo root, or ../3P-Matrix in the release layout (repo-layout.mjs)
 const TOOL = "gen-brands-data.mjs";
 const CADENCE = "curated — re-run after editing its tables";
 const LIST = Object.freeze({ BRANDS: { id: "brands", name: "Brands" }, GOV: { id: "gov-suffixes", name: "GovSuffixes" } });

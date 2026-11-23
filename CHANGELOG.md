@@ -3,6 +3,10 @@
 (Started with 4.5.4: earlier docs packages carried no CHANGELOG.md. Technical detail for 4.5.4 is in
 PERF_4.5.3_chrome_engine_and_proposals.md section 6 and the principles doc, v13.)
 
+## 5.0.9
+- No change in how 3P Matrix works. Developer comments in the shared DownloadSentinel library now point to the right places (DownloadSentinel moved its repository to the same layout as 3P Matrix).
+- Tools: the check suite and the list tools now also run straight from the GitHub repository (`npm run check` in `tools/`), not only from the three release zips unpacked side by side. The shared Manifest V3 check is again the same file in both projects.
+
 ## 5.0.8
 - **Fixed: a scam page could trap you in fullscreen again.** 3P Matrix refuses to let a page force fullscreen after you left it — but a page could hide the "you left fullscreen" signal, so the block never kicked in. That signal can no longer be hidden.
 

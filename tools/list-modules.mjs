@@ -78,7 +78,7 @@ export function renderListModule({ name, tool, cadence, about, data, generatedAt
 
 /**
  * ${name}${MODULE_SUFFIX} — GENERATED FILE. Do not hand-edit; rebuild with
- * 3P-Matrix-tools/${tool} (${cadence} — data-sources.json).
+ * tools/${tool} (${cadence} — data-sources.json).
  *
 ${body}
  * Content: ${countEntries(name, data)} entries.

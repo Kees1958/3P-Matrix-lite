@@ -31,12 +31,13 @@ import { gunzipSync } from "node:zlib";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { LIB_UTIL, writeListModule, readListData, recordList, readRawSource } from "./list-modules.mjs";
+import { defaultRoots } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXIT = Object.freeze({ OK: 0, REFUSED: 1, DID_NOT_RUN: 2 });
 const LIST_ID = "top-sites";
-const DEFAULT_EXTENSION = join(HERE, "..", "3P-Matrix");
+const DEFAULT_EXTENSION = defaultRoots(HERE).extension;   // 5.0.9: repo root, or ../3P-Matrix in the release layout (repo-layout.mjs)
 const MODULE_NAME = "TopSitesFilter";
 const CRUX_SOURCE = Object.freeze({ url: "https://raw.githubusercontent.com/zakird/crux-top-lists/main/data/global/current.csv.gz",
                                     rawFile: "crux-top-sites.csv.gz", tag: "CrUX top sites", minBytes: 1000000,

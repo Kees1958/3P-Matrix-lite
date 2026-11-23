@@ -25,11 +25,12 @@ import { existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath, domainToASCII } from "node:url";
 import { FETCH_FLAG, PSL_SOURCE, writeListModule, recordList, readRawSource, snapshotId } from "./list-modules.mjs";
+import { defaultRoots } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXIT = Object.freeze({ OK: 0, REFUSED: 1, DID_NOT_RUN: 2 });
-const DEFAULT_EXTENSION = join(HERE, "..", "3P-Matrix");
+const DEFAULT_EXTENSION = defaultRoots(HERE).extension;   // 5.0.9: repo root, or ../3P-Matrix in the release layout (repo-layout.mjs)
 const LIST_ID = "public-suffix-list";
 const MODULE_NAME = "PublicSuffixList";
 const TOOL = "update-psl.mjs";

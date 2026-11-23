@@ -15,13 +15,19 @@
 // Consumers: tools/package-release-state.mjs (refuses to record a release whose trees fail this guard),
 // tools/complete-check.mjs (step release-contents).
 //
-// Usage:  node package-release.mjs --extension ../3P-Matrix --docs ../3P-Matrix-docs [--tools .]
+// Layouts (5.0.9, tools/repo-layout.mjs): the release layout (three sibling folders) and the repo layout (the
+// extension is the repo root, the docs are its other top-level files, tools/ is this package) give the SAME three
+// file lists — releaseTrees() is the one place that cuts them; package-release-state.mjs hashes exactly these.
+//
+// Usage:  node package-release.mjs [--extension <folder>] [--docs <folder>] [--tools .]
+//         (defaults: repo-layout.mjs defaultRoots() — the repo root, or ../3P-Matrix + ../3P-Matrix-docs)
 // Exit:   0 = every tree as declared · 1 = problem found · 2 = check could not run (C38)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, resolve, dirname, sep, extname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { EXTENSION_TEXT_FILES, defaultRoots, isSameRoot, listExtensionFiles, listDocsFiles, docsZipName } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const EXIT = Object.freeze({ OK: 0, FOUND: 1, DID_NOT_RUN: 2 });
@@ -33,7 +39,6 @@ export const CHANGELOG_VERSION_RE = /^##\s+(\d+\.\d+\.\d+)\b/m;           // fir
 export const SKIP_NAMES = Object.freeze(new Set([".DS_Store", "Thumbs.db", ".git", "node_modules"]));   // never part of a release
 const TOOLS_PACKAGE_FILE = "package.json";
 const RUNTIME_EXTENSIONS = Object.freeze([".js", ".html", ".css", ".png", ".json"]);
-const EXTENSION_TEXT_FILES = Object.freeze(["LICENSE.txt", "THIRD_PARTY_LICENSES.md"]);   // the only non-code files that ship
 const DOCS_REQUIRED = Object.freeze([CHANGELOG_FILE, CHANGELOG_HISTORY_FILE, "README.md"]);
 const TOOLS_REQUIRED = Object.freeze([TOOLS_PACKAGE_FILE, "package-lock.json"]);
 function toolsHistoryLine(version) { return `**tools ${version}:**`; }
@@ -47,15 +52,32 @@ export function listTree(root, dir = root) {
   });
 }
 
+// The three release file lists, for either layout: entries { name, path } — name = the path inside the zip
+// ("/" separators), path = the file on disk. Release layout: each folder whole (a stray file then shows up — and
+// fails the guard below). Repo layout (extension and docs are one folder): the extension's files and the top-level
+// documents, as declared in repo-layout.mjs (incl. DOCS_ZIP_NAMES: ARCHITECTURE.md is the docs zip's README.md).
+export function releaseTrees({ extension, docs, tools }) {
+  const entry = (root, rename = (n) => n) => (p) => ({ name: rename(relative(root, p).split(sep).join("/")), path: p });
+  const whole = (root) => listTree(root).sort().map((rel) => ({ name: rel, path: join(root, rel) }));
+  const repo = isSameRoot(extension, docs);
+  const byName = (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  return {
+    extension: repo ? listExtensionFiles(extension).map(entry(extension)) : whole(extension),
+    docs:      repo ? listDocsFiles(docs, extension).map(entry(docs, docsZipName)).sort(byName) : whole(docs),
+    tools:     whole(tools)
+  };
+}
+
 // Returns the list of problems (empty = as declared). Pure apart from reading the three trees.
 export function guardRelease({ extension, docs, tools }) {
   const problems = [];
-  for (const f of listTree(extension)) {
+  const trees = releaseTrees({ extension, docs, tools });
+  for (const { name: f } of trees.extension) {
     if (EXTENSION_TEXT_FILES.includes(f)) continue;
     if (!RUNTIME_EXTENSIONS.includes(extname(f).toLowerCase())) problems.push(`extension: "${f}" is not runtime code and not a declared licence file — it belongs in the docs zip (or in EXTENSION_TEXT_FILES with a reason)`);
   }
   for (const f of EXTENSION_TEXT_FILES) if (!existsSync(join(extension, f))) problems.push(`extension: declared file "${f}" is missing`);
-  for (const f of DOCS_REQUIRED) if (!existsSync(join(docs, f))) problems.push(`docs: required file "${f}" is missing`);
+  for (const f of DOCS_REQUIRED) if (!trees.docs.some((e) => e.name === f)) problems.push(`docs: required file "${f}" is missing`);
   for (const f of TOOLS_REQUIRED) if (!existsSync(join(tools, f))) problems.push(`tools: required file "${f}" is missing`);
   if (problems.length) return problems;
 
@@ -74,7 +96,8 @@ function arg(name) { const i = process.argv.indexOf(`--${name}`); return i === -
 function didNotRun(msg) { console.error(`package-release: DID NOT RUN — ${msg}`); process.exit(EXIT.DID_NOT_RUN); }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const roots = { extension: arg("extension"), docs: arg("docs"), tools: arg("tools") || HERE };
+  const fallback = defaultRoots(HERE);
+  const roots = { extension: arg("extension") || fallback.extension, docs: arg("docs") || fallback.docs, tools: arg("tools") || HERE };
   if (!roots.extension || !existsSync(join(roots.extension, MANIFEST_FILE))) didNotRun("missing or invalid --extension <folder>");
   if (!roots.docs || !existsSync(roots.docs)) didNotRun("missing or invalid --docs <folder>");
   const problems = guardRelease({ extension: resolve(roots.extension), docs: resolve(roots.docs), tools: resolve(roots.tools) });

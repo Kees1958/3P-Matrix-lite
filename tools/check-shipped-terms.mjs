@@ -34,6 +34,7 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { listExtensionFiles } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const EXIT = Object.freeze({ OK: 0, FOUND: 1, DID_NOT_RUN: 2 });
@@ -152,7 +153,7 @@ async function main() {
   }
 
   // 3. uBD-only terms anywhere in the shipped extension
-  for (const path of listFiles(root)) {
+  for (const path of listExtensionFiles(root, { exts: SCAN_EXTENSIONS })) {   // 5.0.9: shipped files only (repo layout)
     const rel = relative(root, path);
     const text = readFileSync(path, "utf8");
     for (const f of FORBIDDEN) {

@@ -24,13 +24,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { filterList } from "./dnr-filter.mjs";   // 4.4.0: explicit DNR verdict per list line
 import { recordList } from "./list-modules.mjs";  // 4.6.0: records the rebuild in data-sources.json like every list tool (C44)
+import { defaultRoots } from "./repo-layout.mjs";
 
 // ── Configuration (all switches in one place) ───────────────────────────────
 const HERE           = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_INPUT  = join(HERE, "spam-tlds-ublock.txt");
 const REGISTER_ID    = "abused-tlds";                  // data-sources.json lists.<id>
 const TOOL_NAME      = "build-spam-tlds.mjs";
-const DEFAULT_EXTENSION = join(HERE, "..", "3P-Matrix");     // sibling folder in the release layout
+const DEFAULT_EXTENSION = defaultRoots(HERE).extension;   // 5.0.9: repo root, or ../3P-Matrix in the release layout (repo-layout.mjs)
 const OUTPUT_REL     = join("data", "spam-tlds.js");
 const EXIT           = Object.freeze({ OK: 0, FAILED: 1, DID_NOT_RUN: 2 });
 const LINE_RE        = /^\|\|([^\^]+)\^\$doc(?:,domain=(.+))?$/;   // ||tld^$doc[,domain=...]

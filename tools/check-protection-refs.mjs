@@ -16,8 +16,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative, dirname, sep } from "node:path";
+import { join, relative, dirname, sep, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { listExtensionFiles, listDocsFiles, docsZipName } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const EXIT = Object.freeze({ OK: 0, FOUND: 1, DID_NOT_RUN: 2 });
@@ -50,9 +51,10 @@ if (!docs || !existsSync(docs)) didNotRun("missing or invalid --docs <folder>");
 
 // Scanned roots, each with the label used in ALLOWLIST and in the report.
 const targets = [
-  ...listFiles(ext).map((f) => ({ f, label: `extension/${relative(ext, f).split(sep).join("/")}` })),
+  ...listExtensionFiles(ext, { skipDirs: SKIP_DIRS, exts: FILE_EXTENSIONS }).map((f) => ({ f, label: `extension/${relative(ext, f).split(sep).join("/")}` })),
   ...listFiles(HERE).map((f) => ({ f, label: `tools/${relative(HERE, f).split(sep).join("/")}` })),
-  ...DOCS_FILES.map((n) => join(docs, n)).filter((f) => existsSync(f)).map((f) => ({ f, label: `docs/${relative(docs, f)}` }))
+  // 5.0.9: the docs by their docs-zip name (repo layout: ARCHITECTURE.md is the docs README — repo-layout.mjs)
+  ...listDocsFiles(docs, ext).filter((f) => DOCS_FILES.includes(docsZipName(basename(f)))).map((f) => ({ f, label: `docs/${docsZipName(basename(f))}` }))
 ];
 if (!targets.length) didNotRun("no files to scan");
 

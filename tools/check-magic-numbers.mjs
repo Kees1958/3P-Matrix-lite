@@ -15,13 +15,14 @@
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
+import { NON_EXTENSION_DIR_NAMES } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const EXIT = Object.freeze({ OK: 0, FOUND: 1, DID_NOT_RUN: 2 });
 const ECMA_VERSION = 2022;
 const ALLOWED_VALUES = Object.freeze([0, 1, -1]);
 const CONSTANT_NAME_RE = /^[A-Z][A-Z0-9_]*$/;
-const SKIP_DIRS = Object.freeze(["lib", "node_modules"]);           // vendored code
+const SKIP_DIRS = Object.freeze(["lib", ...NON_EXTENSION_DIR_NAMES]);   // vendored code + never-extension folders (5.0.9 repo layout)           // vendored code
 const SCRIPT_DIRS = Object.freeze(["security"]);                    // classic scripts, not modules
 const DATA_FILES = Object.freeze([                                  // tables that are the source of truth
   "data/constants.js", "data/country-data.js", "data/spam-tlds.js", "data/suspicious-hosting.js",

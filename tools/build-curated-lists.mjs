@@ -7,7 +7,7 @@
 //   RiskyHostingSites   [{ host, score, exact }]                — user-upload / file-sharing platforms
 //   UrlShorteners       [host]                                  — informational signal only
 //
-// 4.5.4: native to this project (DownloadSentinel keeps the same lists in its EXTENSION/data/*.json;
+// 4.5.4: native to this project (DownloadSentinel keeps the same lists in its own data/*.json;
 // lists-src/ was seeded from the 4.5.3 shipped data, so the content is unchanged). To change a list: edit
 // its JSON in lists-src/, run this tool, then run rebuild-host-list.mjs (HostList skips hosts these two
 // score already: SuspiciousDomains, RiskyHostingSites).
@@ -22,11 +22,12 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { writeListModule, recordList } from "./list-modules.mjs";
+import { defaultRoots } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXIT = Object.freeze({ OK: 0, REFUSED: 1, DID_NOT_RUN: 2 });
-const DEFAULT_EXTENSION = join(HERE, "..", "3P-Matrix");
+const DEFAULT_EXTENSION = defaultRoots(HERE).extension;   // 5.0.9: repo root, or ../3P-Matrix in the release layout (repo-layout.mjs)
 const SOURCE_DIR = join(HERE, "lists-src");
 const TOOL = "build-curated-lists.mjs";
 const CADENCE = "curated — re-run after editing tools/lists-src";

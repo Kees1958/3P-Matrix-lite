@@ -35,11 +35,12 @@
 
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, relative } from "node:path";
+import { NON_EXTENSION_DIR_NAMES } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const EXIT = Object.freeze({ OK: 0, FOUND: 1, DID_NOT_RUN: 2 });
 const ECMA_VERSION = 2022;
-const SKIP_DIRS = Object.freeze(["lib", "node_modules"]);           // vendored code — see header
+const SKIP_DIRS = Object.freeze(["lib", ...NON_EXTENSION_DIR_NAMES]);   // vendored code + never-extension folders (5.0.9 repo layout)           // vendored code — see header
 const SCRIPT_DIRS = Object.freeze(["security"]);                    // classic scripts, not modules
 const SNIPPET_MAX = 110;
 const TIMER_FNS = Object.freeze(["setTimeout", "setInterval"]);     // string-first-arg = implicit eval

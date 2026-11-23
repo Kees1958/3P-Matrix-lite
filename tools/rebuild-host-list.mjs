@@ -12,6 +12,8 @@
 // Per the user's explicit "don't touch DS" instruction, that script is left exactly as it is — this is
 // a NEW, independent script, native to this project, that ports its merge logic (C21: same method,
 // not reinvented) against 3P-Matrix's own files and own import paths.
+// (5.0.9: DownloadSentinel 3.6.0 moved to the repo layout — its update-lists.mjs now builds DS's own data/ from the
+// repo root; it still does not know lib/downloadsentinel/, so this script stays the one for 3P Matrix's copy.)
 //
 // Method (ported from DownloadSentinel tools/update-lists.mjs, same scores/sources):
 //   1. Read the three raw lists (cached under tools/lists-raw/, or re-fetch with --fetch).
@@ -32,12 +34,13 @@ import { existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { LIB_UTIL, FETCH_FLAG, writeListModule, recordList, readRawSource, today } from "./list-modules.mjs";
+import { defaultRoots } from "./repo-layout.mjs";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const HERE = dirname(fileURLToPath(import.meta.url));
 const EXIT = Object.freeze({ OK: 0, REFUSED: 1, DID_NOT_RUN: 2 });
 const LIST_ID = "host-list";
-const DEFAULT_EXTENSION = join(HERE, "..", "3P-Matrix");
+const DEFAULT_EXTENSION = defaultRoots(HERE).extension;   // 5.0.9: repo root, or ../3P-Matrix in the release layout (repo-layout.mjs)
 const MODULE_NAME = "HostList";
 const MIN_RAW_BYTES = 500;                           // guard: refuse an empty/error-page raw file
 const MIN_PER_LIST = 50;                             // guard: refuse a truncated/format-changed download

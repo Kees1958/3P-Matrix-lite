@@ -22,11 +22,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
+import { readFileSync, writeFileSync, statSync, existsSync } from "node:fs";
+import { join, resolve } from "node:path";
 // 5.0.7: file names, the changelog heading pattern and the never-shipped names come from the release
 // declaration, and a tree that breaks it is never recorded (C21: one declaration, not two copies).
-import { MANIFEST_FILE, CHANGELOG_FILE, CHANGELOG_VERSION_RE, SKIP_NAMES, guardRelease } from "./package-release.mjs";
+import { MANIFEST_FILE, CHANGELOG_FILE, CHANGELOG_VERSION_RE, guardRelease, releaseTrees } from "./package-release.mjs";
+// 5.0.9: the file lists come from releaseTrees() — the same three lists in the repo and the release layout, so a
+// state recorded from either layout hashes exactly what the zips hold.
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
 const DEFAULT_OUT = "package-release-state.json";
@@ -58,28 +60,16 @@ function parseArgs(argv) {
   return args;
 }
 
-// Every file under root, as sorted relative paths with "/" separators.
-function listFiles(root, excludeAbs) {
-  const out = [];
-  const walk = (dir) => {
-    for (const name of readdirSync(dir)) {
-      if (SKIP_NAMES.has(name) || name === DEFAULT_OUT) continue;
-      const abs = join(dir, name);
-      if (abs === excludeAbs) continue;
-      const st = statSync(abs);
-      if (st.isDirectory()) walk(abs);
-      else if (st.isFile()) out.push(relative(root, abs).split(sep).join("/"));
-    }
-  };
-  walk(root);
-  return out.sort();
+// One tree's entries (from releaseTrees: { name, path }), without the state file itself wherever --out points.
+function treeFiles(list, excludeAbs) {
+  return list.filter((e) => e.name.split("/").pop() !== DEFAULT_OUT && resolve(e.path) !== excludeAbs);
 }
 
-function hashTree(root, excludeAbs) {
-  const files = listFiles(root, excludeAbs);
+function hashTree(list, excludeAbs) {
+  const files = treeFiles(list, excludeAbs);
   const h = createHash(HASH_ALGORITHM);
-  for (const rel of files) {
-    const bytes = readFileSync(join(root, rel));
+  for (const { name: rel, path } of files) {
+    const bytes = readFileSync(path);
     h.update(rel + FIELD_SEPARATOR + bytes.length + FIELD_SEPARATOR, "utf8");
     h.update(bytes);
   }
@@ -111,10 +101,12 @@ function main() {
   const shippedPermissions = {};
   for (const k of PERMISSION_KEYS) shippedPermissions[k] = Array.isArray(manifest[k]) ? [...manifest[k]].sort() : [];
 
+  const roots = { extension: resolve(args.extension), tools: resolve(args.tools), docs: resolve(args.docs) };
+  const trees = releaseTrees(roots);
   const state = {
-    extension: { ...hashTree(resolve(args.extension), outAbs), version: manifest.version, shippedPermissions },
-    tools:     { ...hashTree(resolve(args.tools), outAbs),     version: args["tools-version"] },
-    docs:      { ...hashTree(resolve(args.docs), outAbs),      version: docsVersion(args.docs) }
+    extension: { ...hashTree(trees.extension, outAbs), version: manifest.version, shippedPermissions },
+    tools:     { ...hashTree(trees.tools, outAbs),         version: args["tools-version"] },
+    docs:      { ...hashTree(trees.docs, outAbs),           version: docsVersion(args.docs) }
   };
   // Same key order as earlier state files: hash, version, files[, shippedPermissions].
   const ordered = {};
