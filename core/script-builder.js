@@ -91,14 +91,6 @@ function baseRegistration(id, p, matches, excludeMatches) {
   return reg;
 }
 
-// 5.1.3 — `strictScripts` from `strictFromLevel` (blockObfuscatedEval: plain eval() blocked at level 5, owner): the
-// same scope rules as the protection's own scripts, computed as if it started at that level, id suffix STRICT.
-function strictRegistrationsFor(state, p) {
-  if (!p.strictScripts || !p.strictScripts.length) return [];
-  const strictP = { ...p, fromLevel: p.strictFromLevel, scripts: p.strictScripts, isolatedScripts: undefined };
-  return mainRegistrationsFor(state, strictP).map((reg) => ({ ...reg, id: reg.id + SCRIPT_ID_SUFFIX.STRICT }));
-}
-
 function registrationsFor(state, p) {
   const main = mainRegistrationsFor(state, p);
   if (!p.isolatedScripts || !p.isolatedScripts.length) return main;
@@ -204,6 +196,6 @@ function groupRegistrations(regs) {
 // opts.grouped (default true) — false returns the per-protection registrations before merging; used
 // only by tools/test-perf-guards.mjs to prove the merge changes no file's scope.
 export function buildScriptRegistrations(state, { grouped = true } = {}) {
-  const regs = PROTECTIONS.flatMap((p) => [...registrationsFor(state, p), ...strictRegistrationsFor(state, p), ...highRiskRegistrationsFor(state, p)]);
+  const regs = PROTECTIONS.flatMap((p) => [...registrationsFor(state, p), ...highRiskRegistrationsFor(state, p)]);
   return grouped ? groupRegistrations(regs) : regs;
 }

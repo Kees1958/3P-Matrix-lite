@@ -39,14 +39,16 @@
 // update the open window, and a window the user closed opens again only for a HIGHER rating. "Tamper: site" on the
 // allow list: recorded, never warns (EXCEPTION).
 //
-// One switch, "Enable tamper detection" (watchTamperSensitive, level 2+), and four trigger ticks under it (5.1.3); the
-// level slider of the TOP page's site (effectiveLevel) widens the watching: from TAMPER_LEVEL.AFTER_SIGN also a page
-// with a tampering sign (a static finding of TAMPER_SIGN_POINTS_MIN or more); from TAMPER_LEVEL.ALWAYS every page at
-// its hello. A site locked at level 1 ("Trust this site") gets nothing: the scripts are not even registered there
-// (core/script-builder.js).
+// One switch, "Enable tamper detection" (watchTamperSensitive, level 2+), and four trigger ticks under it (5.1.3).
+// Owner decision 2026-11-24 ("need to protect", least overhead): ONLY the four ticks start the close watching
+// (banking/payment page, hidden password/card field, checkout words, locked page) — plus the same-site COOLDOWN that
+// continues one of them. No level, no sign and no report arms a page. Pages that are not watched closely send NOTHING
+// (the page scripts hold what they noticed and send it only once armed), so every report here comes from an armed
+// page; one from an unarmed page is ignored. A site locked at level 1 ("Trust this site") gets nothing: the scripts
+// are not even registered there (core/script-builder.js).
 //
 // Per tab — a state machine (B3a, C14), one phase at a time, transitions only through transition():
-//   STANDBY  — ordinary watching: static findings are recorded, nothing warns
+//   STANDBY  — not watched closely: nothing is reported, recorded or shown
 //   ENHANCED — watched closely: the page's dynamic layer is on, the rating may warn
 //   COOLDOWN — the tab left a closely watched page for another page of the SAME site: the next page is armed at its
 //              hello while TAMPER_COOLDOWN_MS has not passed (bank and checkout flows hop between pages)
@@ -65,7 +67,7 @@ import { LOG_PREFIX, TAMPER_RATING, TAMPER_RATING_MIN_POINTS, TAMPER_SENSITIVE_F
          TAMPER_SENSITIVE_THRESHOLD, TAMPER_ADDRESS_WORDS, TAMPER_ADDRESS_ENDINGS, TAMPER_ADDRESS_TOKENS_MAX,
          TAMPER_ADDRESS_LETTER_FOLD, TAMPER_COOLDOWN_MS, TAMPER_TABS_CAP, TAMPER_SCRIPT_VERDICTS_CAP, SEVERITY,
          TAMPER_SCRIPT_PROVIDERS, TAMPER_SCRIPT_TYPO,
-         TAMPER_DETAIL_ITEMS_MAX, TAMPER_DETAIL_TEXT_MAX, TAMPER_FRAME_HOSTS_MAX, TAMPER_LEVEL } from "../data/constants.js";
+         TAMPER_DETAIL_ITEMS_MAX, TAMPER_DETAIL_TEXT_MAX, TAMPER_FRAME_HOSTS_MAX } from "../data/constants.js";
 import { MSG_TAMPER_ARM } from "../data/message-types.js";
 import { PROTECTION_KEY } from "../data/protections.js";
 import { TAMPER_RULE, TAMPER_RULES, TAMPER_RULE_BY_ID, TAMPER_PAGE_RULES, TAMPER_RULE_OF_TARGET, TAMPER_ADDED_PROPS,
@@ -96,12 +98,10 @@ const REASON = Object.freeze({
 });
 // Why a page was armed (one per page; shown nowhere, kept for the log and tests).
 // ADDRESS (5.1.1): a checkout/cart/payment word in the address — armed at hello, the page is NOT made sensitive by it.
-// ADDRESS_SCRIPT (5.1.2): the page put script code from its own address into itself (tgAddressScript) — the
-// report arms the page, whatever the level (the dynamic layer otherwise only takes reports from armed pages).
 // HIDDEN_FIELD / LOCKED (5.1.3): a hidden password/card field on the page; a site locked at level 2 or more.
-export const ARMED_BY = Object.freeze({ SENSITIVE: "sensitive", ALWAYS: "always", COOLDOWN: "cooldown", SIGN: "sign",
-                                        ADDRESS: "address", ADDRESS_SCRIPT: "addressScript", HIDDEN_FIELD: "hiddenField",
-                                        LOCKED: "locked" });
+// (Owner 2026-11-24: ALWAYS, SIGN and ADDRESS_SCRIPT are gone — only the four ticks and their cooldown arm a page.)
+export const ARMED_BY = Object.freeze({ SENSITIVE: "sensitive", COOLDOWN: "cooldown", ADDRESS: "address",
+                                        HIDDEN_FIELD: "hiddenField", LOCKED: "locked" });
 // Address matching (5.1.1): tokens are runs of letters/digits; accents (combining marks after NFD) are removed.
 const TOKEN_SPLIT_RE = /[^\p{L}\p{N}]+/u;
 const COMBINING_MARK_RE = /\p{M}+/gu;
@@ -193,7 +193,7 @@ function modeFor(state, host) {
   const on = isProtectionActive(state, PROTECTION_KEY.WATCH_TAMPER_SENSITIVE, level);
   function tick(key) { return on && isProtectionActive(state, key, level); }
   const locked = lockedLevelOf(state, host);
-  return { on, afterSign: on && level >= TAMPER_LEVEL.AFTER_SIGN, always: on && level >= TAMPER_LEVEL.ALWAYS, level,
+  return { on, level,
            onSensitive: tick(TRIGGER.SENSITIVE), onHidden: tick(TRIGGER.HIDDEN), onWords: tick(TRIGGER.WORDS),
            onLocked: tick(TRIGGER.LOCKED) && locked !== null && locked > LEVEL.ALLOW_ALL };
 }
@@ -245,8 +245,7 @@ export function onHello(state, sender) {
   const rec = watchOf(pages.tabId, pages.site);
   if (isInDomainList(pages.host, BUILTIN_PAYMENT)) addReason(rec, REASON.KNOWN_PAYMENT_SITE);
   const sensitive = updateSensitive(state, pages.tabId, rec, pages);
-  if (mode.always) arm(state, pages.tabId, rec, ARMED_BY.ALWAYS, pages);
-  else if (sensitive && mode.onSensitive) arm(state, pages.tabId, rec, ARMED_BY.SENSITIVE, pages);
+  if (sensitive && mode.onSensitive) arm(state, pages.tabId, rec, ARMED_BY.SENSITIVE, pages);
   else if (rec.phase === TAMPER_PHASE.COOLDOWN && Date.now() < rec.cooldownUntil) arm(state, pages.tabId, rec, ARMED_BY.COOLDOWN, pages);
   else if (mode.onLocked) arm(state, pages.tabId, rec, ARMED_BY.LOCKED, pages);
   else if (mode.onWords && hasAddressWord(pages.url, pages.host)) arm(state, pages.tabId, rec, ARMED_BY.ADDRESS, pages);
@@ -419,38 +418,28 @@ export function onReport(state, msg, sender) {
   const mode = modeFor(state, pages.host);
   if (!mode.on) return { arm: false };
   const rec = watchOf(pages.tabId, pages.site);
+  if (!isArmed(rec)) return { arm: false };            // only closely watched pages report (owner 2026-11-24)
   const def = TAMPER_RULE_BY_ID[msg.rule];
   if (def.layer === TAMPER_LAYER.STATIC) {
     const finding = staticFinding(state, def, detail, pages, rec, mode);
-    if (!finding) return { arm: isArmed(rec) };
+    if (!finding) return { arm: true };
     record(rec, def.id, finding);
     const many = manyHooksFinding(rec);
     if (many) record(rec, TAMPER_RULE.MANY_HOOKS, many);
-    if (mode.afterSign && def.points >= TAMPER_SIGN_POINTS_MIN) arm(state, pages.tabId, rec, ARMED_BY.SIGN, pages);
     evaluate(state, pages.tabId, rec, pages);
-  } else if (def.id === TAMPER_RULE.ADDRESS_SCRIPT) {
-    const finding = sinkFinding(def, detail);            // runs on every page, armed or not (see ARMED_BY)
-    if (!finding) return { arm: isArmed(rec) };
-    record(rec, def.id, finding);
-    arm(state, pages.tabId, rec, ARMED_BY.ADDRESS_SCRIPT, pages);
-    evaluate(state, pages.tabId, rec, pages);
-  } else if (def.id === TAMPER_RULE.OBFUSCATED_CODE) {  // 5.1.3: reported armed or not — a tampering sign
+  } else if (def.sinks) {                              // tgAddressScript, tgObfuscatedCode: the rule's own sink names
     const finding = sinkFinding(def, detail);
-    if (!finding) return { arm: isArmed(rec) };
-    record(rec, def.id, finding);
-    if (mode.afterSign) arm(state, pages.tabId, rec, ARMED_BY.SIGN, pages);
-    evaluate(state, pages.tabId, rec, pages);
+    if (finding) decide(state, pages.tabId, rec, def.id, finding, pages);
   } else {
-    if (!isArmed(rec)) return { arm: false };          // the dynamic layer only runs on armed pages
     const finding = dynamicFinding(def, detail, pages);
     if (finding) decide(state, pages.tabId, rec, def.id, finding, pages);
   }
-  return { arm: isArmed(rec) };
+  return { arm: true };
 }
 
-// 5.1.3 (issue 3) — a protection with its own warning just decided to warn on the sender's page: record its finding.
-// Armed or not (like tgAddressScript, the own warning is itself a strong sign); never when the switch or that
-// protection is off at the top page's level. `items`: the detail (destination / imitated host); default the frame's host.
+// 5.1.3 (issue 3) — a protection with its own warning just decided to warn on the sender's page: record its finding,
+// on a closely watched page only (owner 2026-11-24: nothing is kept for other pages — the own warning itself still
+// warns everywhere); never when the switch or that protection is off at the top page's level. `items`: the detail (destination / imitated host); default the frame's host.
 export function recordOwnWarning(state, key, sender, items) {
   const rule = Object.prototype.hasOwnProperty.call(TAMPER_RULE_OF_OWN_WARNING, key) ? TAMPER_RULE_OF_OWN_WARNING[key] : null;
   const pages = rule ? pagesOf(sender) : null;
@@ -461,6 +450,7 @@ export function recordOwnWarning(state, key, sender, items) {
   const detail = cleanDetail({ kind: TAMPER_DETAIL.DEST, items: hosts.length ? hosts : [pages.frameHost] });
   if (!detail) return false;
   const rec = watchOf(pages.tabId, pages.site);
+  if (!isArmed(rec)) return false;
   decide(state, pages.tabId, rec, rule, detail, pages);
   return true;
 }

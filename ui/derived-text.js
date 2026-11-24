@@ -18,8 +18,8 @@
 
 import { LEVEL, LEVEL_MIN, LEVEL_MAX, DOWNLOAD_BLOCK_EXEMPT_LEVELS, DOWNLOAD_PAGE_TRUST_LEVELS, SITE_DIALOG_FROM, SAFER_REGIONS_LEVELS, SCORE, LOG_PREFIX, AUTO_ALLOW_THRESHOLD_MIN,
          AUTO_ALLOW_THRESHOLD_MAX, DOWNLOAD_DEFAULTS, BUILTIN_TRUSTED_DOWNLOAD_DOMAINS,
-         DOWNLOAD_WARNING_TITLE_DEFAULT, TAMPER_COUNTDOWN_S, TAMPER_LEVEL, TAMPER_RATING, TAMPER_RATING_MIN_POINTS,
-         TAMPER_SENSITIVE_FACTOR, TAMPER_SUSPICIOUS_WARN, BADGE_TEXT } from "../data/constants.js";
+         DOWNLOAD_WARNING_TITLE_DEFAULT, TAMPER_COUNTDOWN_S, TAMPER_RATING, TAMPER_RATING_MIN_POINTS,
+         TAMPER_SUSPICIOUS_WARN, BADGE_TEXT } from "../data/constants.js";
 import { PROTECTION_BY_KEY, PROTECTION_KEY } from "../data/protections.js";
 
 const DERIVED_ATTR   = "data-derived";
@@ -78,17 +78,13 @@ const DERIVED_TEXT = Object.freeze({
   // 5.1.3 — Scam protection: from which level the switch (and its frames part) applies (registry fromLevel)
   "scam-level-from":        () => String(PROTECTION_BY_KEY[PROTECTION_KEY.ENABLE_SCAM_PROTECTION].fromLevel),
   "scam-frames-level-from": () => String(PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS].fromLevel),
-  "tamper-level-after-sign": () => levelsFrom(TAMPER_LEVEL.AFTER_SIGN),
-  "tamper-level-always":    () => levelsFrom(TAMPER_LEVEL.ALWAYS),
   // single "from" levels for the "How Tamper Guard works" lines
-  "tamper-level-after-sign-from": () => String(TAMPER_LEVEL.AFTER_SIGN),
   "tamper-countdown-s":     () => String(TAMPER_COUNTDOWN_S),
   "protection-label-tamper": () => protectionLabel(PROTECTION_KEY.WATCH_TAMPER_SENSITIVE),
   // 5.1.3 — the risk rating (data/constants.js TAMPER_RATING_*, TAMPER_SUSPICIOUS_WARN) and the quiet toolbar mark
   "tamper-points-suspicious": () => String(TAMPER_RATING_MIN_POINTS[TAMPER_RATING.SUSPICIOUS]),
   "tamper-points-high":       () => String(TAMPER_RATING_MIN_POINTS[TAMPER_RATING.HIGH]),
   "tamper-points-critical":   () => String(TAMPER_RATING_MIN_POINTS[TAMPER_RATING.CRITICAL]),
-  "tamper-sensitive-factor":  () => String(TAMPER_SENSITIVE_FACTOR),
   "tamper-suspicious-always": () => levelsFrom(TAMPER_SUSPICIOUS_WARN.ALWAYS_FROM),
   "tamper-suspicious-outside": () => String(TAMPER_SUSPICIOUS_WARN.OUTSIDE_SAFER_FROM),
   "tamper-mark":              () => BADGE_TEXT.SUSPECT

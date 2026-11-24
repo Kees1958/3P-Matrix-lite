@@ -1,11 +1,15 @@
 /*
  * tamper-guard-page.js — watchTamperSensitive (3P Matrix 5.1.0), MAIN-world half of Tamper Guard.
  *
- * STATIC layer (every page where the protection runs): at document_start the property descriptors of the built-ins
- * listed in STATIC_TARGETS are saved, plus the own property names of Object.prototype and Array.prototype. At
- * DOMContentLoaded, load, CHECK_AFTER_LOAD_MS after load and when armed they are compared again; every target that
- * no longer holds its original (or a new prototype property) is reported ONCE per page to the ISOLATED half
- * (security/tamper-guard-bridge.js) as a TG_REPORT_EVENT. Nothing else happens on an ordinary page.
+ * STATIC layer: at document_start (every page where the protection runs) the property descriptors of the built-ins
+ * listed in STATIC_TARGETS are saved, plus the own property names of Object.prototype and Array.prototype — the
+ * baseline must be taken before any page script runs. Owner decision 2026-11-24 ("need to protect", least overhead):
+ * they are COMPARED only on a page that is watched closely (armed by one of the four ticks): when armed, and after
+ * that at DOMContentLoaded, load and CHECK_AFTER_LOAD_MS after load. Every target that no longer holds its original
+ * (or a new prototype property) is reported ONCE per page to the ISOLATED half (security/tamper-guard-bridge.js) as a
+ * TG_REPORT_EVENT. A page that is never armed compares nothing and sends nothing. Anything noticed before arming
+ * (the address layer below, an early replaced JSON function) is held in `pending` (≤ MAX_PENDING_REPORTS) and sent
+ * when the page is armed; released with the page.
  *
  * DYNAMIC layer (only after TG_ARM_EVENT — the service worker decided to watch this page closely):
  *   • tgDataEdited: when JSON.parse or Response.prototype.json is (or later becomes) something else than the original,
@@ -81,6 +85,7 @@
     const MAX_REPORTED_ITEMS = 12;            // names per report (C50)
     const MAX_ITEM_CHARS = 120;               // characters per reported name
     const CHECK_AFTER_LOAD_MS = 3000;         // the third static comparison, after late scripts
+    const MAX_PENDING_REPORTS = 20;           // owner 2026-11-24: reports held until the page is armed (guard)
     const MAX_INSPECTED_CHARS = 524288;       // JSON text compared at most (512 KiB, C50) — longer text is not inspected
     const MAX_DIFF_NODES = 5000;              // JSON values visited per comparison
     const MAX_DIFF_DEPTH = 12;                // nesting depth compared
@@ -233,6 +238,7 @@
     const reported = new SetCtor();                    // target names / added names already reported (once per page)
     const sentReports = new SetCtor();                 // rule + destination already reported (once per page)
     let armed = false;
+    const pending = [];                                // { rule, kind, items } noticed before arming (≤ MAX_PENDING_REPORTS)
     let afterLoadTimer = null;
     let outgoingStarted = false;                       // 5.1.3: the outgoing-data check runs (once per page)
     let resourceObserver = null;                       // 5.1.3: released on pagehide
@@ -286,6 +292,10 @@
     // a string primitive never does.
     function quote(s) { return apply(jsonStringify, JSONObj, [StringCtor(s)]); }
     function report(rule, kind, items) {
+        if (!armed) {                                  // not watched closely (yet): hold it, send nothing
+            if (pending.length < MAX_PENDING_REPORTS) apply(arrPush, pending, [{ __proto__: null, rule, kind, items }]);
+            return;
+        }
         const list = [];
         for (let i = 0; i < items.length && list.length < MAX_REPORTED_ITEMS; i++) apply(arrPush, list, [quote(clip(items[i]))]);
         let detail;
@@ -791,6 +801,8 @@
     function arm() {
         if (armed) return;
         armed = true;
+        for (let i = 0; i < pending.length; i++) report(pending[i].rule, pending[i].kind, pending[i].items);
+        pending.length = 0;                                          // released
         compare();
         try { dataWatch(); watchForSecrets(); }
         catch { logInfo(LOG_PREFIX + ' Tamper Guard: closer watching could not start on this page'); }
@@ -800,10 +812,11 @@
     snapshot();
     startAddressWatch();                                             // 5.1.2: wraps nothing on an ordinary address
     apply(addListener, globalObj, [TG_ARM_EVENT, arm, true]);
-    apply(addListener, globalObj, ['DOMContentLoaded', compare, true]);
+    function compareIfArmed() { if (armed) compare(); }              // owner 2026-11-24: unwatched pages compare nothing
+    apply(addListener, globalObj, ['DOMContentLoaded', compareIfArmed, true]);
     apply(addListener, globalObj, ['load', () => {
-        compare();
-        afterLoadTimer = setTimer(() => { afterLoadTimer = null; compare(); }, CHECK_AFTER_LOAD_MS);
+        compareIfArmed();
+        afterLoadTimer = setTimer(() => { afterLoadTimer = null; compareIfArmed(); }, CHECK_AFTER_LOAD_MS);
     }, true]);
     apply(addListener, globalObj, ['pagehide', () => {                // release (B10)
         if (afterLoadTimer !== null) { clearTimer(afterLoadTimer); afterLoadTimer = null; }

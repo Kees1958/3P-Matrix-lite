@@ -269,8 +269,7 @@ export const SCRIPT_ID_SUFFIX = Object.freeze({
   SAFER_LOCKED:   "-locked",                         // rescue registration: locked sites inside safer regions
   BUILTIN_LOCKED: "-builtin-locked",                 // rescue registration: built-in-whitelist sites locked at 5
   ISOLATED:       "-isolated",                        // 4.6.0: the ISOLATED-world twin of a registration (isolatedScripts)
-  HIGH_RISK:      "-highrisk",                         // 4.7.0: alsoHighRisk's extra registration, fixed to HIGH_RISK_HOSTNAMES, level-independent
-  STRICT:         "-strict"                            // 5.1.3: a protection's `strictScripts`, from its strictFromLevel
+  HIGH_RISK:      "-highrisk"                          // 4.7.0: alsoHighRisk's extra registration, fixed to HIGH_RISK_HOSTNAMES, level-independent
 });
 export const NOEVAL_EXTRA_EXCLUDES = Object.freeze(["*://*/*login*", "*://*/*Login*", "*://*/*LOGIN*", "*://*/*.aspx*"]);
 
@@ -574,10 +573,8 @@ export const XSS_PIECE_MIN_CHARS = 8;
 export const XSS_PIECES_MAX = 16;
 
 // ── Tamper Guard (5.1.0 — core/tamper-guard.js, data/tamper-rules.js, security/tamper-guard-*.js) ──────────────────
-// Where the level slider widens tamper protection's closer watching (5.1.0, user decision): from AFTER_SIGN also pages
-// with a tampering sign (a MEDIUM+ static finding), from ALWAYS every page. Level 2 (the switch's own fromLevel):
-// banking/payment pages only. Not separate switches — "Enable tamper detection" (watchTamperSensitive) and its trigger ticks (5.1.3) cover them.
-export const TAMPER_LEVEL = Object.freeze({ AFTER_SIGN: LEVEL.SMART, ALWAYS: LEVEL.HIGH });
+// Owner decision 2026-11-24 ("need to protect", least overhead): ONLY the four trigger ticks under "Enable tamper
+// detection" start the close watching — the level slider no longer widens it (TAMPER_LEVEL AFTER_SIGN / ALWAYS removed).
 // 5.1.3 — Tamper risk rating (user decision 2026-11-24). Every finding (data/tamper-rules.js) carries POINTS; a page's
 // score is the sum of its DIFFERENT findings' points, × TAMPER_SENSITIVE_FACTOR on a banking/payment page. The score
 // gives the page's rating (ordered: a higher number is more serious). Replaces 5.1.0–5.1.2's per-finding severity,
@@ -604,8 +601,7 @@ export const TAMPER_BADGE_SEVERITY = Object.freeze({
 // One window per page: findings arriving within this time are collected before the window opens (a CRITICAL rating
 // opens it at once). Later findings update the open window.
 export const TAMPER_COLLECT_MS = 2000;
-// A static finding worth at least this many points is a "tampering sign" (closer watching from TAMPER_LEVEL.AFTER_SIGN),
-// and a replaced built-in counts toward tgManyHooks.
+// A replaced built-in of a rule worth at least this many points counts toward tgManyHooks.
 export const TAMPER_SIGN_POINTS_MIN = 20;
 // The protections under the tamper switch that have their own warning (password form elsewhere, payment skimmer,
 // fake sign-in window) — shown with these points on the Tamper Protection tab: they always warn at once.

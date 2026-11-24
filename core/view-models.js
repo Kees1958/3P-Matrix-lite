@@ -69,7 +69,7 @@ async function pageBox(tabId, url, p) {
   const risk = severity === SEVERITY.NONE ? null
     : { severity, reasons: local ? local.signals.slice(0, POPUP_RISK_REASONS_MAX) : [] };
   const t = pageRisk(tabId);
-  const tamper = t && t.rating >= TAMPER_RATING.SUSPICIOUS
+  const tamper = t && t.armed && t.rating >= TAMPER_RATING.SUSPICIOUS     // owner 2026-11-24: watched pages only
     ? { rating: t.rating, ratingLabel: TAMPER_RATING_LABEL[t.rating], findings: t.findings, topLabel: topFindingLabel(tabId) } : null;
   const continued = !!p && Number.isInteger(tabId) && await isAllowedOnce(tabId, registeredDomain(p.host));
   return { risk, tamper, continued };

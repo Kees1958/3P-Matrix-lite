@@ -141,6 +141,23 @@ Owner decisions 2026-11-24 (restructure in five steps; nothing released since 5.
   ("toolbar icon"); the Scam card got its own (one switch from `scam-level-from`, no rating, frames from
   `scam-frames-level-from` outside safer regions, "Scam: site"). Derived key `tamper-level-sensitive-from` (only used by
   the old Tamper text) removed.
+- **Only the four ticks arm a page (owner, 2026-11-24 evening, "need to protect", least overhead):** prompted by
+  Speedometer 3.1 getting a "?" at level 3 (a framework replaced Function.prototype.toString → a 20-point sign armed the
+  page). Removed: TAMPER_LEVEL (AFTER_SIGN level 3, ALWAYS level 4–5), ARMED_BY.SIGN/ALWAYS/ADDRESS_SCRIPT; a
+  tgAddressScript or tgObfuscatedCode report no longer arms; core/tamper-guard.js onReport ignores every report from an
+  unarmed page; recordOwnWarning records on armed pages only; the popup's tamper line needs an armed page. Page side:
+  security/tamper-guard-page.js compares the static targets only when armed (on arm, then DOMContentLoaded / load /
+  +3 s) and holds earlier reports (address sinks, an early JSON replacement) in `pending` (≤ MAX_PENDING_REPORTS = 20,
+  released on arm); security/tamper-guard-bridge.js holds blocked obfuscated-code entry points until arm. The baseline
+  snapshot at document_start stays (it must precede page scripts). Unwatched pages now send no reports at all.
+  UI: "How tamper protection works" first bullet rewritten; derived keys tamper-level-after-sign(-from), tamper-level-always
+  removed. Tests: unit cases use a checkout-word page (WATCHED) where a watched page is needed; e2e: level 4 ordinary page
+  → no window, DOM-XSS page without a tick → no window, with a checkout word → warning.
+- **blockObfuscatedEval back to Firewall (owner, same evening):** "it blocks, it does not watch" — num 10 in the
+  "Outside safer regions" group (level 3 outside safer regions, 4–5 every site), own tick, no `requires`, no
+  `switchable: false`; old 10–13 → 11–14 (ticks by key carry over). The level-5 strict eval (security/sec-no-eval-strict.js,
+  strictScripts/strictFromLevel, script-builder strictRegistrationsFor, SCRIPT_ID_SUFFIX.STRICT) removed. Its tamper sign
+  tgObfuscatedCode stays (watched pages only). Tamper tab: 8 registry rows (switch, three own-warning members, four ticks).
 - **Badge: the highest problem wins (owner, 2026-11-24; core/badge.js, data/constants.js, core/tamper-guard.js):**
   BADGE_TEXT.TAMPER ("•") removed. The entry's `tamper` is now a SEVERITY from TAMPER_BADGE_SEVERITY (Suspicious →
   SUSPECT, High/Critical → PHISHING); badgeOf takes the worst of site and tamper (SEVERITY_ORDER) → "!" / "?" or text

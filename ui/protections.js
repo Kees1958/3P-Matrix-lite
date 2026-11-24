@@ -112,10 +112,8 @@ function buildProtGroup(g) {
   return wrap;
 }
 
-// 4.7.0: two-column layout — the first present group (level 2, "On every site") goes in the left
-// column on its own; every other group (level 3 "outside safer regions" + the level 4–5 "web-platform
-// blocks" group) stacks in the right column. PROTECTION_GROUPS' own order (data/protections.js) decides
-// which group is "first" — never a hardcoded level number here.
+// 5.1.3 (owner, 2026-11-24): ONE column — every group of the tab under the previous one, in PROTECTION_GROUPS' own
+// order (data/protections.js); the 4.7.0 two-column split (first group left, the rest right) is gone.
 // 5.1.3: the switch of a SWITCH_CARD_TITLE tab — the row the tab's other rows name as their master — in its own group.
 function splitSwitch(groups, tab) {
   if (!SWITCH_CARD_TITLE[tab] || !groups.length) return groups;
@@ -136,17 +134,9 @@ function renderProtList(container, tab) {
     container.replaceChildren(Object.assign(document.createElement("p"), { className: "prot-empty", textContent: "Nothing in this group yet." }));
     return;
   }
-  const left = document.createElement("div"); left.className = "prot-col";
-  left.append(buildProtGroup(groups[0]));
-  const cols = [left];
-  if (SWITCH_CARD_TITLE[tab]) {                                    // 5.1.3: switch card, then its ticks — stacked
-    groups.slice(1).forEach((g) => left.append(buildProtGroup(g)));
-  } else if (groups.length > 1) {
-    const right = document.createElement("div"); right.className = "prot-col";
-    groups.slice(1).forEach((g) => right.append(buildProtGroup(g)));
-    cols.push(right);
-  }
-  container.replaceChildren(...cols);
+  const col = document.createElement("div"); col.className = "prot-col";
+  groups.forEach((g) => col.append(buildProtGroup(g)));
+  container.replaceChildren(col);
 }
 
 function renderProtLists() {

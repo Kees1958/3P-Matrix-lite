@@ -143,10 +143,10 @@
         <section class="card tg-fill" aria-labelledby="scHowH">
           <h2 id="scHowH" class="section-title">How scam protection works</h2>
           <ul class="tg-how">
-            <li>One switch covers every scam protection listed on the right (hover a line for what it does); it works from level <span data-derived="scam-level-from"></span>.</li>
-            <li>Each protection blocks or warns on its own, the moment it sees the scam — there is no risk rating here.</li>
+            <li>One switch covers every scam protection listed on the right (hover a line for what it does).</li>
+            <li>Each protection blocks or warns on its own the moment it sees the scam (from level <span data-derived="scam-level-from"></span>).</li>
             <li>Redirects and dialogs from frames are blocked from level <span data-derived="scam-frames-level-from"></span>, outside safer regions.</li>
-            <li>Trusted websites (locked at level <span data-derived="level-allow-all"></span>) are not covered. “Always allow” or “Always ignore” in a scam warning adds “Scam: site” to your allow list.</li>
+            <li>“Always allow” or “Always ignore” in a scam warning adds “Scam: site” to your allow list.</li>
           </ul>
         </section>
       </div>
@@ -163,10 +163,12 @@
         <section class="card tg-fill" aria-labelledby="tgHowH">
           <h2 id="tgHowH" class="section-title">How tamper protection works</h2>
           <ul class="tg-how">
-            <li>Every page is checked for signs of tampering at levels <span data-derived="tamper-level-sensitive"></span>. The ticks above choose which pages are also watched closely (what is sent, forms, frames, scripts); from level <span data-derived="tamper-level-after-sign-from"></span> also a page with a sign of tampering, at levels <span data-derived="tamper-level-always"></span> every page.</li>
-            <li>Each sign adds points (hover a line on the right). The total gives the page a risk rating: Suspicious from <span data-derived="tamper-points-suspicious"></span>, High risk from <span data-derived="tamper-points-high"></span>, Critical from <span data-derived="tamper-points-critical"></span> points — × <span data-derived="tamper-sensitive-factor"></span> on banking and payment pages.</li>
-            <li>Critical and High risk open one window that lists every sign (High risk closes itself after <span data-derived="tamper-countdown-s"></span> s). Suspicious warns at levels <span data-derived="tamper-suspicious-always"></span>, at level <span data-derived="tamper-suspicious-outside"></span> only outside safer regions; otherwise only the toolbar icon shows <span data-derived="tamper-mark"></span>.</li>
-            <li>Trusted websites (locked at level <span data-derived="level-allow-all"></span>) are not guarded by tamper protection. “Always ignore on this site” in a warning adds “Tamper: site” to your allow list.</li>
+            <li>Tamper detection is started by the heuristics above, at levels <span data-derived="tamper-level-sensitive"></span>.</li>
+            <li>Those pages are checked for the signs of tampering listed on the right.</li>
+            <li>Each sign adds points (hover a line on the right). The total gives the page a risk rating: Suspicious from <span data-derived="tamper-points-suspicious"></span>, High risk from <span data-derived="tamper-points-high"></span>, Critical from <span data-derived="tamper-points-critical"></span> points or more.</li>
+            <li>Critical and High risk open one window that lists every sign.</li>
+            <li>Suspicious warns at level <span data-derived="tamper-suspicious-outside"></span> only outside safer regions, and everywhere at levels <span data-derived="tamper-suspicious-always"></span>.</li>
+            <li>“Always ignore on this site” in a warning adds “Tamper: site” to your allow list.</li>
           </ul>
           <p id="tgStatus" class="status" role="status"></p>
         </section>

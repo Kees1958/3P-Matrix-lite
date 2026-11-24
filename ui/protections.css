@@ -20,19 +20,15 @@
 .tab-panel { display: flex; flex-direction: column; gap: 16px; }
 
 /* ── Protections list (adapted from ui/popup.css .prot-*) ─────────────────── */
-/* 4.7.0: one row, two columns — ui/protections.js renderProtList() puts the first group (level 2) in
-   the left column and stacks every other group (level 3, 4–5) in the right column. No explicit
-   align-items here: the default "stretch" makes both columns the height of the taller one (the left
-   column), so the bottom-alignment rule below has a full column to push the last right-hand group into. */
+/* 5.1.3 (owner): a tab's protection groups are ONE column (ui/protections.js renderProtList); .prot-list stays a row
+   only where a tab puts two columns side by side in its HTML (Scam, Tamper: explanation left, list right). */
 .prot-list { display: flex; gap: 14px; }
 .prot-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-/* Bottom-align the right column's last group with the left column's last row (e.g. the level 4–5 group
-   with its WebSocket/WebTransport/WebAssembly rows): margin-top: auto only applies when the column holds more than one group (it is
-   the last child but NOT also the first), so a single-group column — the left one — is unaffected. */
-.prot-col > .prot-group:not(:first-child):last-child { margin-top: auto; }
 .prot-group { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .prot-group-head { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow); }
 .prot-group-head .from { font-family: var(--mono); color: var(--muted); }
+/* 5.1.3 (owner): the full-width lists (one column) keep "FROM Ln" halfway across, close to the group title. */
+#browsingList .prot-group-head, #downloadList .prot-group-head { max-width: 50%; }
 .prot-item { position: relative; display: flex; align-items: flex-start; gap: 8px; min-height: 28px; padding: 3px 0; font-size: 13px; line-height: 1.4; cursor: pointer; color: var(--bright); accent-color: var(--mint); }
 .prot-item input { width: 16px; height: 16px; margin-top: 1px; flex-shrink: 0; }
 .prot-item .p-num { font-family: var(--mono); font-size: 11px; color: var(--dim); width: 20px; text-align: right; flex-shrink: 0; margin-top: 2px; }

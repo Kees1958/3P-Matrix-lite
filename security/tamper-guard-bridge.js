@@ -143,12 +143,17 @@
         if (data && typeof data === 'object') forward(data.rule, data.kind, data.items);
     }, true);
 
-    // 5.1.3 — obfuscated code was blocked: reported once per entry point, armed or not (the service worker scores it).
+    // 5.1.3 — obfuscated code was blocked: reported once per entry point. Owner 2026-11-24: only on a page that is
+    // watched closely — before arming the entry point is only remembered (obfuscatedSinks) and sent on arm().
+    // (The block itself, security/sec-no-obfuscated-code.js, works everywhere regardless.)
+    function sendObfuscated() {
+        if (armed && obfuscatedSinks.size) forward(RULE.OBFUSCATED_CODE, DETAIL_KIND.TARGETS, [...obfuscatedSinks]);
+    }
     window.addEventListener(TG_OBFUSCATED_EVENT, (e) => {
         const sink = e && typeof e.detail === 'string' ? e.detail : '';
         if (!OBFUSCATED_SINKS.includes(sink) || obfuscatedSinks.has(sink)) return;
         obfuscatedSinks.add(sink);
-        forward(RULE.OBFUSCATED_CODE, DETAIL_KIND.TARGETS, [sink]);
+        if (armed) forward(RULE.OBFUSCATED_CODE, DETAIL_KIND.TARGETS, [sink]);
     }, true);
 
     // ── Signals (banking/payment page?) ──
@@ -305,6 +310,7 @@
         if (armed) return;
         armed = true;
         window.dispatchEvent(new CustomEvent(TG_ARM_EVENT));      // the MAIN-world half starts its wrappers
+        sendObfuscated();                                          // what was blocked before arming
         if (document.documentElement) startObserver();
         else window.addEventListener('DOMContentLoaded', startObserver, { capture: true, once: true });
     }

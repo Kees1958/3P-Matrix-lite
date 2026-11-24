@@ -26,6 +26,9 @@ const BRIDGE_SCRIPT = "security/tamper-guard-bridge.js";
 const TAB = Object.freeze({ A: 11, B: 12, C: 13, D: 14, E: 15, F: 16, G: 17, H: 18 });
 const ORDINARY = "https://news.example/article";
 const OTHER_HOST = "collector.example";
+// Owner 2026-11-24: only the four ticks arm a page — an ordinary page that must be watched closely in a test gets a
+// checkout word in its address ("Enable on pages with checkout and payment keywords"; not a banking/payment page).
+const WATCHED = "https://news.example/checkout";
 
 function arg(name) { const i = process.argv.indexOf(`--${name}`); return i === -1 ? null : process.argv[i + 1]; }
 function didNotRun(msg) { console.error(`test-tamper-guard: DID NOT RUN — ${msg}`); process.exit(EXIT.DID_NOT_RUN); }
@@ -146,8 +149,12 @@ const byKey = P.PROTECTION_BY_KEY;
 ok("\"Enable tamper detection\" (watchTamperSensitive) from level 2 (MILD), no built-in exemption",
    byKey[K.WATCH_TAMPER_SENSITIVE].fromLevel === C.LEVEL.MILD && byKey[K.WATCH_TAMPER_SENSITIVE].scope === P.SCOPE.EVERY_SITE &&
    !byKey[K.WATCH_TAMPER_SENSITIVE].trustedExempt);
-ok("the slider widens it: after a sign from level 3, always from level 4", C.TAMPER_LEVEL.AFTER_SIGN === C.LEVEL.SMART && C.TAMPER_LEVEL.ALWAYS === C.LEVEL.HIGH);
-const underSwitch = [K.WARN_PASSWORD_FORMS, K.WARN_PAYMENT_SKIMMER, K.BLOCK_FAKE_SIGNIN_WINDOW, K.BLOCK_OBFUSCATED_EVAL];   // 5.1.3: + obfuscated code
+ok("owner 2026-11-24: the level slider no longer widens the watching (TAMPER_LEVEL gone)", C.TAMPER_LEVEL === undefined);
+const underSwitch = [K.WARN_PASSWORD_FORMS, K.WARN_PAYMENT_SKIMMER, K.BLOCK_FAKE_SIGNIN_WINDOW];
+// Owner 2026-11-24 (evening): the obfuscated-code block is a Firewall protection again — own tick, number, not under the switch.
+ok("blockObfuscatedEval: Firewall tab, numbered, own tick, not under the tamper switch, no level-5 strict script",
+   P.tabOf(byKey[K.BLOCK_OBFUSCATED_EVAL]) === P.PROTECTION_TAB.BROWSING && Number.isInteger(byKey[K.BLOCK_OBFUSCATED_EVAL].num) &&
+   byKey[K.BLOCK_OBFUSCATED_EVAL].switchable !== false && !byKey[K.BLOCK_OBFUSCATED_EVAL].requires && !byKey[K.BLOCK_OBFUSCATED_EVAL].strictScripts);
 ok("password form, skimmer and fake sign-in run under the tamper switch: no checkbox, no number",
    underSwitch.every((k) => byKey[k].switchable === false && byKey[k].requires === K.WATCH_TAMPER_SENSITIVE && byKey[k].num === undefined));
 ok("the Tamper Protection tab has no numbers at all", P.PROTECTIONS.filter((p) => P.tabOf(p) === P.PROTECTION_TAB.TAMPER).every((p) => p.num === undefined));
@@ -166,8 +173,8 @@ ok("blockRiskyDownloads requires warnRiskyDownloads", byKey[K.BLOCK_RISKY_DOWNLO
 ok("Download tab: warnRiskyDownloads + blockRiskyDownloads", P.PROTECTIONS.filter((p) => P.tabOf(p) === P.PROTECTION_TAB.DOWNLOAD).map((p) => p.key).join() ===
    [K.WARN_RISKY_DOWNLOADS, K.BLOCK_RISKY_DOWNLOADS].join());
 const TRIGGERS = [K.TAMPER_ON_SENSITIVE, K.TAMPER_ON_HIDDEN_FIELD, K.TAMPER_ON_CHECKOUT_WORDS, K.TAMPER_ON_LOCKED_PAGES];
-ok("Tamper Protection tab: the switch + the four protections under it + the four trigger ticks (5.1.3)",
-   P.PROTECTIONS.filter((p) => P.tabOf(p) === P.PROTECTION_TAB.TAMPER).length === 9);
+ok("Tamper Protection tab: the switch + the three protections under it + the four trigger ticks",
+   P.PROTECTIONS.filter((p) => P.tabOf(p) === P.PROTECTION_TAB.TAMPER).length === 8);
 ok("trigger ticks: own checkbox, require the switch, level 2", TRIGGERS.every((k) => byKey[k] && byKey[k].switchable !== false &&
    byKey[k].requires === K.WATCH_TAMPER_SENSITIVE && byKey[k].fromLevel === C.LEVEL.MILD));
 {
@@ -228,12 +235,20 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
   const before = windows.length;
   G.onReport(s, report(T.DATA_PARSING, D.TARGETS, ["JSON.parse"]), sender(TAB.B, ORDINARY));
   await settle();
-  ok("level 2, ordinary page: a replaced JSON.parse is noted, no warning", windows.length === before && eventsFor(TAB.B).length === 1);
-  ok("level 2, ordinary page: not armed by a static finding (needs level 3)", !armedFor(TAB.B));
+  ok("level 2, page no tick applies to: a report is ignored — nothing recorded, no warning (owner 2026-11-24)",
+     windows.length === before && eventsFor(TAB.B).length === 0);
+  ok("…and a report never arms it (only the four ticks do)", !armedFor(TAB.B));
   const r = G.onReport(s, report(T.PASSWORD_SENT, D.DEST, [OTHER_HOST]), sender(TAB.B, ORDINARY));
-  ok("a dynamic report on a page that is not armed is dropped", r.arm === false && eventsFor(TAB.B).length === 1);
+  ok("a dynamic report on a page that is not armed is dropped", r.arm === false && eventsFor(TAB.B).length === 0);
   ok("an unknown rule is refused", G.onReport(s, report("tgNope", D.TARGETS, ["x"]), sender(TAB.B, ORDINARY)).arm === false);
-  ok("a target of another rule is not taken", (G.onReport(s, report(T.CRYPTO_HOOKS, D.TARGETS, ["JSON.parse"]), sender(TAB.B, ORDINARY)), eventsFor(TAB.B).length === 1));
+  G.onReport(s, report(T.ADDRESS_SCRIPT, D.TARGETS, ["Element.prototype.innerHTML"]), sender(TAB.B, ORDINARY));
+  ok("an address-script report no longer arms a page (owner 2026-11-24)", !armedFor(TAB.B) && eventsFor(TAB.B).length === 0);
+  const tw = 59;
+  ok("a checkout word arms a page at hello (tick)", G.onHello(s, sender(tw, WATCHED)).arm === true);
+  G.onReport(s, report(T.DATA_PARSING, D.TARGETS, ["JSON.parse"]), sender(tw, WATCHED));
+  ok("watched page: a replaced JSON.parse is recorded", eventsFor(tw).length === 1);
+  ok("a target of another rule is not taken", (G.onReport(s, report(T.CRYPTO_HOOKS, D.TARGETS, ["JSON.parse"]), sender(tw, WATCHED)), eventsFor(tw).length === 1));
+  G.releaseTab(tw);
 }
 { // level 2, known payment site: score × factor, Suspicious = quiet mark, then Critical = one window, updated
   const s = stateAt(C.LEVEL.MILD);
@@ -263,29 +278,29 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
 { // collect delay and reopen rule
   const s = stateAt(C.LEVEL.MILD);
   const t = 51;
-  G.onHello(s, sender(t, ORDINARY));
+  G.onHello(s, sender(t, WATCHED));
   G.setCollectMsForTests(40);
   const before = windows.length;
-  G.onReport(s, report(T.ADDRESS_SCRIPT, D.TARGETS, ["Element.prototype.innerHTML"]), sender(t, ORDINARY));   // arms; 60: High
+  G.onReport(s, report(T.ADDRESS_SCRIPT, D.TARGETS, ["Element.prototype.innerHTML"]), sender(t, WATCHED));   // 60: High
   ok("High: the window waits for the collect delay", windows.length === before && riskOf(t).outcome === G.TAMPER_OUTCOME.COLLECTING, riskOf(t));
-  G.onReport(s, report(T.INVISIBLE_FRAME, D.DEST, [OTHER_HOST]), sender(t, ORDINARY));                     // 70: still High
+  G.onReport(s, report(T.INVISIBLE_FRAME, D.DEST, [OTHER_HOST]), sender(t, WATCHED));                      // 70: still High
   await sleep(80);
   const id = new URL(windows[windows.length - 1].url).searchParams.get(C.TAMPER_WARNING_ID_PARAM);
   ok("…then ONE window with both findings", windows.length === before + 1 && W.warningModel(id).signals.length === 2);
   ok("High risk counts down", W.warningModel(id).countdownS === C.TAMPER_COUNTDOWN_S);
   G.setCollectMsForTests(0);
   await W.closeWarning(id);                                                          // the user chose Ignore
-  G.onReport(s, report(T.STORAGE_HOOKS, D.TARGETS, ["Document.prototype.cookie"]), sender(t, ORDINARY));
+  G.onReport(s, report(T.STORAGE_HOOKS, D.TARGETS, ["Document.prototype.cookie"]), sender(t, WATCHED));
   await settle();
   ok("closed by the user: a finding at the same rating does not reopen it", windows.length === before + 1, riskOf(t));
-  G.onReport(s, report(T.PASSWORD_SENT, D.DEST, [OTHER_HOST]), sender(t, ORDINARY));
+  G.onReport(s, report(T.PASSWORD_SENT, D.DEST, [OTHER_HOST]), sender(t, WATCHED));
   ok("…a higher rating (Critical) opens it again", windows.length === before + 2);
   G.releaseTab(t);
   ok("the real collect delay is TAMPER_COLLECT_MS (2 s)", C.TAMPER_COLLECT_MS === 2000);
 }
 { // Suspicious by level and safer regions
   const t = 52;
-  const OUTSIDE = "https://shop.example/product/1";                 // .example is not in the safer regions
+  const OUTSIDE = "https://shop.example/checkout/1";                // .example is not in the safer regions; watched (word)
   const s3 = stateAt(C.LEVEL.SMART);
   G.onHello(s3, sender(t, OUTSIDE));
   G.onReport(s3, report(T.CRYPTO_HOOKS, D.TARGETS, ["Crypto.prototype.getRandomValues"]), sender(t, OUTSIDE));   // 40: Suspicious, a sign
@@ -347,11 +362,14 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
   G.onReport(s, report(T.INPUT_HOOKS, D.TARGETS, ["HTMLInputElement.prototype.value"]), sender(TAB.D, SHOP));
   G.onReport(s, report(T.DATA_PARSING, D.TARGETS, ["Response.prototype.json"]), sender(TAB.D, SHOP));
   await settle();
-  ok("shop page before its card form: findings only noted", windows.length === before);
+  ok("shop page before its card form: not watched — reports ignored, nothing kept", windows.length === before && eventsFor(TAB.D).length === 0);
   const r = G.onSignals(s, { type: M.MSG_TAMPER_SIGNALS, card: true, bank: false, frames: [] }, sender(TAB.D, SHOP));
-  await settle();
   ok("a card field makes it a payment page: armed", r.arm === true);
-  ok("…and the findings noted before count (× factor): High, a warning", windows.length === before + 1 && riskOf(TAB.D).rating === RT.HIGH, riskOf(TAB.D));
+  // the page scripts held what they noticed and send it now that the page is armed (security/tamper-guard-page.js pending)
+  G.onReport(s, report(T.INPUT_HOOKS, D.TARGETS, ["HTMLInputElement.prototype.value"]), sender(TAB.D, SHOP));
+  G.onReport(s, report(T.DATA_PARSING, D.TARGETS, ["Response.prototype.json"]), sender(TAB.D, SHOP));
+  await settle();
+  ok("…and what the page held back counts (× factor): High, a warning", windows.length === before + 1 && riskOf(TAB.D).rating === RT.HIGH, riskOf(TAB.D));
   ok("signals with only frames from unknown hosts do not arm",
      G.onSignals(stateAt(C.LEVEL.MILD), { card: false, bank: false, frames: ["ads.example"] }, sender(TAB.E, "https://blog.example/")).arm === false);
   ok("a frame from a payment host reaches the threshold",
@@ -459,28 +477,32 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
      X.mayBeXssLink({ tabId: 1, type: "main_frame", initiator: FROM, url: HITS[1] }) &&
      !X.mayBeXssLink({ tabId: 1, type: "main_frame", url: HITS[0] }));
 }
-{ // 5.1.2 tgAddressScript (Tamper): the report arms the page itself and warns (High)
+{ // 5.1.2 tgAddressScript (Tamper) — owner 2026-11-24: on a watched page only (it no longer arms a page)
   const s = stateAt(C.LEVEL.MILD);
   const t = 37;
+  G.onHello(s, sender(t, WATCHED));
   const before = windows.length;
-  const r = G.onReport(s, report(T.ADDRESS_SCRIPT, D.TARGETS, ["Element.prototype.innerHTML"]), sender(t, ORDINARY));
+  G.onReport(s, report(T.ADDRESS_SCRIPT, D.TARGETS, ["Element.prototype.innerHTML"]), sender(t, WATCHED));
   await settle();
   const f = eventsFor(t).find((e) => e.rule === T.ADDRESS_SCRIPT);
-  ok("address script put into an ordinary page: armed by the report and a warning (High)",
-     r.arm === true && !!f && windows.length === before + 1, { r, f });
-  G.onReport(s, report(T.ADDRESS_SCRIPT, D.TARGETS, ["not.a.sink"]), sender(38, ORDINARY));
+  ok("address script put into a watched page: a warning (High)", !!f && windows.length === before + 1, { f });
+  G.onHello(s, sender(38, WATCHED));
+  G.onReport(s, report(T.ADDRESS_SCRIPT, D.TARGETS, ["not.a.sink"]), sender(38, WATCHED));
   ok("a sink name that is not the rule's own is dropped", !eventsFor(38).some((e) => e.rule === T.ADDRESS_SCRIPT));
   G.releaseTab(t); G.releaseTab(38);
 }
-{ // 5.1.3 tgObfuscatedCode: recorded armed or not, a sign from level 3
+{ // 5.1.3 tgObfuscatedCode — owner 2026-11-24: a sign on a watched page only; it never arms a page
   const s2 = stateAt(C.LEVEL.MILD);
   G.onReport(s2, report(T.OBFUSCATED_CODE, D.TARGETS, ["eval"]), sender(62, ORDINARY));
-  ok("obfuscated code blocked: recorded on an unarmed page, level 2 does not arm", eventsFor(62).some((e) => e.rule === T.OBFUSCATED_CODE) && !armedFor(62));
-  G.onReport(s2, report(T.OBFUSCATED_CODE, D.TARGETS, ["document.write"]), sender(63, ORDINARY));
+  ok("obfuscated code blocked on a page no tick applies to: nothing kept, not armed", eventsFor(62).length === 0 && !armedFor(62));
+  G.onHello(s2, sender(63, WATCHED));
+  G.onReport(s2, report(T.OBFUSCATED_CODE, D.TARGETS, ["document.write"]), sender(63, WATCHED));
   ok("…a name that is not one of its entry points is dropped", eventsFor(63).length === 0);
+  G.onReport(s2, report(T.OBFUSCATED_CODE, D.TARGETS, ["eval"]), sender(63, WATCHED));
+  ok("…on a watched page it is a sign", eventsFor(63).some((e) => e.rule === T.OBFUSCATED_CODE));
   const s3 = stateAt(C.LEVEL.SMART);
   const r = G.onReport(s3, report(T.OBFUSCATED_CODE, D.TARGETS, ["setTimeout"]), sender(64, ORDINARY));
-  ok("level 3: it arms the page (a sign of tampering)", r.arm === true && G.pageRisk(64).armedBy === G.ARMED_BY.SIGN);
+  ok("level 3: it no longer arms a page", r.arm === false && !armedFor(64));
   G.releaseTab(62); G.releaseTab(63); G.releaseTab(64);
 }
 { // destinations (incl. 5.1.3 IBAN)
@@ -503,32 +525,27 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
   ok("an invalid destination is dropped", !eventsFor(TAB.G).some((e) => e.rule === T.PASSWORD_SENT));
   G.releaseTab(TAB.G);
 }
-{ // level 3 after a sign, level 4 always, 3P Matrix's own wrappers
+{ // owner 2026-11-24: no level widens the watching (the Speedometer case); 3P Matrix's own wrappers
   const s3 = stateAt(C.LEVEL.SMART);
   const t = 21;
   G.onHello(s3, sender(t, ORDINARY));
-  G.onReport(s3, report(T.STORAGE_HOOKS, D.TARGETS, ["Document.prototype.cookie"]), sender(t, ORDINARY));
-  ok("level 3: a low-point finding does not arm", !armedFor(t));
   const r = G.onReport(s3, report(T.FUNCTION_HOOKS, D.TARGETS, ["Function.prototype.toString"]), sender(t, ORDINARY));
-  ok("level 3: a sign (≥ TAMPER_SIGN_POINTS_MIN) arms the page", r.arm === true && armedFor(t));
-  const before = windows.length;
-  G.onReport(s3, report(T.DATA_EDITED, D.KEYS, ["items.0.price"]), sender(t, ORDINARY));
-  await settle();
-  ok("level 3, armed ordinary page: edited data on top (High) warns", windows.length === before + 1, riskOf(t));
+  ok("level 3: a replaced core function does not arm a page (only the four ticks do)", r.arm === false && !armedFor(t) && eventsFor(t).length === 0);
   const s4 = stateAt(C.LEVEL.HIGH);
-  ok("level 4: every page is armed at hello", G.onHello(s4, sender(22, ORDINARY)).arm === true);
-  G.onReport(s4, report(T.NETWORK_HOOKS, D.TARGETS, ["XMLHttpRequest.prototype.response", "fetch"]), sender(22, ORDINARY));
+  ok("level 4: an ordinary page is not armed at hello", G.onHello(s4, sender(20, ORDINARY)).arm === false);
+  ok("level 4: a page a tick applies to is", G.onHello(s4, sender(22, WATCHED)).arm === true);
+  G.onReport(s4, report(T.NETWORK_HOOKS, D.TARGETS, ["XMLHttpRequest.prototype.response", "fetch"]), sender(22, WATCHED));
   const ev = eventsFor(22).find((e) => e.rule === T.NETWORK_HOOKS);
   ok("level 4: the XHR response getter (wrapped by blockWebAssembly there) is ignored, fetch kept (5.1.3: no longer wrapped)",
      !!ev && ev.items.join() === "fetch", ev);
   const s4off = stateAt(C.LEVEL.HIGH, (s) => { s.disabledProtections[K.BLOCK_WEBASSEMBLY] = true; });
-  G.onHello(s4off, sender(23, ORDINARY));
-  G.onReport(s4off, report(T.NETWORK_HOOKS, D.TARGETS, ["XMLHttpRequest.prototype.response"]), sender(23, ORDINARY));
+  G.onHello(s4off, sender(23, WATCHED));
+  G.onReport(s4off, report(T.NETWORK_HOOKS, D.TARGETS, ["XMLHttpRequest.prototype.response"]), sender(23, WATCHED));
   ok("…with blockWebAssembly off, a replaced XHR response getter is a finding", eventsFor(23).some((e) => e.rule === T.NETWORK_HOOKS));
   const sTrust = stateAt(C.LEVEL.HIGH, (s) => { s.siteLocks["news.example"] = C.LEVEL.ALLOW_ALL; s.siteLocksOrder.push("news.example"); });
-  ok("a trusted site (allow list) is never watched", G.onHello(sTrust, sender(24, ORDINARY)).arm === false);
+  ok("a trusted site (allow list) is never watched", G.onHello(sTrust, sender(24, WATCHED)).arm === false);
   const sAlwaysOff = stateAt(C.LEVEL.HIGH, (s) => { s.disabledProtections[K.WATCH_TAMPER_SENSITIVE] = true; });
-  ok("master unticked: \"Always watch\" does nothing either", G.onHello(sAlwaysOff, sender(25, ORDINARY)).arm === false);
+  ok("master unticked: no tick arms anything", G.onHello(sAlwaysOff, sender(25, WATCHED)).arm === false);
 }
 { // MANY_HOOKS, allow list, cooldown
   const s = stateAt(C.LEVEL.MILD);
@@ -567,20 +584,20 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
 { // bounds: one finding per rule per page, detail items and text capped
   const s = stateAt(C.LEVEL.MILD);
   const t = 41;
-  G.onHello(s, sender(t, ORDINARY));
+  G.onHello(s, sender(t, WATCHED));
   for (let i = 0; i < C.TAMPER_DETAIL_ITEMS_MAX * 2; i++) {
-    G.onReport(s, report(T.PROTOTYPE_POLLUTION, D.TARGETS, [`Object.prototype.p${i}`]), sender(t, ORDINARY));
+    G.onReport(s, report(T.PROTOTYPE_POLLUTION, D.TARGETS, [`Object.prototype.p${i}`]), sender(t, WATCHED));
   }
   ok("a page holds one finding per rule, however many reports", eventsFor(t).filter((e) => e.rule === T.PROTOTYPE_POLLUTION).length === 1);
   ok("…with at most TAMPER_DETAIL_ITEMS_MAX items", eventsFor(t).every((e) => e.items.length <= C.TAMPER_DETAIL_ITEMS_MAX));
   const long = "x".repeat(C.TAMPER_DETAIL_TEXT_MAX * 2);
-  G.onReport(s, report(T.ARRAY_EXTENDED, D.TARGETS, [`Array.prototype.${long}`]), sender(t, ORDINARY));
+  G.onReport(s, report(T.ARRAY_EXTENDED, D.TARGETS, [`Array.prototype.${long}`]), sender(t, WATCHED));
   ok("detail text is cut at TAMPER_DETAIL_TEXT_MAX", eventsFor(t).every((e) => e.items.every((x) => x.length <= C.TAMPER_DETAIL_TEXT_MAX)));
   G.onCommitted(t, "https://other.example/");
   ok("a new page starts with no findings and a Low rating", eventsFor(t).length === 0 && riskOf(t).rating === RT.LOW);
 }
 // 5.1.3 (issue 3) — the protections with their own warning are also 100-point findings, never an extra window.
-const own = underSwitch.filter((k) => k !== K.BLOCK_OBFUSCATED_EVAL);
+const own = underSwitch;
 const ownRule = (k) => R.TAMPER_RULE_OF_OWN_WARNING[k];
 {
   ok("each own-warning protection has exactly one rule, at TAMPER_OWN_WARNING_POINTS",
@@ -590,16 +607,20 @@ const ownRule = (k) => R.TAMPER_RULE_OF_OWN_WARNING[k];
   ok("an own-warning finding alone rates Critical", G.ratingOf(C.TAMPER_OWN_WARNING_POINTS) === RT.CRITICAL);
   ok("a protection without a tamper rule (ClickFix) records nothing",
      G.recordOwnWarning(stateAt(C.LEVEL.MILD), K.BLOCK_CLICK_FIX, sender(151, ORDINARY)) === false && eventsFor(151).length === 0);
-  for (const [i, k] of own.entries()) {   // ordinary page, not armed: recorded and rated, no window, no mark
+  for (const [i, k] of own.entries()) {   // owner 2026-11-24: a page no tick applies to keeps nothing (own warning still warns)
     const t = 152 + i;
-    const before = windows.length;
     const s = stateAt(C.LEVEL.MILD);
     G.onHello(s, sender(t, ORDINARY));
-    ok(`${k}: recorded as ${ownRule(k)} (with its detail host)`, G.recordOwnWarning(s, k, sender(t, ORDINARY), [OTHER_HOST]) === true &&
-       eventsFor(t).some((e) => e.rule === ownRule(k) && e.items.join() === OTHER_HOST));
+    ok(`${k}: on a page that is not watched closely nothing is recorded`,
+       G.recordOwnWarning(s, k, sender(t, ORDINARY), [OTHER_HOST]) === false && eventsFor(t).length === 0);
+    const before = windows.length;
+    G.onHello(s, sender(160 + i, WATCHED));
+    ok(`${k}: on a watched page recorded as ${ownRule(k)} (with its detail host)`,
+       G.recordOwnWarning(s, k, sender(160 + i, WATCHED), [OTHER_HOST]) === true &&
+       eventsFor(160 + i).some((e) => e.rule === ownRule(k) && e.items.join() === OTHER_HOST));
     await settle();
-    ok(`${k}: the page rates Critical, but no tamper window opens (not watched closely: no badge rating either)`,
-       riskOf(t).rating === RT.CRITICAL && windows.length === before && badgeRatingOf(t) === RT.LOW);
+    ok(`${k}: the page rates Critical, but no tamper window opens`, riskOf(160 + i).rating === RT.CRITICAL && windows.length === before);
+    G.releaseTab(t); G.releaseTab(160 + i);
   }
   { // armed (banking) page: still no window of its own …
     const t = 156;

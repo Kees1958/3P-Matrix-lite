@@ -21,9 +21,10 @@ Tabs (5.1.3): Firewall protection (tab value `browsing`; the only tab with a tic
 Scam protection (one switch, enableScamProtection: the bundled scam scripts), Tamper Protection and the Allow list.
 Tamper Protection (5.1.0, internally "Tamper Guard") is one switch, watchTamperSensitive ("Enable tamper detection",
 from level 2), with four trigger ticks (5.1.3: banking/payment pages, a password/card field hidden as a trick,
-checkout words, locked pages) and the same slider: 3 also pages with a tampering sign, 4–5 every page (TAMPER_LEVEL); level 1 /
-"All:" on the allow list: off. warnPasswordForms, warnPaymentSkimmer, blockFakeSignInWindow and (5.1.3)
-blockObfuscatedEval run under that switch (switchable: false). 5.1.3: a page gets a RISK RATING from the points of its
+checkout words, locked pages) — owner 2026-11-24: ONLY these ticks (and the same-site cooldown) start the close watching,
+no level does; unwatched pages compare and send nothing (the page scripts hold what they noticed until armed); level 1 /
+"All:" on the allow list: off. warnPasswordForms, warnPaymentSkimmer and blockFakeSignInWindow run under that switch
+(switchable: false); blockObfuscatedEval is a Firewall protection again, "Outside safer regions" group (owner 2026-11-24, no level-5 strict script). 5.1.3: a page gets a RISK RATING from the points of its
 findings (× 1.5 on banking/payment pages): Critical/High warn in one window per page, Suspicious by level and safer
 regions (else only "?" on the toolbar badge), Low never. The password-form, skimmer and fake sign-in warnings keep
 their own warning and are also 100-point findings (rules with `ownWarning`): they count in the rating, the popup's
