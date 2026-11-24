@@ -6,6 +6,9 @@
  * no variables), in the order they used to run:
  *   browser-locker scams (alertbuster, dialogbuster, browser-locker) · ClickFix · notification prompts without a click ·
  *   fake payment handlers · custom protocol handlers.
+ * 5.1.5: the first support-scam sign (dialog loop, keyboard lock, fullscreen re-entry) is reported (LOCKER_SIGN_EVENT →
+ * the bridge → the red warning page); "Leave site?" is blocked only after such a sign (typing detector removed). The
+ * macOS Script Editor link check moved to security/scam-guard-mac.js, registered on a Mac only.
  * The ISOLATED-world half is security/scam-guard-bridge.js. Scope: level 2 and up on every site (the switch's); the
  * notification-prompt part used to start at level 3 outside safer regions (owner accepted the wider scope).
  *
@@ -47,10 +50,19 @@
             // target.toString.bind, both page-replaceable, and a replaced
             // bind would have been handed the original alert as `this`.
             const nativeToString = nativeAlert.toString.bind(nativeAlert);
+            // 5.1.5 (owner): an endless dialog loop is a support-scam sign — at DIALOG_SPAM_MIN dialogs this page
+            // dispatches LOCKER_SIGN_EVENT (= the same constant in the browser-locker part and in
+            // security/scam-guard-bridge.js, kept equal by tools/check-shipped-terms.mjs): the bridge opens the warning.
+            const LOCKER_SIGN_EVENT = '3pmcf-browser-locker';
+            const DIALOG_SPAM_MIN = 3;
+            const dispatch = EventTarget.prototype.dispatchEvent;
+            const EventCtor = Event;
+            let dialogs = 0;
             window.alert = new Proxy(nativeAlert, {
                 __proto__: null,
                 apply: function(target, thisArg, args) {
                     logInfo(LOG_PREFIX + ' alert blocked:', args[0]);
+                    if (++dialogs === DIALOG_SPAM_MIN) { try { Reflect.apply(dispatch, window, [new EventCtor(LOCKER_SIGN_EVENT)]); } catch { /* block stands */ } }
                 },
                 get(target, prop) {
                     if ( prop === 'toString' ) { return nativeToString; }
@@ -93,6 +105,12 @@
             // Object.prototype.get/apply and receive `target` itself.
             const reflectGet = Reflect.get;
             const logInfo = console.info.bind(console);
+            // 5.1.5: the dialog-loop sign, as in the alert part (same constants, kept equal by check-shipped-terms).
+            const LOCKER_SIGN_EVENT = '3pmcf-browser-locker';
+            const DIALOG_SPAM_MIN = 3;
+            const dispatch = EventTarget.prototype.dispatchEvent;
+            const EventCtor = Event;
+            let dialogs = 0;
             function _makeDialogProxy(native, returnValue, label) {
                 // Bound once, at install — see sec-alertbuster.js.
                 const nativeToString = native.toString.bind(native);
@@ -100,6 +118,7 @@
                     __proto__: null,
                     apply: function(target, thisArg, args) {
                         logInfo(LOG_PREFIX + ' ' + label + ' blocked:', args[0]);
+                        if (++dialogs === DIALOG_SPAM_MIN) { try { Reflect.apply(dispatch, window, [new EventCtor(LOCKER_SIGN_EVENT)]); } catch { /* block stands */ } }
                         return returnValue;
                     },
                     get(target, prop) {
@@ -126,8 +145,13 @@
  *   2. Fullscreen re-entry — after the user has left fullscreen, the page cannot enter it again until it reloads.
  *      Exception: a video player — the <video> itself, or a player element holding a video with a source; the
  *      whole page (html/body) never counts, so a scam cannot pass by containing a video somewhere.
- *   3. "Leave site?" — the prompt is allowed only after the user typed on the page (the real "unsaved changes"
- *      case). Covers event.preventDefault(), event.returnValue = … and window.onbeforeunload = () => "…".
+ *   3. "Leave site?" — 5.1.5 (owner, 2026-11-24): allowed as normal UNTIL the page shows a support-scam sign (an
+ *      endless dialog loop from the dialog parts above, a keyboard lock, forcing fullscreen again); from that moment
+ *      the prompt is blocked and LOCKER_SIGN_EVENT tells security/scam-guard-bridge.js, which has the service worker
+ *      send the tab to the red warning page (its button opens a new tab). The prompt must be off FIRST: Chrome lets a
+ *      page's "Leave site?" stop the extension's own redirect or tab close (tested 2026-11-24). Covers
+ *      event.preventDefault() (hooked on BeforeUnloadEvent only — every other event's preventDefault is untouched),
+ *      event.returnValue = … and window.onbeforeunload = () => "…". The 5.1.3 typing detector is gone.
  *   4. Back-button trap — history entries a page adds WITHOUT a click are counted; the user's first Back press on
  *      such a page skips all of them at once (the page's own popstate handlers do not run). No earlier entry →
  *      about:blank (a page cannot open the browser's new-tab page).
@@ -148,14 +172,13 @@
     // tools/check-shipped-terms.mjs.
     const LOG_PREFIX = '[3PMCF]';
     const NOT_ALLOWED = 'NotAllowedError';                       // DOMException name for a refused request
-    const BEFOREUNLOAD = 'beforeunload';
     const VIDEO_WITH_SOURCE = 'video[src], video > source[src]';   // a player holds a video that has a source
     const VIDEO_TAG = 'VIDEO';
     const PAGE_ROOT_TAGS = Object.freeze(['HTML', 'BODY']);       // the whole page is never "a video player"
     const LEAVE_URL = 'about:blank';                             // back-button trap with no earlier entry
     const NAVIGATE = 'navigate';                                 // Navigation API event, fired before popstate
     const TRAVERSE = 'traverse';                                 // NavigateEvent.navigationType of a Back/Forward step
-    const EDITABLE_TAGS = Object.freeze(['INPUT', 'TEXTAREA', 'SELECT']);
+    const LOCKER_SIGN_EVENT = '3pmcf-browser-locker';            // 5.1.5: = the dialog parts and the bridge
 
     // ── Captured builtins (C35) ──────────────────────────────────────────────
     const logInfo = console.info.bind(console);
@@ -167,9 +190,8 @@
     const elemQuery = Element.prototype.querySelector;
     const tagNameGet = getOwnPropertyDescriptor(Element.prototype, 'tagName').get;
     const fsElementGet = getOwnPropertyDescriptor(Document.prototype, 'fullscreenElement').get;
-    const editableGet = getOwnPropertyDescriptor(HTMLElement.prototype, 'isContentEditable').get;
-    const eventTypeGet = getOwnPropertyDescriptor(Event.prototype, 'type').get;
-    const eventTargetGet = getOwnPropertyDescriptor(Event.prototype, 'target').get;
+    const dispatch = EventTarget.prototype.dispatchEvent;
+    const EventCtor = Event;
     const historyGo = History.prototype.go;
     const historyLengthGet = getOwnPropertyDescriptor(History.prototype, 'length').get;
     const navigationApi = window.navigation || null;            // Chrome ≥ 102 (manifest minimum is higher)
@@ -187,11 +209,18 @@
 
     function refused(what) { logInfo(LOG_PREFIX + ' blocked ' + what); return new DOMExceptionCtor(what + ' blocked by 3P Matrix', NOT_ALLOWED); }
     function clickedNow() { return activationGet ? !!apply(activationGet, userActivation, []) : false; }
+    // 5.1.5: a support-scam sign seen here (keyboard lock, fullscreen re-entry) — the dialog parts dispatch the event
+    // themselves. The flag is set synchronously, before the bridge's message can lead to the redirect.
+    function scamSign() {
+        scamSeen = true;
+        try { apply(dispatch, window, [new EventCtor(LOCKER_SIGN_EVENT)]); } catch { /* the block stands */ }
+    }
+    apply(addListener, window, [LOCKER_SIGN_EVENT, function() { scamSeen = true; }, true]);
 
     // ── Page-local state (no history kept) ──────────────────────────────────
     let leftFullscreen = false;      // the user has left fullscreen at least once on this page
     let wasFullscreen = false;
-    let typed = false;               // the user typed into an editable field on this page
+    let scamSeen = false;            // 5.1.5: this page showed a support-scam sign (then "Leave site?" is blocked)
     let pushedWithoutClick = 0;      // history entries this page added without a click
     let userSteppedBack = false;     // the traversal now running is the user's own Back press (set by 'navigate')
 
@@ -199,7 +228,7 @@
     const keyboard = navigator.keyboard;
     if (keyboard && typeof keyboard.lock === 'function') {
         const proto = getPrototypeOf(keyboard);
-        proto.lock = new Proxy(proto.lock, { __proto__: null, apply: function() { return PromiseReject(refused('keyboard lock')); } });
+        proto.lock = new Proxy(proto.lock, { __proto__: null, apply: function() { scamSign(); return PromiseReject(refused('keyboard lock')); } });
     }
 
     // 2. Fullscreen re-entry ──────────────────────────────────────────────────
@@ -227,6 +256,7 @@
         const promiseApi = name === 'requestFullscreen';             // the webkit variants return nothing
         Element.prototype[name] = new Proxy(orig, { __proto__: null, apply: function(target, self, args) {
             if (leftFullscreen && !isVideoPlayer(self)) {
+                scamSign();                                                 // 5.1.5
                 const err = refused('fullscreen re-entry');
                 return promiseApi ? PromiseReject(err) : undefined;
             }
@@ -234,26 +264,21 @@
         } });
     }
 
-    // 3. "Leave site?" only after typing ──────────────────────────────────────
-    // 5.0.8 (C47): on window, capture, like every page-script listener (a page stopping it would only keep its own
-    // "Leave site?" prompt blocked — the safe side — but one rule for all listeners keeps the check simple).
-    apply(addListener, window, ['input', function(e) {
-        if (!e.isTrusted) return;
-        const t = apply(eventTargetGet, e, []);
-        try {
-            if (EDITABLE_TAGS.includes(apply(tagNameGet, t, [])) || apply(editableGet, t, [])) typed = true;
-        } catch { /* not an element */ }
-    }, true]);
-    function isBeforeUnload(ev) { try { return apply(eventTypeGet, ev, []) === BEFOREUNLOAD; } catch { return false; } }
-    Event.prototype.preventDefault = new Proxy(Event.prototype.preventDefault, { __proto__: null, apply: function(target, self, args) {
-        if (!typed && isBeforeUnload(self)) { logInfo(LOG_PREFIX + ' blocked "Leave site?" prompt'); return undefined; }
-        return apply(target, self, args);
-    } });
+    // 3. "Leave site?" — blocked only after a support-scam sign (5.1.5) ────────────────────────────────────────
+    // preventDefault is hooked on BeforeUnloadEvent.prototype only (an own property there, in front of Event's), so
+    // the countless other events of a page never pass through this code.
+    if (typeof BeforeUnloadEvent === 'function') {
+        defineProperty(BeforeUnloadEvent.prototype, 'preventDefault', { __proto__: null, configurable: true, writable: true,
+            enumerable: false, value: new Proxy(Event.prototype.preventDefault, { __proto__: null, apply: function(target, self, args) {
+                if (scamSeen) { logInfo(LOG_PREFIX + ' blocked "Leave site?" prompt'); return undefined; }
+                return apply(target, self, args);
+            } }) });
+    }
     const rvDesc = typeof BeforeUnloadEvent === 'function' ? getOwnPropertyDescriptor(BeforeUnloadEvent.prototype, 'returnValue') : null;
     if (rvDesc && rvDesc.set) {
         defineProperty(BeforeUnloadEvent.prototype, 'returnValue', { __proto__: null, configurable: true, enumerable: rvDesc.enumerable,
             get: rvDesc.get,
-            set: function(v) { if (!typed) { logInfo(LOG_PREFIX + ' blocked "Leave site?" prompt'); return; } apply(rvDesc.set, this, [v]); } });
+            set: function(v) { if (scamSeen) { logInfo(LOG_PREFIX + ' blocked "Leave site?" prompt'); return; } apply(rvDesc.set, this, [v]); } });
     }
     // window.onbeforeunload = () => "…": the handler's RETURN value shows the prompt — wrap the handler.
     let ownerOfHandler = window;
@@ -267,7 +292,7 @@
                 pageHandler = typeof fn === 'function' ? fn : null;
                 apply(handlerDesc.set, window, [pageHandler === null ? null : function(ev) {
                     const r = apply(pageHandler, this, [ev]);
-                    if (!typed) { if (r !== undefined) logInfo(LOG_PREFIX + ' blocked "Leave site?" prompt'); return undefined; }
+                    if (scamSeen) { if (r !== undefined) logInfo(LOG_PREFIX + ' blocked "Leave site?" prompt'); return undefined; }
                     return r;
                 }]);
             } });
@@ -340,10 +365,8 @@
               Ctrl+Shift+V, "verify you are human" …). The page text is read
               once, at that clipboard write only. Accepted false negative: a scam
               page with a weak payload and no such words gets through.
-   macOS Script Editor: a link to applescript:// opens Script Editor with a
-   script already filled in (a newer macOS variant) — a click on such a link,
-   or window.open() of one, is blocked the same way. Not covered: a page that
-   sets location.href to such an address itself (not hookable from a page script).
+   macOS Script Editor links (applescript://): 5.1.5 — security/scam-guard-mac.js,
+   registered on macOS only.
 
    4.7.0 — VISIBLE WARNING (was silent): the first block on a page dispatches
    CLICKFIX_BLOCKED_EVENT; the ISOLATED-world bridge (security/clickfix-bridge.js)
@@ -381,15 +404,11 @@
         const strToLowerCase = String.prototype.toLowerCase;
         const strIncludes = String.prototype.includes;
         const strReplace = String.prototype.replace;
-        const strTrimStart = String.prototype.trimStart;
         const toStr = String;
         const logWarn = console.warn.bind(console);
         const textContentGet = Object.getOwnPropertyDescriptor(Node.prototype, 'textContent').get;
-        const closest = Element.prototype.closest;
-        const getAttr = Element.prototype.getAttribute;
         const dispatch = EventTarget.prototype.dispatchEvent;
         const CustomEventCtor = CustomEvent;
-        const ElementCtor = Element;
         const doc = document;
 
         // ── CONFIG ───────────────────────────────────────────────────────
@@ -477,7 +496,6 @@
             'open the terminal', 'open powershell', 'verification steps',
         ];
         const PLUS_SPACING = /\s*\+\s*/g;
-        const APPLESCRIPT_SCHEME = 'applescript:';
 
         let warned = false;                  // guard: the warning is requested once per page
 
@@ -534,10 +552,6 @@
             catch { /* the block stands; only the warning is lost */ }
         }
 
-        function isAppleScriptUrl(u) {
-            const s = lower(reflectApply(strTrimStart, toStr(u ?? ''), []));
-            return reflectApply(strSlice, s, [ 0, APPLESCRIPT_SCHEME.length ]) === APPLESCRIPT_SCHEME;
-        }
 
         // ── 1. navigator.clipboard.writeText() ───────────────────────────
         const clipboard = navigator.clipboard;
@@ -596,25 +610,8 @@
             ev.stopImmediatePropagation();
         }, true);
 
-        // ── 4. macOS Script Editor links (4.7.0) ─────────────────────────
-        window.addEventListener('click', ev => {
-            const t = ev.target;
-            if ( !(t instanceof ElementCtor) ) { return; }
-            const a = reflectApply(closest, t, [ 'a[href]' ]);
-            if ( a === null || !isAppleScriptUrl(reflectApply(getAttr, a, [ 'href' ])) ) { return; }
-            blocked('applescript: link', 'link click');
-            ev.preventDefault();
-            ev.stopImmediatePropagation();
-        }, true);
-        if ( typeof window.open === 'function' ) {
-            window.open = new Proxy(window.open, {
-                __proto__: null,
-                apply(target, thisArg, args) {
-                    if ( isAppleScriptUrl(args[0]) ) { blocked('applescript: address', 'window.open'); return null; }
-                    return reflectApply(target, thisArg, args);
-                },
-            });
-        }
+        // ── 4. macOS Script Editor links: 5.1.5 (owner) moved to security/scam-guard-mac.js, registered on macOS
+        //       only (data/protections.js macScripts) — no click listener on other systems.
     } catch {
         // Never break the page: a protection that throws at document_start
         // would be worse than one that is absent.

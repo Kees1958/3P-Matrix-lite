@@ -225,8 +225,17 @@ async function registeredKey() {
   } catch (e) { console.warn(LOG_PREFIX, "getRegisteredContentScripts failed:", e); return null; }
 }
 
+// 5.1.5 — the operating system, asked once per service-worker life (data/protections.js macScripts). Guard: unknown
+// (null) when Chrome cannot say — the macOS-only files are then left out, never added by guess.
+let _os;                                                    // undefined = not asked yet
+async function platformOs() {
+  if (_os !== undefined) return _os;
+  try { _os = (await chrome.runtime.getPlatformInfo()).os || null; } catch { _os = null; }
+  return _os;
+}
+
 async function applyScripts(state) {
-  const wanted = buildScriptRegistrations(state);
+  const wanted = buildScriptRegistrations(state, { os: await platformOs() });
   const key = canonicalKey(wanted.map(scriptProjection));
   if (key === _scriptsKey) return wanted.length;            // unchanged since our last apply
   _scriptsKey = null;                                       // guard: unknown until verified below

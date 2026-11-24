@@ -35,7 +35,8 @@ const PROTECTION_FOR_KIND = Object.freeze({
   [PAGE_SCAM_KIND.CLICK_FIX]:       PROTECTION_KEY.BLOCK_CLICK_FIX,
   [PAGE_SCAM_KIND.CONSENT_FIX]:     PROTECTION_KEY.BLOCK_CONSENT_FIX,
   [PAGE_SCAM_KIND.PAYMENT_SKIMMER]: PROTECTION_KEY.WARN_PAYMENT_SKIMMER,  // 5.0.2 — C21 reuse, no other change needed
-  [PAGE_SCAM_KIND.SHARED_CODE]:     PROTECTION_KEY.BLOCK_SHARED_CODES     // 5.1.3 — never-share codes
+  [PAGE_SCAM_KIND.SHARED_CODE]:     PROTECTION_KEY.BLOCK_SHARED_CODES,    // 5.1.3 — never-share codes
+  [PAGE_SCAM_KIND.BROWSER_LOCKER]:  PROTECTION_KEY.BLOCK_DIALOG_SPAM      // 5.1.5 — a support-scam sign → warning page
 });
 
 const _opening = new Set();                       // tabIds whose warning is being opened (released in finally)

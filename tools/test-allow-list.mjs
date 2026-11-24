@@ -115,5 +115,22 @@ const CAT = A.ALLOW_CATEGORY;
   ok("D. … unticked: they are not", !stores.some((h) => DL.trustedDownloadDomains(s).includes(h)));
 }
 
+// ── P. 5.1.5: the popup's per-tab counts and the mac-only scam script ──
+{
+  const s = S.defaultState();
+  const lvl = C.LEVEL.SMART;
+  const VT_KEY = "a".repeat(64);                              // the VirusTotal key shape: 64 hex characters
+  const dl = (st) => POL.protectionCounts(st, lvl).download.active;
+  s.dns.first = C.DNS_NONE; s.dns.second = C.DNS_NONE; s.downloads.vtApiKey = "";
+  const base = dl(s);
+  s.dns.first = C.DEFAULT_DNS_FIRST;  ok("P. a DNS check that is on adds one to Download protection", dl(s) === base + 1, `${base} → ${dl(s)}`);
+  s.dns.second = C.DEFAULT_DNS_SECOND; ok("P. …the second DNS check another one", dl(s) === base + 2);
+  s.downloads.vtApiKey = VT_KEY;      ok("P. …and a VirusTotal key one more", dl(s) === base + 3);
+  ok("P. at most 6 download checks", dl(s) <= 6, String(dl(s)));
+  const macJs = (os) => B.buildScriptRegistrations(S.defaultState(), { os }).flatMap((r) => r.js || []);
+  ok("P. the Script Editor link check is registered on a Mac", macJs(C.PLATFORM_OS_MAC).includes("security/scam-guard-mac.js"));
+  ok("P. …and not on Windows", !macJs("win").includes("security/scam-guard-mac.js"));
+}
+
 console.log(failures ? `test-allow-list: FAIL — ${failures} case(s)` : "test-allow-list: ALL PASS");
 process.exit(failures ? EXIT.FAILED : EXIT.OK);

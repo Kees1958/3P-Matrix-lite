@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ── tools/e2e-page-protections.mjs ───────────────────────────────────────────────
 // Real-Chromium test (4.6.0) for the new page-level protections — behaviour only a browser shows:
-//   blockDialogSpam (browser-locker): keyboard lock refused; fullscreen re-entry refused after the
+//   blockDialogSpam (browser-locker, 5.1.5: a sign → the red warning page): keyboard lock refused; fullscreen re-entry refused after the
 //     user left fullscreen (video player excepted) — also when the page stops fullscreenchange in the window
 //     capture phase (5.0.8, C47); "Leave site?" only after typing; back-button trap skipped
 //     (to the previous website, or about:blank when there is none) — and nothing kept between pages;
@@ -35,6 +35,7 @@ const SW_SETTLE_MS = 1500;                          // first rule/script apply a
 const APPLY_SETTLE_MS = 1500;                       // a level/protection change re-registers scripts
 const HOLD_CHECK_MS = 1500;                         // a held form must NOT have navigated within this time
 const NAV_TIMEOUT_MS = 10000;
+const POLL_STEP_MS = 200;                            // 5.1.5: polling the tab address for the warning page
 const PUSHED_ENTRIES = 5;                           // fake history entries the trap page adds without a click
 const DIALOG_ENTRIES = 1;                            // a site's own dialog entry (cookie banner), added on load without a click (5.0.4)
 const DIALOG_CLOSE = Object.freeze({ HISTORY: "history", NAVIGATION: "navigation" });   // the two ways a page steps back itself
@@ -89,6 +90,10 @@ function buildPages(port) {
     </script>`,
   "/leave": `<!doctype html><title>leave</title><input id="t"><button id="b">click</button>
     <script>window.onbeforeunload = () => "Changes you made may not be saved";</script>`,
+  // 5.1.5 — a fake "your computer is infected" page: "Leave site?" armed, then a dialog loop (a support-scam sign).
+  "/support-scam": `<!doctype html><title>infected</title><button id="b">click</button>
+    <script>window.onbeforeunload = () => "Do not leave";
+      document.getElementById("b").onclick = () => { for (let i = 0; i < 5; i++) alert("Your computer is infected! Call now"); };</script>`,
   "/trap": `<!doctype html><title>trap</title><p>trap
     <script>for (let i = 0; i < ${PUSHED_ENTRIES}; i++) history.pushState({ i }, "", "#t" + i);
       addEventListener("popstate", () => history.pushState({}, "", "#again"));</script>`,
@@ -105,6 +110,17 @@ function buildPages(port) {
       document.getElementById("b").onclick = () => Notification.requestPermission().then((r) => window.__clicked = r);</script>`,
   "/form-other": `<!doctype html><title>login</title><form id="f" method="post" action="${other("/collect")}">
     <input name="u" value="me"><input id="pw" type="password" name="p"><button id="go">Sign in</button></form>`,
+  // 5.1.5 (user report, Ziggo GO): a single-page app signs in with its own submit handler, which removes the form at
+  // once, and re-renders right after the click. Its handler must run and nothing may be re-sent afterwards. Known
+  // limit: the original error needs a SLOW answer from the service worker (asleep); in the lab it answers within a
+  // millisecond, so the 5.1.3 code passes this case too — it guards the same-host pass-through, not the timing.
+  "/form-spa": `<!doctype html><title>login</title><form id="f" action=""><input id="pw" type="password">
+    <button id="go">Sign in</button></form><p id="state">start</p>
+    <script>document.getElementById("f").addEventListener("submit", (e) => { e.preventDefault();
+      window.handledAt = performance.now(); document.getElementById("f").remove();
+      document.getElementById("state").textContent = "signed-in"; });
+      document.getElementById("go").addEventListener("click", () => setTimeout(() => {   // re-render, as SPAs do
+        const f = document.getElementById("f"); if (f) f.replaceWith(f.cloneNode(true)); }, 0));</script>`,
   "/form-same": `<!doctype html><title>login</title><form method="post" action="/done">
     <input id="pw" type="password" name="p"><button id="go">Sign in</button></form>`,
   "/form-nopw": `<!doctype html><title>search</title><form action="${other("/search")}"><input id="q" name="q"><button id="go">Search</button></form>`,
@@ -169,10 +185,23 @@ try {
     return pg;
   }
 
+  // 5.1.5 (owner): a support-scam sign sends the tab to the red warning page (reason browserLocker).
+  const LOCKER_REASON = (await import(pathToFileURL(join(EXT, "data/page-scam-reasons.js")).href)).PAGE_SCAM_KIND.BROWSER_LOCKER;
+  async function lockerWarned(p) {
+    for (let t = 0; t < NAV_TIMEOUT_MS; t += POLL_STEP_MS) {
+      try { const u = new URL(p.url()); if (u.pathname.endsWith(C.WARNING_PAGE.split("/").pop()) && u.searchParams.get(C.WARNING_REASON_PARAM) === LOCKER_REASON) return true; }
+      catch { /* not yet */ }
+      await sleep(POLL_STEP_MS);
+    }
+    return false;
+  }
+
   // ── blockDialogSpam: keyboard lock ──
   let pg = await open(HOST_A, "/locker");
   const kl = await pg.evaluate(() => navigator.keyboard.lock().then(() => "locked", (e) => e.message));
   ok("browser-locker: keyboard lock refused by 3P Matrix", /3P Matrix/.test(kl), kl);
+  ok("5.1.5: …and the page goes to the red warning page (support-scam sign)", await lockerWarned(pg), pg.url());
+  await pg.close();
 
   // ── blockDialogSpam: fullscreen re-entry ──
   // Enter, leave, enter again; returns [first, again] — the page's own result strings.
@@ -182,23 +211,44 @@ try {
     await p.evaluate(() => document.exitFullscreen());
     await p.waitForFunction(() => !document.fullscreenElement);
     await p.evaluate(() => { window.__fs = undefined; });
-    await p.click("#fs"); await p.waitForFunction(() => window.__fs, null, { timeout: NAV_TIMEOUT_MS });
-    return [first, await p.evaluate(() => window.__fs)];
+    await p.click("#fs");
+    // 5.1.5: the refusal is a support-scam sign — the tab may already be on the warning page (LEFT_PAGE) before the
+    // page's own result can be read.
+    const again = await p.waitForFunction(() => window.__fs, null, { timeout: NAV_TIMEOUT_MS })
+      .then(() => p.evaluate(() => window.__fs)).catch(() => LEFT_PAGE);
+    return [first, again];
   }
-  const [first, again] = await fullscreenTwice(pg);
-  ok("browser-locker: fullscreen allowed the first time", first === "in", first);
-  ok("browser-locker: fullscreen re-entry after leaving it is refused", /3P Matrix/.test(again), again);
-  {
-    const hp = await open(HOST_A, "/locker-hostile");
-    const [, hostileAgain] = await fullscreenTwice(hp);
-    ok("browser-locker: re-entry refused even when the page stops fullscreenchange (C47)", /3P Matrix/.test(hostileAgain), hostileAgain);
-    await hp.close();
-  }
+  const LEFT_PAGE = "(left for the warning page)";
+  const refusedOrLeft = (r) => /3P Matrix/.test(r) || r === LEFT_PAGE;
+  pg = await open(HOST_A, "/locker");                                      // a video player first: always allowed
   await pg.click("#vfs"); await pg.waitForFunction(() => window.__vfs, null, { timeout: NAV_TIMEOUT_MS });
   ok("browser-locker: a video player may still go fullscreen", (await pg.evaluate(() => window.__vfs)) === "in", await pg.evaluate(() => window.__vfs));
   await pg.close();
+  pg = await open(HOST_A, "/locker");
+  const [first, again] = await fullscreenTwice(pg);
+  ok("browser-locker: fullscreen allowed the first time", first === "in", first);
+  ok("browser-locker: fullscreen re-entry after leaving it is refused", refusedOrLeft(again), again);
+  ok("5.1.5: …and the page goes to the red warning page", await lockerWarned(pg), pg.url());
+  await pg.close();
+  {
+    const hp = await open(HOST_A, "/locker-hostile");
+    const [, hostileAgain] = await fullscreenTwice(hp);
+    ok("browser-locker: re-entry refused even when the page stops fullscreenchange (C47)", refusedOrLeft(hostileAgain), hostileAgain);
+    await hp.close();
+  }
 
-  // ── blockDialogSpam: "Leave site?" only after typing ──
+  // ── 5.1.5: a support-scam page with "Leave site?" armed and a dialog loop ──
+  {
+    const sp = await open(HOST_A, "/support-scam");
+    let prompted = false;
+    sp.on("dialog", (d) => { if (d.type() === "beforeunload") prompted = true; d.dismiss().catch(() => {}); });
+    await sp.click("#b");                                                  // sticky activation + the dialog loop
+    ok("5.1.5: a dialog loop sends the page to the warning page, its \"Leave site?\" does not stop it",
+       (await lockerWarned(sp)) && !prompted, { url: sp.url(), prompted });
+    await sp.close();
+  }
+
+  // ── blockDialogSpam: "Leave site?" on an ordinary page (5.1.5: untouched until a scam sign) ──
   async function leavePrompted(type) {
     const p = await open(HOST_A, "/leave");
     await p.click("#b");                                                   // sticky activation, as on a scam page
@@ -212,7 +262,7 @@ try {
   // 5.1.3: blockRedirectsDialogs sandboxes FRAMES only — before, the top page was sandboxed too (without allow-modals),
   // which made Chrome suppress every "Leave site?" prompt from level 3 outside safer regions. These cases run at
   // level 3 (the test hosts are outside safer regions), where the frames block is on: the site's own prompt survives.
-  ok("browser-locker: no \"Leave site?\" when nothing was typed", !(await leavePrompted(false)));
+  ok("5.1.5: an ordinary page keeps its own \"Leave site?\" (no scam sign), typed or not", await leavePrompted(false));
   ok("level 3 (frames sandboxed): \"Leave site?\" still shown after typing (unsaved changes)", await leavePrompted(true));
 
   // ── blockDialogSpam: back-button trap ──
@@ -284,6 +334,14 @@ try {
   await pg.fill("#pw", PASSWORD); await pg.click("#go");
   await pg.waitForURL((u) => u.pathname === "/done", { timeout: NAV_TIMEOUT_MS }).catch(() => {});
   ok("password form: same site → sent at once", new URL(pg.url()).pathname === "/done", pg.url());
+  await pg.close();
+  pg = await open(HOST_A, "/form-spa");
+  const errors = [];
+  pg.on("console", (m) => { if (/not connected/i.test(m.text())) errors.push(m.text()); });
+  await pg.fill("#pw", PASSWORD); await pg.click("#go");
+  await sleep(HOLD_CHECK_MS);
+  ok("5.1.5: a single-page app's own sign-in handler runs and removes its form — no 'form is not connected' error",
+     (await pg.textContent("#state")) === "signed-in" && errors.length === 0, { state: await pg.textContent("#state"), errors });
   await pg.close();
   pg = await open(HOST_A, "/form-nopw");
   await pg.fill("#q", "x"); await pg.click("#go");

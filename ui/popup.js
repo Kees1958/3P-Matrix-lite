@@ -60,36 +60,46 @@ async function act(type, extra, { reloadTab = false } = {}) {
 }
 
 // ── Active policy bullets (fixed order: allow · level-specific · block) ─────
-// Every protection (incl. suspicious-site warnings and the abused-TLD block) is counted in `n`
-// and gets no bullet of its own. Every count comes from the view model (registry-derived) —
+// 5.1.5: the protections are counted per tab (tabLines); none gets a bullet of its own. Every count comes from the view model (registry-derived) —
 // never a number typed into the text (C39a).
 // 4.2: levels 3–5 target 3P scripts + frames only; images/video/fonts/CSS are never blocked.
 function countText(active, total) {
   return active === total ? String(total) : `${active} of ${total}`;
 }
 
+// 5.1.5 (owner): one line per Protections-page tab, a number after each (core/policy.js protectionCounts); a switched-
+// off tab says "off". Switches and trigger ticks are not protections and are not counted.
+const OFF_TEXT = "off";
+function tabLines(m, c, withOutside) {
+  const t = m.counts;
+  const fw = withOutside ? ` (${countText(t.firewall.outside.active, t.firewall.outside.total)} outside safer regions)` : "";
+  return [
+    { c, t: `Firewall protection: ${countText(t.firewall.active, t.firewall.total)}${fw}` },
+    { c: t.download.on ? c : NEUTRAL_COLOR, t: `Download protection: ${t.download.on ? t.download.active : OFF_TEXT}` },
+    { c: t.scam.on ? c : NEUTRAL_COLOR, t: `Scam protection: ${t.scam.on ? t.scam.active : OFF_TEXT}` },
+    { c: t.tamper.on ? c : NEUTRAL_COLOR, t: `Tamper protection: ${t.tamper.on ? `${t.tamper.signs} signs` : OFF_TEXT}` }
+  ];
+}
+
 function bulletsFor(m) {
   const c = m.levelInfo[m.level - 1].color;
-  const n = `${countText(m.counts.active, m.counts.total)} protections`;
-  const outside = m.counts.outside;   // 5.1.0: counted by scope (core/policy.js protectionCounts), groups are per tab now
   // Derived from the whitelist's own categories (4.5.6: BUILTIN_SUMMARY — it used to be a typed copy).
   const builtin = { c: ALLOW_COLOR, t: `Trusted: ${BUILTIN_SUMMARY.join(LIST_SEPARATOR)}` };
   switch (m.level) {
     case LEVEL.ALLOW_ALL: return [{ c: NEUTRAL_COLOR, t: "All traffic allowed — no protections" }];
-    case LEVEL.MILD: return [
-      { c, t: `${n} active` }];
+    case LEVEL.MILD: return tabLines(m, c, false);
     case LEVEL.SMART: return [
       builtin,
       { c: ALLOW_COLOR, t: `3P code from ${m.safeZone.tlds.length} safer-region TLDs allowed` },
-      { c, t: `${n} (${countText(outside.active, outside.total)} outside safer regions)` },
+      ...tabLines(m, c, true),
       { c: BLOCK_COLOR, t: "Other 3P scripts & frames blocked" }];
     case LEVEL.HIGH: return [
       builtin,
       { c, t: "3P code from “cdn” hosts allowed" },
-      { c, t: `${n} active` },
+      ...tabLines(m, c, false),
       { c: BLOCK_COLOR, t: "Other 3P scripts & frames blocked" }];
     default: return [
-      { c, t: `${n} active` },
+      ...tabLines(m, c, false),
       { c: BLOCK_COLOR, t: "All 3P scripts & frames blocked — no exceptions" }];
   }
 }

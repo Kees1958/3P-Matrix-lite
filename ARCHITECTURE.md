@@ -111,7 +111,8 @@ data/
 core/
   policy.js              pure: effective level, active protections, rule groups
   rule-builder.js        pure: state → dynamic DNR rules
-  script-builder.js      pure: state → content-script registrations
+  script-builder.js      pure: state → content-script registrations (5.1.5: + a protection's macScripts only when
+                         the platform is macOS — apply-manager reads chrome.runtime.getPlatformInfo once)
   apply-manager.js       the only module that writes rules/scripts to Chrome (serialized, regex-validated)
   site-scorer.js         stage 1: local heuristics (DownloadSentinel modules)
   online-checks.js       stage 2: RDAP domain age + two DoH threat-intel resolvers, two of five (timeouts, cache)
@@ -119,7 +120,8 @@ core/
                          Download = trusted download hosts, Firewall/Scam/Tamper = state.allowCategories)
   matrix-overrides.js    Show Matrix overrides — set / clear, always global (pure)
   matrix-windows.js      Show Matrix panel windows — open, focus, close with tab/timeout
-  view-models.js         the data each page receives (popup, Show Matrix, options)
+  view-models.js         the data each page receives (popup, Show Matrix, options); 5.1.5: the popup's per-tab
+                         "Active policy" counts come from policy.js protectionCounts(state, level)
   navigation-guard.js    warnSuspiciousSites: top-level navigation check → warning dialog; "continue once"
   exfil-guard.js         blockExfilMessagingBots/blockExfilWebServices (4.6.0): a blocked exfiltration request opens the warning dialog with its channel
   tamper-guard.js        5.1.0 Tamper Guard decisions: per-tab state machine (standby/enhanced/cooldown), banking/payment
@@ -143,7 +145,8 @@ core/
   tab-sites.js           per-tab top-level host — stand-in for opaque ("null") initiators
   safer-regions.js, tld-engine.js   safer-regions computation (3P-Matrix-lite engine)
 security/                content scripts (MAIN world) — uBlock Stripped Dynamic 10.2.1; 5.1.3: scam-guard-page.js (MAIN)
-                         + scam-guard-bridge.js (ISOLATED) bundle Scam protection, sec-no-eval-strict.js (level 5); 4.6.0:
+                         + scam-guard-bridge.js (ISOLATED) bundle Scam protection (5.1.5: + scam-guard-mac.js, the
+                         Script Editor link check, registered on macOS only), sec-no-eval-strict.js (level 5); 4.6.0:
                          sec-browser-locker.js (3), sec-form-submit-hook.js + password-form-guard.js (14, the
                          guard runs in the ISOLATED world), sec-notification-prompts.js (18); 5.1.0:
                          tamper-guard-page.js (MAIN: baseline + outer wrappers) + tamper-guard-bridge.js (ISOLATED:

@@ -43,7 +43,8 @@ const SCAN_EXTENSIONS = Object.freeze([".js", ".html", ".css", ".json", ".md"]);
 const PREFIX_DECL_RE = /const\s+LOG_PREFIX\s*=\s*(['"])(.*?)\1\s*;/;
 const LOGS_TO_CONSOLE_RE = /\bconsole\.(?:log|info|warn|error|debug)\b/;
 const MSG_DECL_RE = /const\s+(MSG_[A-Z0-9_]+)\s*=\s*(['"])(.*?)\2\s*;/g;               // 4.6.0
-const SHARED_SCRIPT_CONSTS = Object.freeze(["PASSWORD_SUBMIT_EVENT", "PASSWORD_SELECTOR", "SKIMMER_BLOCKED_EVENT"]); // 4.6.0/5.0.2: copies across security/ files
+const SHARED_SCRIPT_CONSTS = Object.freeze(["PASSWORD_SUBMIT_EVENT", "PASSWORD_SELECTOR", "SKIMMER_BLOCKED_EVENT",
+  "CLICKFIX_BLOCKED_EVENT", "LOCKER_SIGN_EVENT", "DIALOG_SPAM_MIN"]); // 4.6.0/5.0.2, 5.1.5: copies across security/ files
 // Obfuscation-threshold copies (finding 3 above): file name → inline constant name → the
 // util/ObfuscationShape.js OBFUSCATION_CONFIG key it must equal.
 const OBFUSC_SHAPE_FILES = Object.freeze(

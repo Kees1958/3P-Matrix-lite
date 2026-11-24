@@ -3,6 +3,13 @@
 (Started with 4.5.4: earlier docs packages carried no CHANGELOG.md. Technical detail for 4.5.4 is in
 PERF_4.5.3_chrome_engine_and_proposals.md section 6 and the principles doc, v13.)
 
+## 5.1.5
+- **Fixed: "Form submission canceled because the form is not connected" listed under 3P Matrix** (seen on Ziggo GO). The password-form check held every sign-in form for a moment; a site that rebuilds its page meanwhile lost the form. Now a sign-in form that sends to the site's own address is never held — only a form that sends your password to another site is checked, as before.
+- **Fake "your PC is infected" pages now go straight to the red warning page** at the first sign: a loop of dialogs, a keyboard lock, or going fullscreen again after you left it. The warning page's button opens a new tab. Such a page can no longer hold you with "Leave site?". An ordinary page keeps its own "Leave site?" — 3P Matrix no longer watches what you type to decide this.
+- **Scam protection is lighter on Windows, Linux and ChromeOS:** the check for links that open the macOS Script Editor is loaded on a Mac only (decided once when the extension starts).
+- **Clearer XSS texts:** the Scam protection "Warn about links with hidden code (XSS)" and the tamper sign "Cross-site scripting (XSS)", each with a plain explanation; the XSS warning page explains it the same way.
+- **The popup's "Active policy" lists each tab with numbers:** Firewall protection with how many protections are on (and how many of them outside safer regions at level 3), Download protection with the checks a download gets (its own protections, each DNS check that is on, the heuristics, and VirusTotal once you entered a key — at most 6) or off, Scam protection with its number or off, Tamper protection with its number of signs or off.
+
 ## 5.1.4
 - **New tamper sign: a wallet's recovery phrase sent to another site.** When you type the 12 or 24 words of a crypto wallet's recovery phrase on a page tamper protection watches, and the page sends them to another site, you get a Critical warning at once — whoever has those words owns the wallet.
 - **Crypto words start close watching too:** "wallet", "bitcoin", "crypto", "metamask" and similar words in the address — this time also in the site's own name — make tamper protection watch the page (tick "Enable on pages with checkout and payment keywords").

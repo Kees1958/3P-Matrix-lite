@@ -39,8 +39,20 @@
     const MSG_PAGE_SCAM_BLOCKED = 'PAGE_SCAM_BLOCKED';
     const CLICKFIX_BLOCKED_EVENT = '3pmcf-clickfix-blocked';
     const PAGE_SCAM_CLICK_FIX = 'clickFix';
+    // 5.1.5 — a support-scam sign (security/scam-guard-page.js LOCKER_SIGN_EVENT: dialog loop, keyboard lock, fullscreen
+    // re-entry) → the red warning page; PAGE_SCAM_BROWSER_LOCKER = data/page-scam-reasons.js PAGE_SCAM_KIND.BROWSER_LOCKER.
+    const LOCKER_SIGN_EVENT = '3pmcf-browser-locker';
+    const PAGE_SCAM_BROWSER_LOCKER = 'browserLocker';
 
     let sent = false;                                    // guard: one warning request per page
+    let lockerSent = false;                              // 5.1.5: the same for the browser-locker warning
+
+    window.addEventListener(LOCKER_SIGN_EVENT, () => {
+        if (lockerSent) return;
+        lockerSent = true;
+        chrome.runtime.sendMessage({ type: MSG_PAGE_SCAM_BLOCKED, kind: PAGE_SCAM_BROWSER_LOCKER })
+            .catch((err) => console.warn(LOG_PREFIX, 'browser-locker warning could not be opened', err));
+    }, true);
 
     window.addEventListener(CLICKFIX_BLOCKED_EVENT, () => {
         if (sent) return;
