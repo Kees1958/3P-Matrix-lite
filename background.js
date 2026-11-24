@@ -12,26 +12,35 @@
 //                      tab band rebuilt from the open tabs (the in-memory assignment is lost on a restart)
 //
 // Events
-//   webNavigation.onBeforeNavigate (top frame) → stage 1 site check → warning dialog (warnSuspiciousSites);
-//                                                tab band: the tab joins/leaves its site lock's band (4.4.5)
-//   webNavigation.onCommitted (top frame)      → reset badge count, per-tab icon, tab band (after redirects)
-//   webRequest.onErrorOccurred                 → count OUR blocks per tab (rule-matcher attribution)
+//   webRequest.onBeforeRequest (main_frame)    → 5.1.3: ONE listener for a new top-level page: tab band (4.4.5), then
+//                                                one warning per navigation — XSS link first, else the stage 1 site
+//                                                check (warnSuspiciousSites). (webNavigation.onBeforeNavigate: gone)
+//   webNavigation.onCommitted (top frame)      → tamper mark reset, per-tab icon, tab band (after redirects)
+//   webRequest.onErrorOccurred (exfiltration hosts only) → the exfiltration warning (rule-matcher attribution);
+//                                                5.1.3: no blocked-request counting — the popup asks Chrome
+//                                                (getMatchedRules, activeTab) when it opens
+//   webRequest.onBeforeRequest (device sign-in pages only) → device-code warning (4.7.0)
 //   tabs.onRemoved / windows.onRemoved         → release per-tab state, matrix panels and download
 //                                                warning windows (guards)
-//   downloads.onCreated / onChanged / onErased → warnRiskyDownloads + blockRiskyDownloads (core/download-guard.js)
+//   downloads.onCreated / onChanged / onErased → warnRiskyDownloads + blockRiskyDownloads (core/download-guard.js);
+//                                                5.1.3: the page's click flag asked at every download start
+//   Tamper Guard (5.1.0)                       → page reports via the router (core/tamper-guard.js); onCommitted starts
+//                                                a tracked tab's new page; tabs/windows.onRemoved release its window;
+//                                                5.1.3: the password-form, skimmer and fake sign-in decisions are also
+//                                                recorded as tamper findings (Tamper.recordOwnWarning)
 //   alarms.onAlarm                             → stale download-check sweep
 //
 // All state mutations go through mutate(): load → change → save → apply, run
 // under withStateLock() so two messages can never interleave.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { LEVEL, LEVEL_INFO, LOG_PREFIX, SEVERITY, MATRIX_SCOPE, MATRIX_ACTION, WARNING_PAGE, WARNING_TARGET_PARAM, WARNING_REASON_PARAM,
+import { LEVEL_INFO, LOG_PREFIX, SEVERITY, MATRIX_SCOPE, MATRIX_ACTION, WARNING_PAGE, WARNING_TARGET_PARAM, WARNING_REASON_PARAM, WARNING_REFERRER_PARAM,
          CHROME_BLOCKED_BY_CLIENT_ERROR, CHROME_NEW_TAB_URL, DOWNLOAD_WARNING_PAGE, DOWNLOAD_BLOCKED_PAGE, DOWNLOAD_ID_PARAM,
-         DECIMAL_RADIX, RT } from "./data/constants.js";
+         DECIMAL_RADIX, RT, TAMPER_WARNING_PAGE, TAMPER_WARNING_ID_PARAM } from "./data/constants.js";
 import * as M from "./data/message-types.js";
 import { defaultState, loadState, saveState, normalizeState, withStateLock, isValidHost, parseLevel } from "./data/state-storage.js";
 import { PROTECTION_BY_KEY, PROTECTION_KEY } from "./data/protections.js";
-import { PAGE_SCAM_REASON_BY_ID, PAGE_SCAM_KIND, LEAVE } from "./data/page-scam-reasons.js";
+import { PAGE_SCAM_REASON_BY_ID, PAGE_SCAM_KIND, LEAVE, ALLOW_FROM } from "./data/page-scam-reasons.js";
 import { DEVICE_CODE_URL_PATTERNS } from "./data/device-code-pages.js";
 import { effectiveLevel } from "./core/policy.js";
 import { applyState, applySessionRules, getCompiledRules } from "./core/apply-manager.js";
@@ -39,13 +48,15 @@ import { matchOutcome } from "./core/rule-matcher.js";
 import { computeSaferRegions, editSaferRegions } from "./core/safer-regions.js";
 import { scoreLocal } from "./core/site-scorer.js";
 import { evaluateSite, clearScoreCache } from "./core/online-checks.js";
-import { popupModel, matrixModel, optionsModel } from "./core/view-models.js";
-import { lockSite, toggleLock, parseAllowListText, replaceAllowList } from "./core/site-locks.js";
+import { popupModel, matrixModel, optionsModel, firewallBlockCount } from "./core/view-models.js";
+import { toggleLock, parseAllowListText, replaceAllowList, addToAllowList } from "./core/site-locks.js";
 import { setMatrixOverride } from "./core/matrix-overrides.js";
 import { openMatrixPanel, closeMatrixPanel, onWindowRemoved } from "./core/matrix-windows.js";
 import * as Badge from "./core/badge.js";
 import * as Guard from "./core/navigation-guard.js";
 import * as DeviceCode from "./core/device-code-guard.js";          // 4.7.0 — warnDeviceCodePages
+import { EXFIL_URL_PATTERNS } from "./data/exfil-channels.js";   // 5.1.3 — the exfiltration listener's filter
+import * as XssLink from "./core/xss-link-guard.js";                // 5.1.2 — warnXssLinks
 import { senderKind, isMessageAllowed, senderLabel } from "./core/message-gate.js";   // 5.0.6 — C46 sender kinds
 import * as PageScam from "./core/page-scam-guard.js";               // 4.7.0 — ClickFix / ConsentFix → warning
 import * as BrowserUpdate from "./core/browser-update.js";           // 4.7.0 — Chrome out-of-date band
@@ -58,6 +69,11 @@ import { leaveSite } from "./core/leave-site.js";               // 4.6.0 — "Go
 import { passwordFormDecision, fakeWindowDecision } from "./core/password-form.js"; // 4.6.0 warnPasswordForms; 4.7.0 blockFakeSignInWindow
 import { applyDownloadSettings, setVtKey, dismissVtKeyPrompt } from "./core/download-settings.js";
 import { toSettingsFile, fromSettingsFile, summarize } from "./data/settings-io.js";
+import * as Tamper from "./core/tamper-guard.js";                 // 5.1.0 — Tamper Guard decisions
+Tamper.setMarkSink(Badge.setTamperRating);                        // 5.1.3 — the page's tamper rating on the badge ("?" / "!")
+Badge.init();                                                      // 5.1.3 — every SW start: Chrome's own block count, grey
+import * as TamperWarnings from "./core/tamper-warnings.js";      // 5.1.0 — its warning windows
+import { ALLOW_CATEGORY } from "./data/allow-categories.js";
 import { parseHttpUrl, registeredDomain } from "./util/domain.js";
 
 // ── Core helpers ─────────────────────────────────────────────────────────────
@@ -124,46 +140,53 @@ loadState().then(async (state) => { await TabLocks.rebuild(state); await applySe
   .catch((e) => console.error(LOG_PREFIX, "tab band init:", e));
 
 // ── Navigation / request events (registered synchronously at top level) ─────
-chrome.webNavigation.onBeforeNavigate.addListener((details) => {
-  if (details.frameId !== 0) return;
+// 5.1.3 — ONE listener for the start of a new top-level page (webRequest, main_frame only; webNavigation.onBeforeNavigate
+// fired for every frame of every page): the tab band, then one warning per navigation — the XSS-link warning first
+// (more specific, names the site that sent you), else the suspicious-site check (issue: two redirects used to race).
+// The XSS pre-check runs before the state is loaded, as before.
+chrome.webRequest.onBeforeRequest.addListener((details) => {
+  if (details.tabId < 0) return;
   syncTabBand(details.tabId, details.url);              // before the page creates its frames
-  loadState().then((state) => Guard.checkNavigation(details, state))
-    .catch((e) => console.error(LOG_PREFIX, "navigation check:", e));
-});
+  const mayBeXss = XssLink.mayBeXssLink(details);
+  loadState().then(async (state) => {
+    const xssWarned = mayBeXss ? await XssLink.onXssLinkRequest(details, state) : false;
+    await Guard.checkNavigation(details, state, !xssWarned);   // main_frame: frameId 0
+  }).catch((e) => console.error(LOG_PREFIX, "navigation check:", e));
+}, { urls: ["<all_urls>"], types: ["main_frame"] });
 
 chrome.webNavigation.onCommitted.addListener((details) => {
   if (details.frameId !== 0) return;
   syncTabBand(details.tabId, details.url);              // final URL, after redirects
-  Badge.resetCount(details.tabId);
+  Badge.resetPage(details.tabId);                       // 5.1.3: the tamper mark belongs to the page
   const p = parseHttpUrl(details.url);
   TabSites.setTopHost(details.tabId, p ? p.host : "");
   Matrix.clearOnNavigation(details.tabId, p ? p.host : "");
+  Tamper.onCommitted(details.tabId, details.url);       // 5.1.0 — a tracked tab's new page (cooldown or standby)
   if (!p) return;
   Badge.clearRiskIfOtherSite(details.tabId, registeredDomain(p.host));
   loadState().then((state) => Badge.setLevelIcon(effectiveLevel(state, p.host), details.tabId))
     .catch((e) => console.error(LOG_PREFIX, "tab icon:", e));
 });
 
-function onRequestError(details) {
-  if (details.error !== CHROME_BLOCKED_BY_CLIENT_ERROR || details.type === "main_frame" || details.tabId < 0) return;
-  // Chrome reports ERR_BLOCKED_BY_CLIENT for blocks by ANY extension — the badge counts only
-  // the requests our own rules block (core/rule-matcher.js replays DNR matching; an opaque
-  // "null" initiator is matched as the tab's own site, as Chrome does).
+// 5.1.3 — the exfiltration warning only: a request to one of the exfiltration channels' hosts that was blocked (by
+// any extension — rule-matcher.js replays OUR rules to be sure it was ours). Filtered to those hosts, so the service
+// worker no longer wakes for every failed request on every page (the 5.1.2 blocked-request count is gone: the
+// popup asks Chrome when it opens, core/view-models.js).
+function onExfilRequestError(details) {
+  if (details.error !== CHROME_BLOCKED_BY_CLIENT_ERROR || details.tabId < 0) return;
   Promise.all([getCompiledRules(), TabSites.topHostOf(details.tabId)]).then(([compiled, topHost]) => {
     const outcome = matchOutcome(compiled, details, topHost);
-    if (outcome.action !== "block") return;
-    Badge.noteBlocked(details.tabId);
-    return Exfil.onBlockedRequest(details.tabId, outcome.ruleId);   // 4.6.0: an exfiltration block also opens the warning
-  }).catch((e) => console.warn(LOG_PREFIX, "block attribution failed:", e));
+    if (outcome.action === "block") return Exfil.onBlockedRequest(details.tabId, outcome.ruleId);
+    return null;
+  }).catch((e) => console.warn(LOG_PREFIX, "exfiltration block attribution failed:", e));
 }
-// 4.5.4 (perf P6): the `types` filter makes Chrome drop main-frame errors before they cross to the
-// service worker (fewer wake-ups and events). Guard: a Chrome that does not know one of the types throws
-// here — then listen without it (the main_frame check above still applies), never without a listener.
+// Guard (as before 5.1.3): a Chrome that does not know one of the types throws here — then listen without the type
+// filter (still only the exfiltration hosts), never without a listener and never aborting the worker's start.
 try {
-  chrome.webRequest.onErrorOccurred.addListener(onRequestError, { urls: ["<all_urls>"], types: [...RT.ALL_SUB] });
+  chrome.webRequest.onErrorOccurred.addListener(onExfilRequestError, { urls: [...EXFIL_URL_PATTERNS], types: [...RT.ALL_SUB] });
 } catch (e) {
-  console.warn(LOG_PREFIX, "webRequest type filter rejected — listening unfiltered:", e);
-  chrome.webRequest.onErrorOccurred.addListener(onRequestError, { urls: ["<all_urls>"] });
+  console.warn(LOG_PREFIX, "webRequest type filter rejected — listening without it:", e);
+  chrome.webRequest.onErrorOccurred.addListener(onExfilRequestError, { urls: [...EXFIL_URL_PATTERNS] });
 }
 
 // ── Device-code warning (warnDeviceCodePages, 4.7.0) — filtered to the known device sign-in pages, so the service
@@ -209,10 +232,12 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   Guard.releaseTab(tabId);
   TabSites.releaseTab(tabId);
   closeMatrixPanel(tabId);
+  Tamper.releaseTab(tabId);                             // 5.1.0 — its watch record and warning window
 });
 
 chrome.windows.onRemoved.addListener((windowId) => {
   onWindowRemoved(windowId);                            // Show Matrix panels
+  TamperWarnings.onWindowRemoved(windowId);             // 5.1.0 — a Tamper Guard warning window closed
   Downloads.onWindowRemoved(windowId)                   // download warning windows + blocked-download notices
     .catch((e) => console.error(LOG_PREFIX, "download window closed:", e));
 });
@@ -238,6 +263,14 @@ function warningTarget(msg, sender) {
   return msg.url || "";
 }
 
+// 5.1.3: the site that sent the user (deviceCode / xssLink) — ONLY from the warning page's own URL (C28); a valid host or "".
+function warningReferrer(sender) {
+  const warningPage = chrome.runtime.getURL(WARNING_PAGE);
+  if (!sender.url || !sender.url.startsWith(warningPage)) return "";
+  const r = String(new URL(sender.url).searchParams.get(WARNING_REFERRER_PARAM) || "").toLowerCase();
+  return isValidHost(r) ? r : "";
+}
+
 // 4.6.0: the exfiltration channel the warning is about — ONLY from the warning page's own URL (C28).
 function warningReason(sender) {
   const warningPage = chrome.runtime.getURL(WARNING_PAGE);
@@ -260,9 +293,21 @@ function downloadTarget(sender, pagePath = DOWNLOAD_WARNING_PAGE) {
   return id;
 }
 
+// 5.1.0: the Tamper Guard warning a warning-window message is about — ONLY from the sender's own URL (C28).
+function tamperWarningId(sender) {
+  const page = chrome.runtime.getURL(TAMPER_WARNING_PAGE);
+  if (!sender.url || !sender.url.startsWith(page)) throw new Error("not the Tamper Guard warning");
+  const id = new URL(sender.url).searchParams.get(TAMPER_WARNING_ID_PARAM);
+  if (!id) throw new Error("bad warning id");
+  return id;
+}
+
 // ── Message router ───────────────────────────────────────────────────────────
 const HANDLERS = {
   [M.MSG_GET_POPUP_STATE]: async (msg) => popupModel(await loadState(), msg.tabId, msg.url),
+  // 5.1.3 — the popup's firewall count and "Details" (extension pages only: the message gate refuses content scripts)
+  [M.MSG_COUNT_FIREWALL_BLOCKS]: async (msg) => firewallBlockCount(msg.ruleIds),
+  [M.MSG_SHOW_TAMPER_DETAILS]: async (msg) => Tamper.showDetails(requireTabId(msg)),
 
   [M.MSG_SET_LEVEL]: async (msg) => {
     const level = parseLevel(msg.level);
@@ -354,8 +399,14 @@ const HANDLERS = {
       return true;
     }
     if (msg.action === M.WARNING_ACTION.TRUST) {
-      if (scam && scam.canTrust === false) throw new Error("this warning has no Trust action");
-      await mutate((s) => lockSite(s, site, LEVEL.ALLOW_ALL));
+      // 5.1.3: "Always allow" / "Always ignore" — one allow-list line for the warning's category (no longer "All"):
+      //   a page-scam reason → its own category and site (the page's, or the site that sent the user);
+      //   an exfiltration block → Firewall, the page's site; the ordinary suspicious-site warning → Scam, the page's site.
+      if (scam && scam.canTrust === false) throw new Error("this warning has no Always action");
+      const category = scam ? scam.allow.category : (reason ? ALLOW_CATEGORY.FIREWALL : ALLOW_CATEGORY.SCAM);
+      const allowHost = scam && scam.allow.from === ALLOW_FROM.SENDER ? warningReferrer(sender) : p.host;
+      if (!allowHost) throw new Error("no site to allow");
+      await mutate((s) => addToAllowList(s, category, allowHost));
       Badge.setRisk(tabId, site, SEVERITY.NONE);
       // 4.7.0: trusting the site also drops it from the alsoHighRisk tab band — re-apply.
       loadState().then(applySessionRules).catch((e) => console.error(LOG_PREFIX, "high-risk band (trust):", e));
@@ -369,7 +420,13 @@ const HANDLERS = {
   },
 
   // ── Password-field warnings (page from the sender only, C28) ──
-  [M.MSG_CHECK_PASSWORD_FORM]: async (msg, sender) => passwordFormDecision(await loadState(), senderFrameUrl(sender), String(msg.actionUrl || "")),
+  // 5.1.3 (issue 3): a warning decision is also recorded as a tamper finding (core/tamper-guard.js recordOwnWarning).
+  [M.MSG_CHECK_PASSWORD_FORM]: async (msg, sender) => {
+    const state = await loadState();
+    const decision = passwordFormDecision(state, senderFrameUrl(sender), String(msg.actionUrl || ""));
+    if (decision.warn) Tamper.recordOwnWarning(state, PROTECTION_KEY.WARN_PASSWORD_FORMS, sender, [decision.destHost]);
+    return decision;
+  },
 
   // 4.7.0 — blockFakeSignInWindow (Browser-in-the-Browser). 5.0.6: on a hit the service worker opens
   // the red warning page itself (C47 — an in-page dialog could be removed by the page); the reply only says so.
@@ -377,6 +434,7 @@ const HANDLERS = {
     const state = await loadState();
     const decision = fakeWindowDecision(state, senderFrameUrl(sender), String(msg.shownText || ""));
     if (!decision.warn) return { warned: false };
+    Tamper.recordOwnWarning(state, PROTECTION_KEY.BLOCK_FAKE_SIGNIN_WINDOW, sender, [decision.shownHost]);   // issue 3
     const warned = await PageScam.openPageScamWarning(state, PAGE_SCAM_KIND.FAKE_SIGN_IN_WINDOW, PROTECTION_KEY.BLOCK_FAKE_SIGNIN_WINDOW, sender);
     return { warned };
   },
@@ -390,7 +448,36 @@ const HANDLERS = {
 
   // 4.7.0 — ClickFix / ConsentFix: a content script BLOCKED the page scam itself; this opens the matching warning
   // (core/page-scam-guard.js — tab and page from the sender only, C28).
-  [M.MSG_PAGE_SCAM_BLOCKED]: async (msg, sender) => PageScam.onPageScamBlocked(await loadState(), String(msg.kind || ""), sender),
+  // 5.1.3 (issue 3): the payment skimmer is also a tamper finding — recorded before the warning page replaces the page
+  // (and after "Continue once", when the block stays but no warning opens). Other kinds have no tamper rule (no-op).
+  [M.MSG_PAGE_SCAM_BLOCKED]: async (msg, sender) => {
+    const state = await loadState();
+    const kind = String(msg.kind || "");
+    const key = PageScam.protectionForKind(kind);
+    if (key) Tamper.recordOwnWarning(state, key, sender);
+    return PageScam.onPageScamBlocked(state, kind, sender);
+  },
+
+  // ── Tamper Guard (5.1.0) — content scripts report; core/tamper-guard.js decides from the sender (C28) ──
+  [M.MSG_TAMPER_HELLO]:   async (msg, sender) => Tamper.onHello(await loadState(), sender),
+  [M.MSG_TAMPER_SIGNALS]: async (msg, sender) => Tamper.onSignals(await loadState(), msg, sender),
+  [M.MSG_TAMPER_REPORT]:  async (msg, sender) => Tamper.onReport(await loadState(), msg, sender),
+
+  [M.MSG_GET_TAMPER_WARNING]: async (msg, sender) => TamperWarnings.warningModel(tamperWarningId(sender)),
+
+  [M.MSG_TAMPER_WARNING_ACTION]: async (msg, sender) => {
+    const id = tamperWarningId(sender);
+    const w = TamperWarnings.warningRecord(id);
+    if (!w) throw new Error("this warning is no longer available");
+    // 5.1.3: "Always ignore" puts the site on the allow list under Tamper (every tamper warning there is ignored).
+    if (msg.action === M.TAMPER_WARNING_ACTION.ALWAYS_IGNORE) await mutate((s) => addToAllowList(s, ALLOW_CATEGORY.TAMPER, w.site));
+    else if (msg.action !== M.TAMPER_WARNING_ACTION.IGNORE) throw new Error("unknown Tamper Guard action");
+    await TamperWarnings.closeWarning(id);
+    return true;
+  },
+
+  [M.MSG_GET_TAMPER_VIEW]: async () => Tamper.tamperView(),
+
 
   // 4.7.0 — Chrome out-of-date band (popup)
   [M.MSG_GET_BROWSER_UPDATE]: async () => BrowserUpdate.popupBand(),
@@ -404,7 +491,25 @@ const HANDLERS = {
   [M.MSG_GET_BLOCKED_DOWNLOAD]: async (msg, sender) => Downloads.blockedModel(downloadTarget(sender, DOWNLOAD_BLOCKED_PAGE)),
 
   [M.MSG_BLOCKED_DOWNLOAD_ACTION]: async (msg, sender) => {
-    await Downloads.blockedAction(downloadTarget(sender, DOWNLOAD_BLOCKED_PAGE), msg.action, await loadState());
+    const id = downloadTarget(sender, DOWNLOAD_BLOCKED_PAGE);
+    if (msg.action === M.BLOCKED_DOWNLOAD_ACTION.ALWAYS_ALLOW) {               // 5.1.3: allow list, then as "Download anyway"
+      const host = Downloads.allowHostFor(id);
+      if (!host) throw new Error("no site to allow");
+      const { state } = await mutate((s) => addToAllowList(s, ALLOW_CATEGORY.DOWNLOAD, host));
+      await Downloads.blockedAction(id, M.BLOCKED_DOWNLOAD_ACTION.DOWNLOAD_ANYWAY, state);
+      return true;
+    }
+    await Downloads.blockedAction(id, msg.action, await loadState());
+    return true;
+  },
+
+  // 5.1.3 — the download warning's "Always ignore": "Download: <file host>" on the allow list, then done.
+  [M.MSG_DOWNLOAD_ALWAYS_IGNORE]: async (msg, sender) => {
+    const id = downloadTarget(sender);
+    const host = Downloads.allowHostFor(id);
+    if (!host) throw new Error("no site to allow");
+    await mutate((s) => addToAllowList(s, ALLOW_CATEGORY.DOWNLOAD, host));
+    Downloads.dismiss(id);
     return true;
   },
 
@@ -435,7 +540,9 @@ const HANDLERS = {
   // sites locked at other levels are never shown or touched here.
   [M.MSG_SET_ALLOW_LIST]: async (msg) => {
     const wanted = parseAllowListText(msg.text);
-    const { state } = await mutate((s) => replaceAllowList(s, wanted));
+    // 5.1.3: an unknown category or an invalid domain is never dropped silently — nothing is saved, the lines are named.
+    if (wanted.errors.length) throw new Error(`not saved — fix these lines: ${wanted.errors.join(" · ")}`);
+    const { state } = await mutate((s) => replaceAllowList(s, wanted.entries));
     return optionsModel(state);
   },
 

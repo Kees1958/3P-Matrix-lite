@@ -35,7 +35,7 @@
 import { BUILTIN_TRUSTED_DOWNLOAD_DOMAINS, DOWNLOAD_BLOCK_REASON, DOWNLOAD_BLOCK_EXEMPT_LEVELS, DOWNLOAD_PAGE_TRUST_LEVELS } from "../data/constants.js";
 import { BUILTIN_ALL } from "../data/builtin-domains.js";
 import { PROTECTION_KEY } from "../data/protections.js";
-import { isValidVtKey, isValidHost } from "../data/state-storage.js";
+import { isValidVtKey } from "../data/state-storage.js";
 import { effectiveLevel, isProtectionActive, isProtectionEnabled, saferRegionsApply, isHighRiskSite } from "./policy.js";
 import { isInDomainList, tldOf } from "../util/domain.js";
 import { VtKeyPromptPolicy } from "../lib/downloadsentinel/util/VtKeyPromptPolicy.js";
@@ -118,9 +118,10 @@ export function downloadBlockReason(state, item) {
 
 // The effective trusted-download list: built-in app stores (always) and the user's own domains. DownloadSentinel's
 // "Trust AI downloads" category is not offered (4.3.6, user decision) — add an AI site to your own domains instead.
+// 5.1.3: the app stores only while "Trust app stores" is ticked; the user's domains are the allow list's Download lines.
 export function trustedDownloadDomains(state) {
   const d = state.downloads;
-  return [...BUILTIN_TRUSTED_DOWNLOAD_DOMAINS, ...d.trustedDomains];
+  return [...(d.trustAppStores ? BUILTIN_TRUSTED_DOWNLOAD_DOMAINS : []), ...d.trustedDomains];
 }
 
 // Trusted when the file's own host is on the list (DS 3.3.0 rule, item 27: the page only when the file has no
@@ -151,17 +152,13 @@ export function shouldOfferVtKey(state) {
 // Fields Options may change. vtApiKey is NOT here: it has its own message (setVtKey), so a key can never
 // be overwritten by a settings form that does not show it.
 const EDITABLE = Object.freeze(["vtEnabled", "silentWhenInconclusive", "autoAllow", "autoAllowThreshold", "fpReductionLevel",
-                                "trustedDomains", "warningColor", "warningTitle"]);
+                                "trustAppStores", "warningColor", "warningTitle"]);   // 5.1.3: trusted domains → the allow list
 
 export function applyDownloadSettings(state, patch) {
   if (!patch || typeof patch !== "object") throw new Error("bad download settings");
   const unknown = Object.keys(patch).filter((k) => !EDITABLE.includes(k));
   if (unknown.length) throw new Error(`not editable: ${unknown.join(", ")}`);
-  if (patch.trustedDomains !== undefined) {
-    if (!Array.isArray(patch.trustedDomains)) throw new Error("bad trusted domains");
-    const bad = patch.trustedDomains.map((h) => String(h).trim().toLowerCase()).filter((h) => h && !isValidHost(h));
-    if (bad.length) throw new Error(`fix invalid domains first (format: domain.tld): ${bad.join(", ")}`);
-  }
+  if (patch.trustAppStores !== undefined && typeof patch.trustAppStores !== "boolean") throw new Error("bad app-store choice");
   Object.assign(state.downloads, patch);
 }
 

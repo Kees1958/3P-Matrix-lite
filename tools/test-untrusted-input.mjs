@@ -38,7 +38,7 @@ const URL_PIECES = Object.freeze(["http://", "https://", "ftp://", "javascript:"
   "@", "[", "]", "::1", "127.0.0.1", "0x7f.1", "%2e", "localhost", "a.b.c", "co.uk", "例え.jp", "\u0000", " ", "#", "?"]);
 const IMPORT_READER = "readImportFile";
 const UI_FILE = "ui/protections.js";
-const CLICKFIX_FILE = "security/sec-clickfix-clipboard.js";
+const CLICKFIX_FILE = "security/scam-guard-page.js";   // 5.1.3: the ClickFix part is in the scam bundle
 const LOG_SCAN_DIRS = Object.freeze(["background.js", "core", "data", "ui", "util", "security"]);   // first-party (lib/ is vendored)
 const LOG_CALL_RE = /console\.(?:log|info|warn|error|debug)\(([^;]*)\)/g;
 const ADDRESS_ARG_RE = /(?:\.url\b|\.href\b|\b[a-z]*Url\b|\burl\b|location\b)/;

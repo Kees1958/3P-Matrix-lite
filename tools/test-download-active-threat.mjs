@@ -32,8 +32,8 @@ if (!existsSync(join(ext, "manifest.json"))) {
   process.exit(EXIT.DID_NOT_RUN);
 }
 const load = (rel) => import(pathToFileURL(join(ext, rel)).href);
-const { applyActiveThreatFloor } = await load("core/download-guard.js");
-const { SCORE } = await load("data/constants.js");
+const { applyActiveThreatFloor, withNoClickSignal, NO_CLICK_SIGNAL_SOURCE } = await load("core/download-guard.js");
+const { SCORE, DOWNLOAD_NO_CLICK_LABEL } = await load("data/constants.js");
 
 let failed = 0;
 function ok(name, cond, detail) {
@@ -164,6 +164,19 @@ function dsResult(score, breakdown = []) {
   const out = applyActiveThreatFloor(dsResult(0, [explained]), "https://github.com/user/repo/archive/refs/heads/main.zip");
   ok("explained row: Download ZIP note still shown", out.breakdown.some((e) => e.source === "ActiveThreatHostNote"), JSON.stringify(out.breakdown));
   ok("explained row: not counted in the headline", /^1 heuristic risk signal /.test(out.label), out.label);
+}
+
+// 12. 5.1.3 — "Download started without a click on the page" (core/download-gesture.js): an addend, in both host verdicts,
+//     headline rebuilt; a hard-rule verdict keeps its score.
+{
+  const out = withNoClickSignal(dsResult(-10, []));
+  ok("no click: the score drops by SCORE.DOWNLOAD_NO_CLICK", out.score === -10 + SCORE.DOWNLOAD_NO_CLICK, out.score);
+  ok("no click: its line is in the breakdown", out.breakdown.some((e) => e.source === NO_CLICK_SIGNAL_SOURCE && e.label === DOWNLOAD_NO_CLICK_LABEL));
+  const both = withNoClickSignal({ ...dsResult(0, []), heuristicsOnly: dsResult(-5, []) });
+  ok("no click: both host verdicts get it", both.heuristicsOnly.score === -5 + SCORE.DOWNLOAD_NO_CLICK && both.score === SCORE.DOWNLOAD_NO_CLICK);
+  const hard = withNoClickSignal({ ...dsResult(SCORE.DNS_BLOCKED, []), hardRuleApplied: true });
+  ok("no click: a hard-rule verdict keeps its score", hard.score === SCORE.DNS_BLOCKED && hard.breakdown.length === 1);
+  ok("no click: never below SCORE.FLOOR", withNoClickSignal(dsResult(SCORE.FLOOR, [])).score === SCORE.FLOOR);
 }
 
 console.log(failed ? `test-download-active-threat: ${failed} FAILED` : "test-download-active-threat: all passed");

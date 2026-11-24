@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>3P Matrix — Tamper Protection</title>
+<link rel="stylesheet" href="common.css">
+<link rel="stylesheet" href="warning.css">
+<link rel="stylesheet" href="tamper-warning.css">
+</head>
+<!-- Tamper Guard warning (5.1.0): something changed how a page works. 5.1.3: one window per page with the page's risk
+     rating and every finding; the service worker updates it (MSG_TAMPER_WARNING_CHANGED) when more is found. Same dialog look as the site warning (warning.css,
+     C21). Opened by core/tamper-warnings.js in a small window — an extension page the web page cannot remove or hide
+     (C47). The service worker reads the warning id from this page's URL (?w=, C28). A non-critical warning closes
+     itself after the countdown; any interaction stops the countdown; a critical one waits for a choice. -->
+<body>
+<div class="backdrop">
+  <section class="dialog" role="alertdialog" aria-labelledby="tgTitle" aria-describedby="tgDescription">
+    <div class="dlg-head">
+      <div class="dlg-brand">
+        <img src="../icons/icon_4_32.png" alt="" width="32" height="32">
+        <span class="mono">3P Matrix — Tamper Protection</span>
+      </div>
+      <span id="tgRating" class="tg-severity"></span>
+    </div>
+    <h1 id="tgTitle">…</h1>
+    <div class="dlg-site">
+      <span id="tgSite" class="mono dlg-host">…</span>
+      <p id="tgSummary" class="tg-description"></p>
+      <!-- 5.1.3: every finding on the page, most serious first (label, then the names/hosts it is about) -->
+      <ul id="tgSignals" class="tg-signals"></ul>
+      <p id="tgContext" class="tg-context"></p>
+    </div>
+    <div class="dlg-actions">
+      <button id="btnIgnore" class="btn btn-safe" type="button">Ignore</button>
+      <button id="btnAlwaysIgnore" class="btn btn-careful" type="button">Always ignore on this site</button>
+    </div>
+    <p id="tgCountdown" class="tg-countdown" role="timer" hidden></p>
+    <p id="tgStatus" class="status-line" role="status" hidden></p>
+    <p class="dlg-note">Tamper protection only warns — it never blocks the page. “Always ignore on this site” puts the site on your allow list as “Tamper: site”; you can remove it again on the Protections page, Allow list tab.</p>
+  </section>
+</div>
+<script type="module" src="focus-ring.js"></script>
+<script src="tamper-warning.js" type="module"></script>
+</body>
+</html>

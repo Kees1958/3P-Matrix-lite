@@ -1,69 +1,83 @@
-Privacy Policy for 3P-Matrix-lite
+Privacy Policy for 3P Matrix — content firewall
 
-Last Updated: August 2026
+Last Updated: November 2026 (version 5.1.3)
 
 Introduction
 
-3P-Matrix-lite is committed to protecting your privacy. This Privacy Policy explains what information the extension processes and how it is used.
+3P Matrix — content firewall is a Chrome extension that controls third-party content, adds security protections and warns about suspicious sites, risky downloads and pages that are being tampered with. This policy explains what the extension processes, where, and what — if anything — leaves your device.
 
-Information We Collect
+In short
 
-3P-Matrix-lite does not collect, store, transmit, or share any personal information about users.
+3P Matrix does not collect, sell or share personal information. It has no account, no analytics and no server of its own. It keeps no browsing history. Everything below happens inside your browser, except the few online checks listed under "What leaves your device", which only send a site or download address, never anything about you.
 
-Specifically, 3P-Matrix-lite does not:
+What 3P Matrix does not do
 
-Collect personally identifiable information (PII)
-Track user activity or browsing behaviour
-Store or transmit browsing history
-Read the actual content you type into a page (passwords, card numbers, form text, or any other input value)
-Create user profiles or analytics data
-Contact any external server or API
+Collect personally identifiable information
+Track your activity or build a profile of you
+Store or send your browsing history
+Store or send anything you type into a page (passwords, card numbers, form text or any other input)
+Load or run code from the internet
+Use analytics or advertising services
 
-How 3P-Matrix-lite Works
+How the protections work (all on your device)
 
-The extension registers filtering rules with Chrome's native Declarative Net Request (DNR) engine. These rules block or allow third-party network requests based on the protection level you have chosen. The filtering happens entirely inside the browser — the extension never reads, inspects, or transmits the content of any request.
+Blocking: third-party scripts, frames and requests are blocked or allowed by Chrome's built-in Declarative Net Request engine, according to the level you chose. The extension does not read the content of any request.
 
-When you move the slider to a higher protection level, the extension updates the set of active DNR rules. When you add a domain or TLD to a whitelist, that entry is saved locally in your browser and used to generate an allow rule. Nothing is sent anywhere.
+Blocked-request count (since 5.1.3): the extension no longer watches or counts blocked requests in the background. Chrome itself counts the requests the extension's rules blocked on a page and shows that number on the toolbar icon; the extension does not see it. When you open the popup, it asks Chrome for that count once (Chrome's activeTab permission, granted only by your click on the icon); the number is shown and not kept. The background only notices a blocked request to the known data-theft channels (messaging bots and similar), to open that warning.
 
-Fail-Break Protection
+Page protections: small scripts bundled with the extension run inside web pages to stop known scams (fake payment and protocol handlers, browser-locker tricks, ClickFix and ConsentFix clipboard scams, fake sign-in windows, payment-skimmer overlays, obfuscated code) and to warn when a password form sends to another site. They look at what the page does — for example the address a form sends to, or the text a page tries to put on your clipboard — and decide on the spot. They do not read or send the values you type.
 
-At protection levels 2 and 3, the extension also runs a small script on each page that watches for you interacting with a form field. It checks only the field's type (e.g. password, payment, address) — never what you actually type — to decide whether third-party blocking should temporarily relax to level 1 so the form keeps working. This check happens entirely in your browser, is never transmitted anywhere, and the fallback lasts only until you close that tab. It does not apply to a site you've explicitly locked to a level yourself. If you move the protection slider or lock the site to a level yourself, that choice immediately replaces the fallback.
+Never-share codes (since 5.1.3, Scam protection): when you paste text into a message box (a chat or mail field), the pasted text is checked on the spot, inside the page, for the shape of a one-time or recovery code. If it has that shape, the paste is stopped and a warning opens; the text itself is never stored or sent anywhere — only the fact that a code was stopped reaches the extension's background.
 
-The Request Logger
+Tamper Protection (since 5.1.0): bundled page scripts check whether a page's built-in functions were replaced and, on banking, payment and checkout pages (or on every page at protection levels 4–5), watch what the page does with your data. To notice a password, card number or IBAN (bank-account number) being sent to another site, the value in a password, card or IBAN field (or in any text field whose value is a card number or an IBAN) is compared with the outgoing request or address INSIDE the page, at that moment. The value is never stored, never sent to the extension's background and never sent anywhere; only the name of the destination site is passed on, to decide whether to warn. On pages it watches closely, the names of the sites the page's scripts come from are also passed to the extension's background and checked there against the extension's built-in lists — on your device, nothing is looked up online. When a page's own address contains script code, the page script also watches where the page puts HTML; only the name of that place (such as "innerHTML") is passed on, never the address or the page content. Since 5.1.3 the page script also says whether the page holds a password or card field hidden as a trick (yes or no — never the field or its value) and when disguised code was stopped (only the name of the function, such as "eval"). The check of outgoing data only starts once you typed (or your browser filled in) a password, card number or IBAN on a watched page; it then also compares the addresses the page loads (images, style sheets, scripts) with what you typed, inside the page. The password-form, skimmer and fake sign-in warnings are also recorded as findings (only the destination or imitated site's name). Each page gets a risk rating from what was found; the rating and the findings are kept in memory for open tabs only.
 
-The built-in request logger is strictly opt-in and is designed for debugging only.
+XSS link warning (since 5.1.2): when another website opens a page whose address contains script code, the extension compares the address with a few fixed patterns in its background, on your device, and may show a warning. The address is not stored or sent anywhere. When data a site receives is changed by another script, only the names of the changed fields are shown — never their values. What tamper protection finds is kept in memory for open tabs only and cleared when the tab closes.
 
-Logging is off by default and only activates when you explicitly click SHOW LOGS
-When active, the logger captures the URL, request type, calling domain and timestamp of requests that were blocked by the extension's own rules
-This data is stored temporarily in chrome.storage.local on your device only
-All log data is automatically deleted after 5 minutes, or immediately when you click Stop & close
-Log data is never transmitted to any server or third party
+Show Matrix: when you open Show Matrix for a tab, the extension lists the third-party sites that tab connects to. This list is kept in memory and stops after a few minutes or when you close the panel.
 
-Third-Party Services
+What leaves your device (only these, only for the purpose stated)
 
-3P-Matrix-lite does not use any third-party services. It does not connect to any external API, analytics platform, or remote server of any kind. All processing happens locally within your browser using Chrome's built-in extension APIs.
+Online site check: when a site you open already looks suspicious by the extension's local checks, its domain name (for example example.com — never the full address) is looked up at rdap.org (domain age) and at the two DNS threat-intelligence services you selected (Quad9, Cloudflare Security, Control D, DNS4EU Protective or CleanBrowsing Security). You can set both to None.
 
-Data Storage
+Download check: when you download a program, script or archive, its download address may be checked the same way (domain age and DNS checks). Since 5.1.3 the extension also asks the tab that started a download (any download the download protection applies to), once, as the download starts and on your device, whether you clicked or pressed a key there in the last few seconds (yes or no — nothing about what you clicked); the answer is kept in memory only until that download's check is done, and nothing leaves your device. If you entered your own VirusTotal API key, the download's address is also checked at VirusTotal under your key. Without a key nothing is sent to VirusTotal. The file itself is never uploaded.
 
-The following settings are stored locally on your device using chrome.storage.local:
+Browser update check: once a day the extension asks Google's public Chrome version service which version is current for your operating system, to tell you when a security update is waiting. Only the platform name is sent.
 
-Your chosen protection level (1–5)
-Your startup level preference
-Your domain whitelist entries
-Your TLD whitelist entries
+What is stored on your device (chrome.storage)
 
-None of this data is ever transmitted outside your browser.
+Your protection level and startup level
+Protections you switched off
+Sites you locked to a level, and your allow list (since 5.1.3 one list with a category per line: All, Download, Firewall, Scam or Tamper)
+Your safer-regions (top-level domain) choices
+Your Show Matrix overrides
+Your DNS check choices
+Your download-protection settings, including your VirusTotal API key if you entered one
+The result of the last browser update check
 
-Important Notice
+For the current browser session only (cleared when the browser closes): the site shown in each open tab with its risk symbol and tamper rating, the sites you chose "Continue once" for in a tab, and downloads that are waiting for your decision.
 
-3P-Matrix-lite does not upload, transmit, or share:
+None of this is sent anywhere. "Save settings" writes it to a file only when you ask; that file contains your VirusTotal API key, so keep it private.
 
-The content of any web page you visit
-Any request payload or response data
-Any personal data of any kind
-Your browsing history
-Any information about which websites you visit
+Permissions
 
-Changes to This Privacy Policy
+declarativeNetRequest: blocking and allowing requests inside the browser.
+storage: your settings, as listed above.
+webNavigation, tabs: knowing which site a tab shows, to apply your level and show warnings.
+webRequest: noticing the start of a new page in a tab (its address, for the site check and the warnings) and a blocked request to a known data-theft channel (no content is read). Since 5.1.3 no longer used to count blocked requests.
+activeTab (since 5.1.3): when you click the toolbar icon, the popup may ask Chrome how many requests 3P Matrix blocked on that page.
+scripting: registering the bundled page scripts described above, and (since 5.1.3) the one-time "was there a click?" question to the tab that started a download; no remote code.
+downloads: checking downloads and holding risky ones until you decide.
+alarms: the daily browser update check and cleaning up finished download checks.
+Access to all sites: needed to apply the protections on every site you visit.
 
-This Privacy Policy may be updated from time to time. Any changes will be reflected by updating the "Last Updated" date at the top of this document.
+Children's privacy
+
+3P Matrix collects no personal information from anyone, including children.
+
+Changes to this policy
+
+When a version changes what the extension processes, this policy is updated with it and the date above changes.
+
+Contact
+
+Questions about this policy: open an issue at https://github.com/Kees1958/3P-Matrix-lite

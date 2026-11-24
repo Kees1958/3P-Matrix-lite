@@ -113,9 +113,10 @@ export const RULE_LOCAL_ID = Object.freeze({
   BUILTIN_ALLOW_BOTH:   82,  // L3/L4 — built-in whitelist, script + frame domains
   HDR_PP_MAIN:          100, // blockScpPrivacy/blockScpSecurity/blockSensorsNfc — Permissions-Policy on top-level pages
   HDR_PP_SUB:           101, // blockScpPrivacy/blockScpSecurity/blockSensorsNfc — Permissions-Policy on frames
-  HDR_CSP_MAIN:         102, // blockRedirectsDialogs — sandbox CSP on top-level pages
+  HDR_CSP_MAIN:         102, // retired 5.1.3 — the sandbox is on FRAMES only (it suppressed the top page's own "Leave
+                             // site?" prompt, print() and dialogs, and leaked into its popups) — id kept unused
   HDR_CSP_SUB:          103, // blockRedirectsDialogs — sandbox CSP on frames
-  HDR_HIGH_RISK:        110, // blockHighRiskEval — Permissions-Policy on high-risk sites
+  HDR_HIGH_RISK:        110, // retired 5.1.3 (blockHighRiskEval merged into blockObfuscatedEval) — id kept unused
   ALLOW_ALL_REQUESTS:   120, // 4.4.5: level-1 lock — allowAllRequests for the whole frame tree of the site
   TAB_RESET:            130, // 4.4.5: tab band — cancels the session-level rules inside the locked tab
   // 4.6.0: data exfiltration (phishing kits) — one rule per channel, data/exfil-channels.js. A blocked request on
@@ -133,7 +134,7 @@ export const RULE_LOCAL_ID = Object.freeze({
   // 4.7.0 — alsoHighRisk: the STATIC half (HIGH_RISK_HOSTNAMES), unconditional on level, same shape as the
   // pre-existing HDR_HIGH_RISK (blockHighRiskEval) but for the protections that opted into alsoHighRisk (data/protections.js)
   HDR_HIGH_RISK_PP:         170, // blockScpPrivacy/blockScpSecurity/blockSensorsNfc (alsoHighRisk) — combined Permissions-Policy
-  HDR_HIGH_RISK_CSP_SANDBOX: 171, // blockRedirectsDialogs (alsoHighRisk) — sandbox CSP
+  HDR_HIGH_RISK_CSP_SANDBOX: 171, // blockRedirectsDialogs (alsoHighRisk) — sandbox CSP on the high-risk sites' frames (5.1.3: frames only)
   HDR_HIGH_RISK_CSP_WS:      172, // blockWebsockets (alsoHighRisk) — WebSocket-blocking CSP
   // 173 (HDR_HIGH_RISK_CSP_STRICT, blockInlineScripts alsoHighRisk) retired in 4.7.6 along with 162/163 above.
   EXFIL_FORM_MAIL_HR:        180, // blockExfilWebServices (alsoHighRisk) — form-to-email, static high-risk hosts as the PAGE
@@ -237,8 +238,9 @@ export const BYETHOST_REGEX   = "^[a-z]+://([a-z0-9-]+\\.)*byethost[a-z0-9-]*\\.
 // ── Header values ────────────────────────────────────────────────────────────
 export const PP_VALUE = Object.freeze({
   PRIVACY:  "camera=(), microphone=(), display-capture=(), clipboard-read=()",       // blockScpPrivacy
-  SECURITY: "bluetooth=(), serial=(), hid=(), usb=(), local-network-access=()",      // blockScpSecurity
-  SENSORS:  "accelerometer=(), gyroscope=(), magnetometer=()"                          // blockSensorsNfc (NFC = script)
+  // blockScpSecurity — 5.1.3: + the motion sensors of the former blockSensorsNfc (its NFC script was dropped: Web NFC
+  // exists only in Chrome on Android, where extensions do not run).
+  SECURITY: "bluetooth=(), serial=(), hid=(), usb=(), local-network-access=(), accelerometer=(), gyroscope=(), magnetometer=()"
 });
 export const SANDBOX_CSP_VALUE = "sandbox allow-downloads allow-forms allow-orientation-lock allow-pointer-lock " +
   "allow-popups allow-presentation allow-same-origin allow-scripts allow-storage-access-by-user-activation"; // blockRedirectsDialogs
@@ -267,7 +269,8 @@ export const SCRIPT_ID_SUFFIX = Object.freeze({
   SAFER_LOCKED:   "-locked",                         // rescue registration: locked sites inside safer regions
   BUILTIN_LOCKED: "-builtin-locked",                 // rescue registration: built-in-whitelist sites locked at 5
   ISOLATED:       "-isolated",                        // 4.6.0: the ISOLATED-world twin of a registration (isolatedScripts)
-  HIGH_RISK:      "-highrisk"                          // 4.7.0: alsoHighRisk's extra registration, fixed to HIGH_RISK_HOSTNAMES, level-independent
+  HIGH_RISK:      "-highrisk",                         // 4.7.0: alsoHighRisk's extra registration, fixed to HIGH_RISK_HOSTNAMES, level-independent
+  STRICT:         "-strict"                            // 5.1.3: a protection's `strictScripts`, from its strictFromLevel
 });
 export const NOEVAL_EXTRA_EXCLUDES = Object.freeze(["*://*/*login*", "*://*/*Login*", "*://*/*LOGIN*", "*://*/*.aspx*"]);
 
@@ -304,6 +307,9 @@ export const SCORE = Object.freeze({
   // not MILD. Downloads: "Probably Inconclusive" alone (THRESHOLD_QUESTIONABLE). A floor, not an
   // addend: other signals change the verdict only when they already score below it on their own.
   ACTIVE_THREAT_HOST:   -30,
+  // 5.1.3 — a download that started without a click on the page that started it (core/download-gesture.js) — an
+  // addend to the download's host score, like the other small signals.
+  DOWNLOAD_NO_CLICK:    -15,
   FLOOR:                -100
 });
 // 4.4.1 — the open-platform tables (DEV_HOSTING_PLATFORMS, ORG_PAGE_PLATFORMS of 4.4.0) moved into the shared
@@ -363,14 +369,29 @@ export const LEGACY_DNS_DEFAULT = Object.freeze({ first: DNS_PROVIDER.QUAD9.id, 
 export const PRIVATE_HOST_SUFFIXES = Object.freeze([".local", ".lan", ".internal", ".home.arpa", ".localhost"]);
 
 // ── Badge ────────────────────────────────────────────────────────────────────
+// 5.1.3 (owner, 2026-11-24): the highest problem always wins, one symbol per tab — "!" (red) dangerous: a dangerous
+// site OR a High/Critical tamper rating; "?" (orange) suspicious: a suspicious site OR a Suspicious tamper rating;
+// otherwise the NUMBER of requests the firewall blocked on the page, counted by Chrome itself
+// (declarativeNetRequest.setExtensionActionOptions displayActionCountAsBadgeText — only 3P Matrix's own block rules,
+// allow rules not counted, no listener of ours, no extra permission; verified in Chrome). A symbol is per-tab badge
+// text, which overrules Chrome's number; text null hands the badge back to the number. NORMAL is the GLOBAL badge
+// colour (Chrome resets per-tab colours on navigation), so the number is always grey.
 export const BADGE_COLOR = Object.freeze({
   NORMAL:   "#666666",
   SUSPECT:  "#C2410C",
   PHISHING: "#B91C1C"
 });
-export const BADGE_PHISHING_PREFIX = "!";
-export const BADGE_MAX_COUNT       = 999;            // shown as "999+" above this
-export const BADGE_RENDER_DELAY_MS = 250;            // 4.5.4: badge redraw (and session save) coalesced per tab — a burst of blocks = 1 update
+export const BADGE_TEXT = Object.freeze({
+  SUSPECT:  "?",                                   // suspicious (orange)
+  PHISHING: "!"                                    // dangerous (red)
+});
+export const BADGE_SHOWS_BLOCK_COUNT = true;       // owner: Chrome's own block count when there is no symbol
+// The badge severities from least to most serious ("the highest problem wins").
+export const SEVERITY_ORDER = Object.freeze([SEVERITY.NONE, SEVERITY.SUSPECT, SEVERITY.PHISHING]);
+// 5.1.3 — the popup's "This page" box and firewall count (core/view-models.js, ui/popup.js).
+export const POPUP_RISK_REASONS_MAX = 2;           // site-check reasons shown under "Suspicious site" / "Dangerous site"
+export const POPUP_MATCHED_RULES_MAX = 20000;      // guard: matched-rule ids the popup passes on for the firewall count
+export const BADGE_RENDER_DELAY_MS = 250;          // 4.5.4: badge redraw (and session save) coalesced per tab
 
 // ── Show Matrix (Script / Frame overrides) ────────────────────────────────────────────────────
 // 4.2: the combined 3P-code / 3P-all pair is replaced by two independent columns, Script and
@@ -506,7 +527,10 @@ export const FP_LEVEL_HINT = Object.freeze({
 });
 export const AUTO_ALLOW_THRESHOLD_MIN = DS_APP.AUTO_ALLOW_THRESHOLD_MIN;   // "Silent when probably safe" input range
 export const AUTO_ALLOW_THRESHOLD_MAX = DS_APP.AUTO_ALLOW_THRESHOLD_MAX;
-export const TRUSTED_DOWNLOAD_DOMAINS_MAX = DS_APP.DOMAIN_WHITELIST_MAX;   // user's "Do not check" download hosts
+// 5.1.3: the allow list's "Download" lines (they are the former own trusted download hosts) — no longer the 12 boxes.
+export const TRUSTED_DOWNLOAD_DOMAINS_MAX = 500;
+// 5.1.3: at most this many domains per allow-list category (Firewall, Scam, Tamper); "All" keeps SITE_LOCKS_CAP.
+export const ALLOW_CATEGORY_CAP = 500;
 export const BUILTIN_TRUSTED_DOWNLOAD_DOMAINS = Object.freeze(DS_APP.BUILTIN_DO_NOT_CHECK_DOMAINS.slice()); // app stores — never checked
 export const DOWNLOAD_WARNING_TITLE_DEFAULT = DS_APP.WARNING_TITLE_DEFAULT;
 export const DOWNLOAD_WARNING_TITLE_MAX = 80;                              // characters (DS options input maxlength)
@@ -523,8 +547,179 @@ export const DOWNLOAD_DEFAULTS = Object.freeze({
   autoAllow:            false,                           // "Silent when probably safe"
   autoAllowThreshold:   DS_APP.AUTO_ALLOW_THRESHOLD_DEFAULT,
   fpReductionLevel:     FP_LEVEL.MEDIUM,
-  trustedDomains:       Object.freeze(["sharepoint.com"]), // DS starter entry (org-controlled hosting)
+  trustedDomains:       Object.freeze(["sharepoint.com"]), // DS starter entry (org-controlled hosting) — the allow list's "Download" lines
+  trustAppStores:       true,                              // 5.1.3: "Trust app stores" (BUILTIN_TRUSTED_DOWNLOAD_DOMAINS), a tickbox
   warningColor:         Object.freeze({ r: DS_APP.WARNING_COLOR_DEFAULT_R, g: DS_APP.WARNING_COLOR_DEFAULT_G, b: DS_APP.WARNING_COLOR_DEFAULT_B }),
   warningTitle:         "",                              // "" = DOWNLOAD_WARNING_TITLE_DEFAULT
   vtKeyPromptDismissed: false                            // "don't show the VirusTotal key nudge again"
 });
+
+// ── XSS (5.1.2 — core/xss-link-guard.js warnXssLinks; security/tamper-guard-page.js tgAddressScript) ────────────────
+// Script markup in an address: a regex SOURCE per pattern (case-insensitive), so the page script's copy can be checked
+// against this one (tools/test-tamper-guard.mjs). Deliberately few and specific — each needs markup that only makes
+// sense as code: a script tag, an event handler inside a tag, or a javascript: address.
+export const XSS_MARKUP_PATTERNS = Object.freeze([
+  "<\\s*script\\b",                         // <script
+  "<[a-z][^>]*[\\s/]on[a-z]+\\s*=",          // <img src=x onerror=…, <svg/onload=…
+  "javascript\\s*:"                           // javascript:alert(1)
+]);
+export const XSS_MARKUP_FLAGS = "i";
+// An address is decoded this many times at most (double-encoded payloads: %253Cscript).
+export const XSS_DECODE_ROUNDS = 2;
+// Guard (B6): at most this many characters of an address are looked at.
+export const XSS_ADDRESS_CHARS_MAX = 8192;
+// tgAddressScript: an address piece (a query or hash value) shorter than this is never looked for in the page's HTML.
+export const XSS_PIECE_MIN_CHARS = 8;
+// Guard (B6): at most this many address pieces are kept per page (security/tamper-guard-page.js copy).
+export const XSS_PIECES_MAX = 16;
+
+// ── Tamper Guard (5.1.0 — core/tamper-guard.js, data/tamper-rules.js, security/tamper-guard-*.js) ──────────────────
+// Where the level slider widens tamper protection's closer watching (5.1.0, user decision): from AFTER_SIGN also pages
+// with a tampering sign (a MEDIUM+ static finding), from ALWAYS every page. Level 2 (the switch's own fromLevel):
+// banking/payment pages only. Not separate switches — "Enable tamper detection" (watchTamperSensitive) and its trigger ticks (5.1.3) cover them.
+export const TAMPER_LEVEL = Object.freeze({ AFTER_SIGN: LEVEL.SMART, ALWAYS: LEVEL.HIGH });
+// 5.1.3 — Tamper risk rating (user decision 2026-11-24). Every finding (data/tamper-rules.js) carries POINTS; a page's
+// score is the sum of its DIFFERENT findings' points, × TAMPER_SENSITIVE_FACTOR on a banking/payment page. The score
+// gives the page's rating (ordered: a higher number is more serious). Replaces 5.1.0–5.1.2's per-finding severity,
+// warning thresholds and correlation step.
+export const TAMPER_RATING = Object.freeze({ LOW: 1, SUSPICIOUS: 2, HIGH: 3, CRITICAL: 4 });
+// The lowest score of each rating (below SUSPICIOUS: LOW, which never warns).
+export const TAMPER_RATING_MIN_POINTS = Object.freeze({
+  [TAMPER_RATING.SUSPICIOUS]: 30,
+  [TAMPER_RATING.HIGH]:       60,
+  [TAMPER_RATING.CRITICAL]:   100
+});
+export const TAMPER_SENSITIVE_FACTOR = 1.5;    // banking/payment pages count heavier
+// Where a SUSPICIOUS page warns (HIGH and CRITICAL always warn on a closely watched page): from ALWAYS_FROM on every
+// page; from OUTSIDE_SAFER_FROM only when the page's own site is outside the safer regions; below: only the toolbar
+// symbol (core/badge.js setTamperRating: "?").
+export const TAMPER_SUSPICIOUS_WARN = Object.freeze({ ALWAYS_FROM: LEVEL.HIGH, OUTSIDE_SAFER_FROM: LEVEL.SMART });
+// Which badge severity a tamper rating gives (core/badge.js setTamperRating; the page's full rating, own-warning signs
+// included, on a closely watched page outside "Tamper: site").
+export const TAMPER_BADGE_SEVERITY = Object.freeze({
+  [TAMPER_RATING.SUSPICIOUS]: SEVERITY.SUSPECT,
+  [TAMPER_RATING.HIGH]:       SEVERITY.PHISHING,
+  [TAMPER_RATING.CRITICAL]:   SEVERITY.PHISHING
+});
+// One window per page: findings arriving within this time are collected before the window opens (a CRITICAL rating
+// opens it at once). Later findings update the open window.
+export const TAMPER_COLLECT_MS = 2000;
+// A static finding worth at least this many points is a "tampering sign" (closer watching from TAMPER_LEVEL.AFTER_SIGN),
+// and a replaced built-in counts toward tgManyHooks.
+export const TAMPER_SIGN_POINTS_MIN = 20;
+// The protections under the tamper switch that have their own warning (password form elsewhere, payment skimmer,
+// fake sign-in window) — shown with these points on the Tamper Protection tab: they always warn at once.
+export const TAMPER_OWN_WARNING_POINTS = 100;
+// 5.1.3 — tgIbanSent (security/tamper-guard-page.js copy): an IBAN is 15–34 letters/digits; ISO 13616 MOD-97 check.
+export const TAMPER_IBAN = Object.freeze({ MIN_CHARS: 15, MAX_CHARS: 34, DIVISOR: 97, VALID: 1 });
+// 5.1.3 — "Download started without a click" (core/download-gesture.js): the page that started the download (its tab
+// address equals the download's referrer) is asked whether it has a recent user click or key press
+// (navigator.userActivation.isActive — Chrome keeps it about five seconds). Guards: at most TABS_MAX tabs looked at,
+// the answer waited for at most TIMEOUT_MS (else: unknown, no signal). Issue 6: asked at EVERY download start the
+// download protection could apply to and kept until the download is released — at most ENTRIES_MAX downloads at
+// once (oldest dropped: its signal becomes unknown, never a false "no click").
+export const DOWNLOAD_GESTURE = Object.freeze({ TABS_MAX: 200, TIMEOUT_MS: 1000, ENTRIES_MAX: 200 });
+export const DOWNLOAD_NO_CLICK_LABEL = "Download started without a click on the page";
+// Recognising a banking/payment page (core/tamper-guard.js sensitivePoints). Points per signal; the page counts as
+// sensitive at TAMPER_SENSITIVE_THRESHOLD. Every signal here is strong enough on its own. Words in the address are NOT
+// points (5.1.1): they only start the closer watching early (TAMPER_ADDRESS_WORDS below) — never make a page sensitive.
+export const TAMPER_SENSITIVE_POINTS = Object.freeze({
+  KNOWN_PAYMENT_SITE: 70,      // the page's own site is on the built-in whitelist's Payment list (banks, card networks, PSPs)
+  PAYMENT_FRAME:      60,      // the page embeds a frame from a Payment-list host (a shop's card form, 3-D Secure)
+  CARD_FIELD:         60,      // a card-number / card-code / expiry field (autocomplete cc-*, card field names)
+  BANK_FIELD:         60,      // an IBAN / bank-account field
+});
+export const TAMPER_SENSITIVE_THRESHOLD = 60;
+// 5.1.1 — Checkout / cart / payment words in the address (EU+ languages). The address is known before the page's own
+// scripts run, so a word starts the closer watching AT PAGE START (core/tamper-guard.js ARMED_BY.ADDRESS) — before a
+// skimmer loaded later can hook anything. It only raises scrutiny (principle B11): the page does not become a
+// banking/payment page by it, so MEDIUM findings there still warn only once a real signal (card/IBAN field, payment
+// frame, known payment site) confirms it. Matching (core/tamper-guard.js addressTokens): the decoded path and the
+// subdomain labels, lower case, accents removed, split on everything that is not a letter or digit; a word must be a
+// WHOLE token ("/kassa" yes, "/kassabon-tips" no). Write words lower case; accents are removed on load anyway.
+export const TAMPER_ADDRESS_WORDS = Object.freeze({
+  en: ["checkout", "checkouts", "cart", "basket", "payment", "payments", "billing", "banking", "3dsecure"],
+  nl: ["afrekenen", "betalen", "betaling", "winkelwagen", "winkelmand", "kassa", "bestellen"],
+  de: ["kasse", "warenkorb", "bezahlen", "bezahlung", "zahlung", "bestellung"],
+  fr: ["paiement", "panier", "commande", "caisse"],
+  es: ["pago", "pagar", "carrito", "caja", "cesta"],
+  it: ["pagamento", "carrello", "cassa", "ordine"],
+  pt: ["pagamento", "carrinho"],
+  pl: ["platnosc", "platnosci", "koszyk", "kasa", "zamowienie"],
+  da: ["kasse", "kurv", "indkobskurv", "betaling", "bestilling"],
+  no: ["kasse", "handlekurv", "betaling", "bestilling"],
+  sv: ["kassa", "varukorg", "kundvagn", "betalning"],
+  fi: ["kassa", "ostoskori", "maksu", "tilaus"],
+  is: ["karfa", "greidsla"],
+  cs: ["pokladna", "kosik", "platba", "objednavka"],
+  sk: ["pokladna", "kosik", "platba", "objednavka"],
+  hu: ["penztar", "kosar", "fizetes", "rendeles"],
+  ro: ["cos", "plata", "comanda", "finalizare"],
+  hr: ["blagajna", "kosarica", "placanje"],
+  sl: ["blagajna", "kosarica", "placilo"],
+  bg: ["plashtane", "kolichka", "kasa", "плащане", "количка", "каса"],
+  el: ["pliromi", "kalathi", "tameio", "πληρωμη", "καλαθι", "ταμειο"],
+  et: ["kassa", "ostukorv", "makse"],
+  lv: ["kase", "grozs", "maksajums"],
+  lt: ["kasa", "krepselis", "mokejimas"]
+});
+// Endings that also count INSIDE a longer token — platform and compound-word forms such as "onepagecheckout",
+// "firecheckout", "onlinebanking", "anzahlung". Only words that are not the ending of an ordinary word.
+export const TAMPER_ADDRESS_ENDINGS = Object.freeze(["checkout", "payment", "banking", "warenkorb", "zahlung",
+  "betaling", "betalning", "handlekurv", "winkelwagen"]);
+// Letters that keep their mark after Unicode decomposition (NFD), folded by hand: Polish ł, Nordic ø/æ, German ß,
+// Croatian đ, Icelandic þ/ð, French œ.
+export const TAMPER_ADDRESS_LETTER_FOLD = Object.freeze({ "ł": "l", "ø": "o", "æ": "ae", "ß": "ss", "đ": "d", "þ": "th",
+  "ð": "d", "œ": "oe" });
+// Guard (B6): at most this many address tokens are looked at (very long addresses are cut, never scanned whole).
+export const TAMPER_ADDRESS_TOKENS_MAX = 64;
+// 5.1.2 — A card number recognised by its VALUE (security/tamper-guard-page.js and security/tamper-guard-bridge.js
+// carry copies, checked by tools/test-tamper-guard.mjs): only digits, spaces and dashes, this many digits, and a valid
+// Luhn checksum. Finds card fields whatever the page named them; the checksum keeps order and phone numbers out.
+export const TAMPER_CARD_VALUE_DIGITS = Object.freeze({ MIN: 13, MAX: 19 });
+// Inputs read per check when looking for a card number by value (guard, B6).
+export const TAMPER_CARD_VALUE_FIELDS_MAX = 50;
+// 5.1.2 — Other sites' script hosts on closely watched pages (tgSuspiciousScript): at most this many hosts reported per
+// page (security/tamper-guard-bridge.js copy), and this many host verdicts kept in memory (core/tamper-guard.js; oldest
+// dropped). A verdict is the local site check only (core/site-scorer.js), so it does not go stale within a session.
+export const TAMPER_SCRIPT_HOSTS_MAX = 24;
+export const TAMPER_SCRIPT_VERDICTS_CAP = 500;
+// 5.1.2 — Script providers that card skimmers imitate (jquery-cdn.net, googletagmanagr.com, cdn-stripe.xyz): name →
+// the provider's real registered domains. A script host whose registered-domain name, or one of its dash-separated
+// parts, STARTS with a name ("jquerycdn", "cdn-stripe" — not "pinstripe"), or for names of at least TAMPER_SCRIPT_TYPO.MIN_CHARS differs from it by at most TAMPER_SCRIPT_TYPO.MAX_EDITS
+// letters, and is not one of the real domains, imitates that provider (core/tamper-guard.js imitatesProvider).
+export const TAMPER_SCRIPT_PROVIDERS = Object.freeze({
+  jquery:           ["jquery.com", "jqueryui.com", "jquerymobile.com"],
+  googletagmanager: ["googletagmanager.com"],
+  googleanalytics:  ["google-analytics.com"],
+  googleapis:       ["googleapis.com"],
+  gstatic:          ["gstatic.com"],
+  stripe:           ["stripe.com", "stripe.network"],
+  paypal:           ["paypal.com", "paypalobjects.com"],
+  adyen:            ["adyen.com", "adyenpayments.com"],
+  braintree:        ["braintreegateway.com", "braintree-api.com", "braintreepayments.com"],
+  klarna:           ["klarna.com", "klarnaservices.com", "klarnacdn.net"],
+  mollie:           ["mollie.com"],
+  facebook:         ["facebook.com", "facebook.net"],
+  cloudflare:       ["cloudflare.com", "cloudflareinsights.com"],
+  jsdelivr:         ["jsdelivr.net"],
+  bootstrapcdn:     ["bootstrapcdn.com"],
+  magento:          ["magento.com"],
+  shopify:          ["shopify.com", "shopifycdn.com", "shopifysvc.com"],
+  hotjar:           ["hotjar.com"]
+});
+export const TAMPER_SCRIPT_TYPO = Object.freeze({ MIN_CHARS: 8, MAX_EDITS: 2 });
+// After a closely watched page is left for another page of the SAME site, keep watching closely this long (bank and
+// checkout flows hop between pages and redirects).
+export const TAMPER_COOLDOWN_MS = 60 * 1000;
+// Guards (B6): tabs tracked, stored never-warn entries, items and characters per reported detail, frame hosts per signal report.
+export const TAMPER_TABS_CAP = 500;
+export const TAMPER_DETAIL_ITEMS_MAX = 12;
+export const TAMPER_DETAIL_TEXT_MAX = 120;
+export const TAMPER_FRAME_HOSTS_MAX = 20;
+// The warning window (an extension page — a page cannot remove or hide it, C47).
+export const TAMPER_WARNING_PAGE = "ui/tamper-warning.html";
+export const TAMPER_WARNING_ID_PARAM = "w";          // its query parameter: the warning id (C28: read from the sender's URL)
+export const TAMPER_WARNING_WINDOW = Object.freeze({ width: 680, height: 620 });   // the dialog (max 608 px) + three buttons in one row
+export const TAMPER_COUNTDOWN_S = 20;                // a non-critical warning closes itself after this (seconds); critical ones never (5.1.3: was 5, owner)
+export const TAMPER_COUNTDOWN_TICK_MS = 1000;        // countdown display step

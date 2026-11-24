@@ -28,7 +28,8 @@ import { LOG_PREFIX } from "../data/constants.js";
 import { PROTECTION_KEY } from "../data/protections.js";
 import { DEVICE_CODE_PAGES } from "../data/device-code-pages.js";
 import { PAGE_SCAM_KIND } from "../data/page-scam-reasons.js";
-import { effectiveLevel, isProtectionActive } from "./policy.js";
+import { effectiveLevel, isProtectionActive, isAllowedFor } from "./policy.js";
+import { ALLOW_CATEGORY } from "../data/allow-categories.js";
 import { isAllowedOnce, warningUrlFor } from "./navigation-guard.js";
 import { parseHttpUrl, registeredDomain, isInDomainList } from "../util/domain.js";
 
@@ -60,6 +61,7 @@ export function deviceCodeDecision(state, url, initiator) {
   if (from && isInDomainList(from.host, page.ownDomains)) return NO_WARNING;
   const level = from ? effectiveLevel(state, from.host) : state.level;
   if (!isProtectionActive(state, PROTECTION_KEY.WARN_DEVICE_CODE_PAGES, level)) return NO_WARNING;
+  if (from && isAllowedFor(state, ALLOW_CATEGORY.SCAM, from.host)) return NO_WARNING;   // 5.1.3: the sending site is allowed
   return { warn: true, referrer: from ? registeredDomain(from.host) : "" };
 }
 

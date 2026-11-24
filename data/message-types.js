@@ -12,6 +12,8 @@ export const MSG_SET_PROTECTION    = "SET_PROTECTION";     // { key, enabled }
 export const MSG_SET_SAFE_ZONE     = "SET_SAFE_ZONE";      // { addTld?, removeTld?, restoreDefault? }
 
 // popup / matrix panel → SW (Show Matrix)
+export const MSG_COUNT_FIREWALL_BLOCKS = "COUNT_FIREWALL_BLOCKS"; // { ruleIds[] } — 5.1.3: the popup's matched rules (getMatchedRules) → number of firewall blocks
+export const MSG_SHOW_TAMPER_DETAILS = "SHOW_TAMPER_DETAILS";     // { tabId } — 5.1.3: the popup's "Details": open the page's tamper window again
 export const MSG_OPEN_MATRIX       = "OPEN_MATRIX";        // { tabId, url } — start observing, open the panel window, reload the tab
 export const MSG_STOP_MATRIX       = "STOP_MATRIX";        // { tabId }
 export const MSG_GET_MATRIX_DATA   = "GET_MATRIX_DATA";    // { tabId } → rows + overrides + level
@@ -32,12 +34,26 @@ export const MSG_CHECK_FAKE_WINDOW    = "CHECK_FAKE_WINDOW";     // { shownText 
 export const MSG_PAGE_SCAM_BLOCKED    = "PAGE_SCAM_BLOCKED";     // { kind: PAGE_SCAM_KIND.* } — a page scam was blocked: open
                                                                  // the warning (page = sender tab, C28)
 
+// 5.1.0 — Tamper Guard (copies in security/tamper-guard-bridge.js kept equal by tools/check-shipped-terms.mjs).
+// Content script → SW (page and tab from the SENDER only, C28):
+export const MSG_TAMPER_HELLO         = "TAMPER_HELLO";          // {} — top frame started → { arm } (core/tamper-guard.js)
+export const MSG_TAMPER_SIGNALS       = "TAMPER_SIGNALS";        // { card, cardNumber, bank, hidden, frames[] } — banking/payment signals → { arm }
+export const MSG_TAMPER_REPORT        = "TAMPER_REPORT";         // { rule, detail } — a finding (data/tamper-rules.js) → { arm }
+// SW → content script (chrome.tabs.sendMessage, every frame of the tab): start the closer watching.
+export const MSG_TAMPER_ARM           = "TAMPER_ARM";            // {}
+// Tamper Guard warning window / Protections page → SW:
+export const MSG_GET_TAMPER_WARNING   = "GET_TAMPER_WARNING";    // {} → warning model for the sender's ?w= (C28)
+export const MSG_TAMPER_WARNING_CHANGED = "TAMPER_WARNING_CHANGED"; // { id } — service worker → warning window: fetch the model again (5.1.3)
+export const MSG_TAMPER_WARNING_ACTION = "TAMPER_WARNING_ACTION"; // { action: TAMPER_WARNING_ACTION.* }
+export const MSG_GET_TAMPER_VIEW      = "GET_TAMPER_VIEW";       // {} → { rules } — the signal list with points (5.1.3)
+
 // popup → SW (4.7.0)
 export const MSG_GET_BROWSER_UPDATE   = "GET_BROWSER_UPDATE";    // {} → band model or null (core/browser-update.js)
 
 // download warning page / VirusTotal key prompt → SW (warnRiskyDownloads, 4.3.0)
 export const MSG_GET_DOWNLOAD_CHECK  = "GET_DOWNLOAD_CHECK";  // {} → { record, look } for the sender's ?downloadId= (C28)
 export const MSG_DISMISS_DOWNLOAD    = "DISMISS_DOWNLOAD";    // {} — the user is done: release the check
+export const MSG_DOWNLOAD_ALWAYS_IGNORE = "DOWNLOAD_ALWAYS_IGNORE"; // {} — 5.1.3: "Download: <file host>" on the allow list, then done
 export const MSG_VT_KEY_PROMPT_DONE  = "VT_KEY_PROMPT_DONE";  // { dontShowAgain } — nudge closed
 // SW → download warning page (4.3.4, DS 3.3.0 item 16): a late VirusTotal verdict for an open page
 export const MSG_DOWNLOAD_VT_UPDATE  = "DOWNLOAD_VT_UPDATE";  // { downloadId, record }
@@ -62,10 +78,17 @@ export const WARNING_ACTION = Object.freeze({
   CONTINUE_ONCE: "continueOnce"
 });
 
+// Tamper Guard warning-window actions (MSG_TAMPER_WARNING_ACTION.action, 5.1.0)
+export const TAMPER_WARNING_ACTION = Object.freeze({
+  IGNORE:           "ignore",            // close this warning
+  ALWAYS_IGNORE:    "alwaysIgnore"       // 5.1.3: add "Tamper: site" to the allow list (replaces never-warn site/anywhere)
+});
+
 // Download-blocked notice actions (MSG_BLOCKED_DOWNLOAD_ACTION.action)
 export const BLOCKED_DOWNLOAD_ACTION = Object.freeze({
   OK:               "ok",                // keep it blocked, close the notice
-  DOWNLOAD_ANYWAY:  "downloadAnyway"     // continue the held download (4.5.5); warnRiskyDownloads then checks it
+  DOWNLOAD_ANYWAY:  "downloadAnyway",    // continue the held download (4.5.5); warnRiskyDownloads then checks it
+  ALWAYS_ALLOW:     "alwaysAllow"        // 5.1.3: "Download: <file host>" on the allow list, then as DOWNLOAD_ANYWAY
 });
 
 // ── Sender kinds (5.0.6, C46) ────────────────────────────────────────────────
@@ -83,5 +106,8 @@ export const CONTENT_SCRIPT_MESSAGES = Object.freeze(new Set([
   MSG_CHECK_PASSWORD_FORM,   // security/password-form-guard.js
   MSG_PASSWORD_FORM_LEAVE,   // security/password-form-guard.js
   MSG_CHECK_FAKE_WINDOW,     // security/fake-window-guard.js
-  MSG_PAGE_SCAM_BLOCKED      // security/clickfix-bridge.js, consentfix-paste-guard.js, skimmer-bridge.js
+  MSG_PAGE_SCAM_BLOCKED,     // security/scam-guard-bridge.js (ClickFix, ConsentFix, shared codes), skimmer-bridge.js
+  MSG_TAMPER_HELLO,          // security/tamper-guard-bridge.js (5.1.0)
+  MSG_TAMPER_SIGNALS,        // security/tamper-guard-bridge.js
+  MSG_TAMPER_REPORT          // security/tamper-guard-bridge.js
 ]));

@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import * as M from "../data/message-types.js";
-import { LEVEL, LEVEL_MIN, LEVEL_MAX, ICON_DIR, ICON_UI_SIZE } from "../data/constants.js";
+import { LEVEL, LEVEL_MIN, LEVEL_MAX, ICON_DIR, ICON_UI_SIZE, SEVERITY, TAMPER_RATING, POPUP_MATCHED_RULES_MAX } from "../data/constants.js";
 import { fillDerivedText, levelRange, LIST_SEPARATOR } from "./derived-text.js";
 import { BUILTIN_SUMMARY } from "../data/builtin-domains.js";
 import { showError, releaseStatus } from "./status-line.js";
@@ -21,6 +21,14 @@ const LOCK_ICON_PLAIN     = "var(--bright)";  // lock icon on the plain (unlocke
 const SVG_NS = "http://www.w3.org/2000/svg";
 const LOCK_PATH_CLOSED = "M8 11V7a4 4 0 0 1 8 0v4";
 const LOCK_PATH_OPEN   = "M8 11V7a4 4 0 0 1 7.5-2";
+// 5.1.3 — "This page" box texts and classes (the model says what; the words are here, once).
+const RISK_TEXT = Object.freeze({ [SEVERITY.SUSPECT]: "Suspicious site", [SEVERITY.PHISHING]: "Dangerous site" });
+const RISK_CLASS = Object.freeze({ [SEVERITY.SUSPECT]: "suspect", [SEVERITY.PHISHING]: "danger" });
+// "This page" tamper line (owner, 2026-11-24): "<rating> tamper sign(s): <number>", and on the next line the most
+// serious sign by name — one line, cut with "…" when too long (CSS .page-one-line; the full name on hover).
+function tamperCountText(t) { return `${t.ratingLabel} tamper ${t.findings === 1 ? "sign" : "signs"}: ${t.findings}`; }
+const LIST_JOIN = ", ";
+const BLOCK_COUNT_UNKNOWN = "";              // the count could not be asked (no activeTab grant, quota): nothing shown
 const SAFER_OPEN_DEFAULT = true;          // 4.2: safer-regions panel starts expanded (TLD list visible at once)
 const TRACK_INSET_PX = 44;                // slider track: total horizontal inset of the fill (= popup.css .track left + right)
 
@@ -63,7 +71,7 @@ function countText(active, total) {
 function bulletsFor(m) {
   const c = m.levelInfo[m.level - 1].color;
   const n = `${countText(m.counts.active, m.counts.total)} protections`;
-  const outside = m.groups.find((g) => g.fromLevel === LEVEL.SMART) || { active: 0, total: 0 };  // "outside safer regions" group
+  const outside = m.counts.outside;   // 5.1.0: counted by scope (core/policy.js protectionCounts), groups are per tab now
   // Derived from the whitelist's own categories (4.5.6: BUILTIN_SUMMARY — it used to be a typed copy).
   const builtin = { c: ALLOW_COLOR, t: `Trusted: ${BUILTIN_SUMMARY.join(LIST_SEPARATOR)}` };
   switch (m.level) {
@@ -179,9 +187,44 @@ function render() {
 
   $("matrixBtn").disabled = !m.scorable;                       // web pages only
 
-  // 4.4.5: always the real count — "level 1 = nothing blocked" was an assumption (an embedded frame, a Show
-  // Matrix override or the session level could still block here), and it hid 26 blocks behind a stuck page.
-  $("blockedText").textContent = m.blocked === 0 ? "No requests blocked" : `${m.blocked} requests blocked on this tab`;
+  renderPageBox(m.page);
+}
+
+// 5.1.3 — "This page": each line only when it has something to say; the box hidden when none has.
+function renderPageBox(page) {
+  const risk = page && page.risk;
+  const tamper = page && page.tamper;
+  const continued = !!(page && page.continued);
+  $("pageRisk").hidden = !risk;
+  if (risk) {
+    $("pageRisk").className = `page-line ${RISK_CLASS[risk.severity] || ""}`.trim();
+    $("pageRiskText").textContent = RISK_TEXT[risk.severity] || "";
+    $("pageRiskWhy").textContent = risk.reasons.join(LIST_JOIN);
+  }
+  $("pageTamper").hidden = !tamper;
+  if (tamper) {
+    $("pageTamper").className = `page-line page-line-row ${tamper.rating >= TAMPER_RATING.HIGH ? "danger" : "suspect"}`;
+    $("pageTamperText").textContent = tamperCountText(tamper);
+    $("pageTamperWorst").textContent = tamper.topLabel;
+    $("pageTamperWorst").title = tamper.topLabel;
+  }
+  $("pageContinued").hidden = !continued;
+  $("pageBox").hidden = !risk && !tamper && !continued;
+}
+
+// 5.1.3 — the firewall count, asked when the popup opens: the rules Chrome says matched in this tab (opening the popup
+// grants activeTab for it), counted by the service worker (block rules only). No background counting at all.
+async function renderBlockCount() {
+  let text = BLOCK_COUNT_UNKNOWN;
+  try {
+    if (tab && model && model.scorable) {
+      const info = await chrome.declarativeNetRequest.getMatchedRules({ tabId: tab.id });
+      const ruleIds = (info && info.rulesMatchedInfo || []).slice(0, POPUP_MATCHED_RULES_MAX).map((x) => x.rule.ruleId);
+      const n = await send(M.MSG_COUNT_FIREWALL_BLOCKS, { ruleIds });
+      text = n === 0 ? "Firewall blocked nothing on this page" : `Firewall blocked ${n} ${n === 1 ? "request" : "requests"} on this page`;
+    }
+  } catch { /* not granted (the popup opened another way) or over Chrome's quota: no count shown */ }
+  $("blockedText").textContent = text;
 }
 
 // ── Wiring ───────────────────────────────────────────────────────────────────
@@ -211,6 +254,10 @@ function wire() {
   // a separate "Options" button; options_ui now points at ui/protections.html, so this still opens
   // the same registered page — just under its new name and with the protections list included).
   $("protectionsBtn").addEventListener("click", () => chrome.runtime.openOptionsPage());
+  $("tamperDetailsBtn").addEventListener("click", async () => {   // 5.1.3: the page's tamper window again
+    try { await send(M.MSG_SHOW_TAMPER_DETAILS); window.close(); }
+    catch (e) { showError($("popupStatus"), e, "Tamper details"); }
+  });
   $("matrixBtn").addEventListener("click", async () => {
     try { await send(M.MSG_OPEN_MATRIX); window.close(); }
     catch (e) { showError($("popupStatus"), e, "Show Matrix"); }
@@ -226,6 +273,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     tab = t ? { id: t.id, url: t.url || "" } : null;
     model = await send(M.MSG_GET_POPUP_STATE);
     render();
+    renderBlockCount();                                         // 5.1.3: after the first render, never in its way
   } catch (e) {
     showError($("popupStatus"), e, "Could not load");
   }

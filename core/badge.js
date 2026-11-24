@@ -1,39 +1,35 @@
 // ── core/badge.js ─────────────────────────────────────────────────────────────
-// Toolbar badge + icon, per tab.
-//   text   = requests blocked on this tab, counted HERE (not Chrome's built-in
-//            action count, which also counts every modifyHeaders match)
-//   colour = risk of the tab's current site: grey / orange / red (+ "!")
+// Toolbar badge + icon, per tab. 5.1.3 (owner, 2026-11-24): the HIGHEST problem wins, one symbol (data/constants.js
+// BADGE_TEXT, SEVERITY_ORDER): the worst of the site's risk and the page's tamper rating (TAMPER_BADGE_SEVERITY) —
+//   "!" red = dangerous, "?" orange = suspicious; nothing → the badge is handed back to Chrome's own count of the
+//   requests 3P Matrix's rules blocked on the page (init: displayActionCountAsBadgeText; grey global colour).
+// No listener counts anything (the 5.1.2 count needed one on every failed request of every page).
 //   icon   = 3P-Matrix-lite brick wall in the colour of the tab's effective level
 //
 // Public interface:
+//   init()                              — every service-worker start: Chrome's block count on, grey global colour (idempotent)
 //   ready()                             — Promise: per-tab state restored (await before reading)
-//   noteBlocked(tabId)                  — one more blocked request on the tab
-//   resetCount(tabId)                   — new top-level page committed
+//   resetPage(tabId)                    — new top-level page committed: the tamper rating belongs to the old page
 //   setRisk(tabId, site, severity)      — remember the risk of the site in the tab
 //   clearRiskIfOtherSite(tabId, site)   — committed page belongs to another site
-//   getCount(tabId) / getRisk(tabId)    — current values (after ready())
+//   setTamperRating(tabId, rating)      — 5.1.3: the page's tamper rating (core/tamper-guard.js, via setMarkSink)
+//   getRisk(tabId)                      — the site's risk (after ready())
 //   allHighRisk()                       — 4.7.0: tabId[] currently at SEVERITY.PHISHING (after ready()) —
-//                                         core/apply-manager.js's high-risk tab band (data/protections.js
-//                                         alsoHighRisk)
+//                                         core/apply-manager.js's high-risk tab band (data/protections.js alsoHighRisk)
 //   setLevelIcon(level, tabId?)         — global (no tabId) or per-tab icon
 //   releaseTab(tabId)                   — tab closed: drop everything we hold for it
 //
-// State — 4.5.4: one entry per tab in a session store (core/session-map.js, SESSION_KEY.BADGE),
-// so the count and risk colour survive a service-worker restart (they used to reset after ~30 s idle):
-//   _tabs.map  Map<tabId, { count, site, severity }>   bounded by open tabs: releaseTab() on tabs.onRemoved
-// Every change waits for the restore (_tabs.ready()), so an event that wakes the worker never works on an
-// empty map, and applies in arrival order.
-//
-// 4.5.4 (perf P6) — render coalescing: a change only marks the tab dirty; one timer per tab
-// (BADGE_RENDER_DELAY_MS) draws it and saves the session entry, so a burst of N blocked requests costs one
-// badge update + one session write instead of 2N Chrome calls. Text and colour already shown are not sent
-// again.
+// State — one entry per tab in a session store (core/session-map.js, SESSION_KEY.BADGE), so the risk survives a
+// service-worker restart: _tabs.map  Map<tabId, { site, severity, tamper }> (tamper = a SEVERITY), bounded by open tabs (releaseTab on
+// tabs.onRemoved). Every change waits for the restore (_tabs.ready()) and applies in arrival order.
+// Render coalescing (4.5.4): a change marks the tab dirty; one timer per tab (BADGE_RENDER_DELAY_MS) draws it and
+// saves the session entry. Text and colour already shown are not sent again.
 //   _timers  Map<tabId, timeoutId>         — pending draw; cleared by releaseTab()
 //   _shown   Map<tabId, { text, color }>   — what Chrome shows now; deleted by releaseTab()
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { BADGE_COLOR, BADGE_PHISHING_PREFIX, BADGE_MAX_COUNT, BADGE_RENDER_DELAY_MS, SESSION_KEY, SEVERITY,
-         LEVEL_INFO, ICON_SIZES, ICON_DIR } from "../data/constants.js";
+import { BADGE_COLOR, BADGE_TEXT, BADGE_RENDER_DELAY_MS, BADGE_SHOWS_BLOCK_COUNT, SESSION_KEY, SEVERITY, SEVERITY_ORDER,
+         TAMPER_BADGE_SEVERITY, LOG_PREFIX, LEVEL_INFO, ICON_SIZES, ICON_DIR } from "../data/constants.js";
 import { createSessionMap } from "./session-map.js";
 
 const _tabs = createSessionMap(SESSION_KEY.BADGE);
@@ -42,18 +38,31 @@ const _shown = new Map();
 
 export function ready() { return _tabs.ready(); }
 
+// Every service-worker start (Chrome keeps the option, setting it again is harmless). Guarded: a failure is logged,
+// the symbols still work.
+export function init() {
+  chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR.NORMAL })
+    .catch((e) => console.warn(LOG_PREFIX, "badge colour:", e));
+  chrome.declarativeNetRequest.setExtensionActionOptions({ displayActionCountAsBadgeText: BADGE_SHOWS_BLOCK_COUNT })
+    .catch((e) => console.warn(LOG_PREFIX, "badge block count:", e));
+}
+
+// A stored entry from before (tamper was a boolean mark) or anything unexpected counts as nothing (guard).
+function severityOf(value) { return SEVERITY_ORDER.includes(value) ? value : SEVERITY.NONE; }
+
 function entryOf(tabId) {
-  if (!_tabs.map.has(tabId)) _tabs.map.set(tabId, { count: 0, site: "", severity: SEVERITY.NONE });
+  if (!_tabs.map.has(tabId)) _tabs.map.set(tabId, { site: "", severity: SEVERITY.NONE, tamper: SEVERITY.NONE });
   return _tabs.map.get(tabId);
 }
 
+const TEXT_OF = Object.freeze({ [SEVERITY.SUSPECT]: BADGE_TEXT.SUSPECT, [SEVERITY.PHISHING]: BADGE_TEXT.PHISHING });
+const COLOR_OF = Object.freeze({ [SEVERITY.NONE]: BADGE_COLOR.NORMAL, [SEVERITY.SUSPECT]: BADGE_COLOR.SUSPECT,
+                                 [SEVERITY.PHISHING]: BADGE_COLOR.PHISHING });
+// The worst of the site's risk and the tamper rating; text null = Chrome's block count.
 function badgeOf(entry) {
-  const n = entry.count;
-  let text = n === 0 ? "" : n > BADGE_MAX_COUNT ? `${BADGE_MAX_COUNT}+` : String(n);
-  if (entry.severity === SEVERITY.PHISHING) text = BADGE_PHISHING_PREFIX + text;
-  const color = entry.severity === SEVERITY.PHISHING ? BADGE_COLOR.PHISHING
-    : entry.severity === SEVERITY.SUSPECT ? BADGE_COLOR.SUSPECT : BADGE_COLOR.NORMAL;
-  return { text, color };
+  const site = severityOf(entry.severity), tamper = severityOf(entry.tamper);
+  const worst = SEVERITY_ORDER.indexOf(tamper) > SEVERITY_ORDER.indexOf(site) ? tamper : site;
+  return { text: TEXT_OF[worst] || null, color: COLOR_OF[worst] };
 }
 
 // Draws the tab now (only what changed) and saves the session store.
@@ -83,15 +92,22 @@ function update(tabId, change) {
   });
 }
 
-export function noteBlocked(tabId) {
-  update(tabId, (e) => { e.count += 1; });
+// Chrome clears a tab's own badge text and colour when it navigates: forget what was shown and draw again (the site's
+// risk stays when the site stays; the tamper rating belonged to the old page).
+export function resetPage(tabId) {
+  _shown.delete(tabId);
+  update(tabId, (e) => { e.tamper = SEVERITY.NONE; });
 }
 
-export function resetCount(tabId) {
-  update(tabId, (e) => { e.count = 0; });
+// `rating`: a TAMPER_RATING (Low and unknown values give nothing).
+export function setTamperRating(tabId, rating) {
+  const sev = Object.prototype.hasOwnProperty.call(TAMPER_BADGE_SEVERITY, rating) ? TAMPER_BADGE_SEVERITY[rating] : SEVERITY.NONE;
+  update(tabId, (e) => {
+    if (e.tamper === sev) return false;                      // nothing changes: no draw
+    e.tamper = sev;
+    return true;
+  });
 }
-
-export function getCount(tabId) { return (_tabs.map.get(tabId) || {}).count || 0; }
 
 export function getRisk(tabId) {
   const e = _tabs.map.get(tabId);

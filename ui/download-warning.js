@@ -64,7 +64,7 @@ const DISCLAIMER = Object.freeze({
 const VT_BUTTON = Object.freeze({ VT: "Check download at VT", HYBRID: "Check download at Hybrid Analysis" });
 const GONE_TEXT = "Download no longer active — you can close this window.";
 const NO_HEURISTIC_SIGNALS = "Heuristics found no alarming signals";
-const BUTTON_IDS = Object.freeze(["btnOk", "btnVt"]);
+const BUTTON_IDS = Object.freeze(["btnOk", "btnVt", "btnAlwaysIgnore"]);   // 5.1.3: + Always ignore
 
 // ── Page state ───────────────────────────────────────────────────────────────
 let lastRecord = null;
@@ -265,12 +265,13 @@ function vtTargetUrl() {
 
 function setButtons(disabled) { for (const id of BUTTON_IDS) $(id).disabled = disabled; }
 
-async function finish(openUrl) {
+// alwaysIgnore (5.1.3): "Download: <file host>" goes on the allow list first (the service worker then releases it).
+async function finish(openUrl, alwaysIgnore = false) {
   if (busy) return;
   busy = true;
   setButtons(true);
   try {
-    const res = await chrome.runtime.sendMessage({ type: M.MSG_DISMISS_DOWNLOAD });
+    const res = await chrome.runtime.sendMessage({ type: alwaysIgnore ? M.MSG_DOWNLOAD_ALWAYS_IGNORE : M.MSG_DISMISS_DOWNLOAD });
     if (!res || !res.ok) throw new Error(res && res.error || "no response");
     if (openUrl) await chrome.tabs.create({ url: openUrl });
     window.close();
@@ -284,6 +285,7 @@ async function finish(openUrl) {
 document.addEventListener("DOMContentLoaded", async () => {
   $("btnOk").addEventListener("click", () => finish(null));
   $("btnVt").addEventListener("click", () => finish(vtTargetUrl()));
+  $("btnAlwaysIgnore").addEventListener("click", () => finish(null, true));
   $("vtKeyLink").addEventListener("click", (e) => { e.preventDefault(); chrome.tabs.create({ url: VT_JOIN_URL }); });
   chrome.runtime.onMessage.addListener(onLiveUpdate);
   $("btnVt").focus();                                        // 4.4.6: the careful choice is the default

@@ -419,6 +419,35 @@ This extension maintains two standing reference documents, `STYLE_GUIDE_LIGHT.md
 
 ---
 
+### A10. Layout and content — what a page shows and how (owner's review of the Tamper Protection tab, 3P Matrix 5.1.0)
+
+Learned the hard way in one session: a tab that worked was redone six times because its layout was invented instead
+of copied. These rules come from that review.
+
+1. **Show only what the user can act on.** A list of findings that never produced a warning, or a log nobody needs
+   to read, is noise. Information without an action goes, or goes behind a hover.
+2. **Copy the sibling, don't invent.** A new tab or panel uses the same layout, density and component classes as
+   the existing ones (two columns, grouped boxes, the same row height, the same heading pattern). A difference
+   needs a reason the user would agree with.
+3. **Columns in one row end at the same height.** Let the flexible element (a text box, a list) take up the
+   difference; never leave one column hanging short.
+4. **Density follows the content.** A row without a checkbox does not keep the checkbox's row height. A missing
+   value (an unnumbered row) gets no empty column or gap.
+5. **One bright line per item; the explanation on hover/focus.** No dim second line repeated under every row, and
+   never the same sentence on every row.
+6. **Group headings say what the group means for the user** ("Warns at once"); the classifier (level, risk) sits
+   right-aligned in the same spot on every tab.
+7. **One name per feature everywhere** — tab, switch, warning window, docs.
+8. **Look before showing.** Screenshot the change next to its sibling and compare spacing, alignment and heights
+   before presenting it — not after the user points it out.
+
+- [ ] Every section on the page leads to an action, or is an explanation the user asked for
+- [ ] The new view uses the same classes and spacing as its nearest sibling view
+- [ ] Side-by-side columns end at the same height
+- [ ] No empty columns, gaps or placeholder rows
+- [ ] Explanations are tooltips, not repeated lines
+- [ ] A screenshot was compared with the sibling view before the change was presented
+
 ## Chapter 2 — Structure & Modularity
 
 ### C1. One module, one responsibility
@@ -1263,6 +1292,14 @@ A related trust-boundary failure occurs when the file type is not known at downl
 - [ ] Add a scoring penalty for extension obfuscation: the server actively concealing what it serves is itself a signal (see scoring engine checks)
 
 **Relationship to B2a:** B11 is about *which* entries belong in a trust list. B2a is about ensuring that list is defined in one place and rendered from that place everywhere. Both checks are necessary: B11 catches a wrong list, B2a catches a stale copy of an otherwise-correct list.
+
+**Signals the page controls may only RAISE scrutiny, never lower protection (3P Matrix 5.1.0, owner's decision).** A
+clue a web page can put on itself — a card-number field, a checkout word in its address, an embedded payment frame —
+may make the extension watch MORE closely (Tamper Guard arms its closer watching on such pages). It must never make
+the extension block or warn LESS: a phishing or skimmer page would add exactly that clue to get the weaker treatment.
+Lowering protection stays limited to owner-controlled lists (the built-in whitelist, B11 above) and the user's own
+trust ("Trust this site").
+- [ ] For every decision that relaxes a block or skips a warning, name its input: it must be a list in the extension or a user choice, never page content
 
 ---
 

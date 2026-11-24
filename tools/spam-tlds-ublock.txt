@@ -9,8 +9,8 @@
 ! Issues: https://github.com/hagezi/dns-blocklists/issues
 ! Disclaimer: https://github.com/hagezi/dns-blocklists/blob/main/README.md#disclaimer
 ! Expires: 1 day
-! Last modified: 05 Nov 2026 17:06 UTC
-! Version: 2026.1105.1706.37
+! Last modified: 23 Nov 2026 02:44 UTC
+! Version: 2026.1123.0244.34
 ! Syntax: uBlock
 ! Number of latin TLDs: 294 - punycode TLDs: 151
 !
@@ -49,7 +49,7 @@
 ||casa^$doc,domain=~keys.casa|~nabu.casa
 ||cash^$doc,domain=~cake.cash|~doe.cash|~redtiger.cash|~vitunleija.cash
 ||casino^$doc
-||cc^$doc,domain=~10gen.cc|~adguard-vpn.cc|~akami-solutions.cc|~arduino.cc|~clashofmagic.cc|~coolkit.cc|~coopoo.cc|~crcon.cc|~datapump.cc|~dhilosnetworks.cc|~dict.cc|~dns36.cc|~eay.cc|~fanbox.cc|~fiedler.cc|~fito.cc|~forestapp.cc|~frontrow.cc|~godoflove.cc|~imgus.cc|~is.cc|~itead.cc|~kktix.cc|~libstc.cc|~lilygo.cc|~lurl.cc|~mydaddy.cc|~myppt.cc|~nssm.cc|~postimg.cc|~ppt.cc|~pravatar.cc|~pretendo.cc|~ptt.cc|~pttweb.cc|~rapha.cc|~rapidcdn.cc|~reurl.cc|~road.cc|~rutracker.cc|~shottr.cc|~silca.cc|~sneakpeek.cc|~theradio.cc|~toxicland.cc|~ultra.cc|~ultracloud.cc|~vern.cc|~vocus.cc|~wallhaven.cc|~yipee.cc|~yz168.cc|~zcyph.cc
+||cc^$doc,domain=~10gen.cc|~adguard-vpn.cc|~akami-solutions.cc|~arduino.cc|~clashofmagic.cc|~coolkit.cc|~coopoo.cc|~crcon.cc|~datapump.cc|~dhilosnetworks.cc|~dict.cc|~dns36.cc|~eay.cc|~ewelink.cc|~fanbox.cc|~fiedler.cc|~fito.cc|~forestapp.cc|~frontrow.cc|~godoflove.cc|~imgus.cc|~is.cc|~itead.cc|~kktix.cc|~libstc.cc|~lilygo.cc|~lurl.cc|~mydaddy.cc|~myppt.cc|~nssm.cc|~postimg.cc|~ppt.cc|~pravatar.cc|~pretendo.cc|~ptt.cc|~pttweb.cc|~rapha.cc|~rapidcdn.cc|~reurl.cc|~road.cc|~rutracker.cc|~shottr.cc|~silca.cc|~sneakpeek.cc|~theradio.cc|~toxicland.cc|~ultra.cc|~ultracloud.cc|~vern.cc|~vocus.cc|~wallhaven.cc|~yipee.cc|~yz168.cc|~zcyph.cc
 ||center^$doc,domain=~found.center|~mein-kunden.center|~oh.center|~priv.center|~relaxx.center
 ||ceo^$doc
 ||cf^$doc,domain=~google.cf
@@ -69,7 +69,7 @@
 ||college^$doc
 ||computer^$doc,domain=~helium.computer|~libre.computer|~neat.computer|~silly.computer
 ||consulting^$doc
-||cool^$doc,domain=~cnyes.cool|~compromise.cool|~eagle.cool|~shirtz.cool|~upbitit.cool|~ymq.cool
+||cool^$doc,domain=~cnyes.cool|~compromise.cool|~eagle.cool|~nowplaying.cool|~shirtz.cool|~upbitit.cool|~ymq.cool
 ||coupons^$doc
 ||courses^$doc
 ||credit^$doc
@@ -79,9 +79,9 @@
 ||date^$doc,domain=~endoflife.date
 ||dating^$doc,domain=~boo.dating|~breeze.dating|~gaudi.dating
 ||day^$doc
-||deals^$doc,domain=~gg.deals
+||deals^$doc,domain=~cs.deals|~gg.deals
 ||degree^$doc,domain=~opf.degree|~three60.degree
-||delivery^$doc,domain=~meucarrinho.delivery|~push.delivery|~return-my.delivery|~wedos.delivery|~ze.delivery
+||delivery^$doc,domain=~logistix.delivery|~meucarrinho.delivery|~push.delivery|~return-my.delivery|~wedos.delivery|~ze.delivery
 ||dental^$doc,domain=~clear.dental
 ||desi^$doc,domain=~xhamster45.desi|~xhamster46.desi|~xhamster.desi
 ||directory^$doc,domain=~2fa.directory|~cursor.directory|~fedi.directory|~ooh.directory|~passkeys.directory|~reactnative.directory
@@ -90,9 +90,9 @@
 ||dog^$doc,domain=~chainsawman.dog|~heika.dog|~misskey.dog|~telegram.dog
 ||download^$doc,domain=~caido.download|~kali.download|~mkvtoolnix.download|~orangefox.download|~up4ever.download|~upfiles.download
 ||dpdns.org^$doc
-||eco^$doc,domain=~auk.eco|~elli.eco|~mer.eco|~play.eco
+||eco^$doc,domain=~auk.eco|~elli.eco|~mer.eco|~nura.eco|~play.eco
 ||edu.eu^$doc
-||energy^$doc,domain=~bigdig.energy|~eonnext-kraken.energy|~homewizard.energy|~octopus.energy|~oegb-kraken.energy
+||energy^$doc,domain=~bigdig.energy|~bliq.energy|~chargee.energy|~eonnext-kraken.energy|~homewizard.energy|~mygrid.energy|~octopus.energy|~oegb-kraken.energy|~planetpod.energy|~shoptopus.energy
 ||engineer^$doc
 ||enterprises^$doc
 ||equipment^$doc,domain=~biqu.equipment
@@ -102,7 +102,7 @@
 ||expert^$doc,domain=~bahn.expert|~booking.expert|~malware.expert
 ||exposed^$doc
 ||faith^$doc
-||family^$doc,domain=~hns.family
+||family^$doc,domain=~gensa.family|~hns.family
 ||fan^$doc,domain=~ktr.fan|~os.fan
 ||fans^$doc
 ||fashion^$doc,domain=~haal.fashion
@@ -120,7 +120,7 @@
 ||fun^$doc,domain=~cdn.fun|~chinaq.fun|~disasterpr.fun|~enza.fun|~neal.fun|~patterncraft.fun|~strem.fun
 ||fund^$doc
 ||futbol^$doc
-||fyi^$doc,domain=~apollo.fyi|~better.fyi|~crypt.fyi|~genderdysphoria.fyi|~iusearchlinux.fyi|~laelaps.fyi|~layoffs.fyi|~levels.fyi|~lunar.fyi|~notbyai.fyi|~ost2.fyi|~poyoanon.fyi|~recollect.fyi|~seized.fyi|~vercel.fyi|~wpt.fyi
+||fyi^$doc,domain=~apollo.fyi|~better.fyi|~crypt.fyi|~expo.fyi|~genderdysphoria.fyi|~iusearchlinux.fyi|~laelaps.fyi|~layoffs.fyi|~levels.fyi|~lunar.fyi|~notbyai.fyi|~ost2.fyi|~poyoanon.fyi|~recollect.fyi|~seized.fyi|~vercel.fyi|~wpt.fyi
 ||ga^$doc,domain=~google.ga|~mmo.ga
 ||games^$doc,domain=~crazypanda.games|~embark.games|~eneba.games|~erkul.games|~gxcorner.games|~mycafe.games|~skystone.games
 ||garden^$doc,domain=~file.garden|~radio.garden
@@ -150,7 +150,7 @@
 ||how^$doc,domain=~mond.how|~notrace.how
 ||icu^$doc,domain=~fastdl.icu|~intervals.icu|~lunar.icu|~mon.icu
 ||immo^$doc
-||ink^$doc,domain=~filepress.ink|~ishortn.ink|~mez.ink|~next.ink|~rdl.ink|~shrinkme.ink|~simple.ink|~spaceforce.ink|~sumerian.ink|~work.ink
+||ink^$doc,domain=~filepress.ink|~homey.ink|~ishortn.ink|~mez.ink|~next.ink|~rdl.ink|~shrinkme.ink|~simple.ink|~spaceforce.ink|~sumerian.ink|~work.ink
 ||insure^$doc
 ||international^$doc,domain=~returns.international
 ||irish^$doc
@@ -186,19 +186,19 @@
 ||moe^$doc,domain=~anh.moe|~aniya.moe|~catbox.moe|~cdn.moe|~cubari.moe|~ddlc.moe|~dmn.moe|~ewe.moe|~honse.moe|~mathi.moe|~nyarchlinux.moe|~sakurajima.moe|~save.moe|~snug.moe|~trace.moe|~tzatzikiweeb.moe|~uma.moe
 ||mom^$doc
 ||money^$doc,domain=~copilot.money|~flowyour.money|~super.money|~unstoppable.money|~usual.money|~vivid.money
-||monster^$doc,domain=~fedi.monster|~mortgage.monster|~rollenspiel.monster|~tts.monster|~yts.monster
+||monster^$doc,domain=~cloudcdn.monster|~fedi.monster|~mortgage.monster|~rollenspiel.monster|~tts.monster|~yts.monster
 ||motorcycles^$doc
 ||mov^$doc,domain=~david.mov|~peerflix.mov|~pstream.mov
 ||name^$doc,domain=~chaosfunk.name|~chris.boyle.name|~crt.name|~davidwalsh.name|~hostaan.name|~keenetic.name|~stefvanbuuren.name|~vlo.name
 ||navy^$doc
-||new^$doc,domain=~bolt.new|~doc.new|~drawing.new|~form.new|~git.new|~lecture.new|~postgres.new|~sheet.new|~site.new|~slide.new
-||ng^$doc,domain=~coupa.ng|~google.com.ng
-||ninja^$doc,domain=~cape.ninja|~clash.ninja|~flashscore.ninja|~giveaway.ninja|~poe.ninja|~protomedia.ninja|~tgtg.ninja
+||new^$doc,domain=~bolt.new|~doc.new|~docs.new|~drawing.new|~drawings.new|~form.new|~forms.new|~git.new|~lecture.new|~postgres.new|~sheet.new|~sheets.new|~site.new|~sites.new|~slide.new|~slides.new|~vids.new
+||ng^$doc,domain=~coupa.ng|~google.com.ng|~origami.ng
+||ninja^$doc,domain=~cape.ninja|~clash.ninja|~dts.ninja|~flashscore.ninja|~giveaway.ninja|~poe.ninja|~protomedia.ninja|~tgtg.ninja
 ||observer^$doc,domain=~project2025.observer
 ||okinawa^$doc
 ||ong^$doc
 ||onl^$doc,domain=~gc.onl
-||online^$doc,domain=~2kweb.online|~adguard-vpn.online|~argon2.online|~bebraver.online|~blink.online|~bodyreset.online|~cf-equality.online|~dancewave.online|~discuss.online|~dnslookup.online|~dnsspeedtest.online|~eufh.online|~fireshinegames.online|~flexilead.online|~forceofwind.online|~geoigarape.online|~grapheneos.online|~incdn.online|~infomax.online|~instructions.online|~manuals.online|~mastodon.online|~mijnslimhuis.online|~mrprice.online|~norepiy.online|~open.online|~order.online|~owncast.online|~photostore24.online|~radarpayment.online|~randemretail.online|~ravendawn.online|~shueisha.online|~vmwesa.online|~volla.online|~zander.online
+||online^$doc,domain=~2kweb.online|~adguard-vpn.online|~argon2.online|~bebraver.online|~blink.online|~bodyreset.online|~cf-equality.online|~dancewave.online|~discuss.online|~dnslookup.online|~dnsspeedtest.online|~eufh.online|~fireshinegames.online|~flexilead.online|~forceofwind.online|~geoigarape.online|~grapheneos.online|~incdn.online|~infomax.online|~instructions.online|~manuals.online|~mastodon.online|~mijnslimhuis.online|~mrprice.online|~norepiy.online|~open.online|~order.online|~owncast.online|~photostore24.online|~radarpayment.online|~randemretail.online|~ravendawn.online|~realbridge.online|~shueisha.online|~vmwesa.online|~volla.online|~zander.online
 ||ooo^$doc,domain=~term.ooo|~toast.ooo
 ||partners^$doc,domain=~1password.partners|~nvidia.partners|~stripe.partners|~xh.partners
 ||parts^$doc,domain=~r.parts
@@ -208,12 +208,12 @@
 ||phd^$doc,domain=~rafael.phd
 ||photo^$doc,domain=~faceapp.photo|~glass.photo
 ||photos^$doc,domain=~picsum.photos
-||pics^$doc,domain=~am-cdn.pics|~covet.pics|~pixers.pics|~sexhd.pics|~slow.pics|~twic.pics
+||pics^$doc,domain=~covet.pics|~pixers.pics|~sexhd.pics|~slow.pics|~twic.pics
 ||pictures^$doc,domain=~cleanup.pictures|~comick.pictures|~pornhoarder.pictures
 ||pink^$doc
 ||pizza^$doc,domain=~tux.pizza
 ||place^$doc,domain=~gamedev.place
-||plus^$doc,domain=~mstdn.plus|~pahe.plus|~petmed.plus|~rcti.plus|~saepay.plus
+||plus^$doc,domain=~mstdn.plus|~pahe.plus|~petmed.plus|~rcti.plus|~saepay.plus|~vite.plus
 ||poker^$doc
 ||post^$doc,domain=~cypruspost.post|~postnl.post
 ||prof^$doc,domain=~casey.prof
@@ -248,14 +248,14 @@
 ||shop^$doc,domain=~11ts.shop|~30grad.shop|~4id.shop|~aloedent.shop|~appchance.shop|~axisms.shop|~brothersinarms.shop|~buergerspital.shop|~chessvibes.shop|~cineorder.shop|~der-marmeladenladen.shop|~derweinladen.shop|~domainname.shop|~domene.shop|~durst.shop|~elbsand.shop|~epicdesk.shop|~eventix.shop|~freshtorge.shop|~frontiers.shop|~funk-dichtungstechnik.shop|~geekchic.shop|~gourmet-kochmanufaktur.shop|~grnk.shop|~grog.shop|~gurkistan.shop|~henssler.shop|~kalypso.shop|~layers.shop|~majblomman.shop|~munu.shop|~music-merchant.shop|~myshopline.shop|~narpy.shop|~nautilusforge.shop|~neue.shop|~neurosama.shop|~nocut.shop|~nordland.shop|~owl-dampfer.shop|~oxiline.shop|~papaplatte.shop|~prohibited.shop|~redbrain.shop|~scayle.shop|~schneckenpost.shop|~schweden.shop|~scorpions.shop|~sentry.shop|~seyffer.shop|~sparepartservice.shop|~swedish-supplements.shop|~terminal.shop|~thechurch.shop|~urlbluemedia.shop|~vector3d.shop|~waldhaus.shop|~weinbibliothek.shop|~weinwunder.shop|~wielrenner.shop|~winefactory.shop|~xn--dnemark-5wa.shop|~zonwering.shop
 ||shopping^$doc
 ||show^$doc,domain=~camz.show|~j.show
-||site^$doc,domain=~additive-apps.site|~aftermath.site|~anonimayzer.site|~bio.site|~canva.site|~chatgpt.site|~claude.site|~edgeone.site|~fbsmarthome.site|~gov-img.site|~heimdall.site|~heyflow.site|~i5i.site|~kaylees.site|~langshuai.site|~leafbrowser.site|~miteru.site|~notion.site|~omar-thing.site|~onrocket.site|~platformsh.site|~privacy-test-pages.site|~reddit-doesnt-like-this.site|~saily.site|~shopapps.site|~silvatica.site|~srht.site|~toast.site|~tst.site|~wishonly.site|~wolow.site|~wpdns.site
+||site^$doc,domain=~7mb.site|~additive-apps.site|~aftermath.site|~anonimayzer.site|~bio.site|~canva.site|~chatgpt.site|~claude.site|~edgeone.site|~fbsmarthome.site|~gov-img.site|~heimdall.site|~heyflow.site|~i5i.site|~kaylees.site|~langshuai.site|~leafbrowser.site|~miteru.site|~notion.site|~omar-thing.site|~onrocket.site|~platformsh.site|~privacy-test-pages.site|~reddit-doesnt-like-this.site|~saily.site|~shopapps.site|~silvatica.site|~srht.site|~toast.site|~tst.site|~wishonly.site|~wolow.site|~wpdns.site
 ||skin^$doc
 ||solar^$doc,domain=~forecast.solar|~optimizer.solar
 ||soy^$doc
 ||space^$doc,domain=~ariadne.space|~azccriminal.space|~blinko.space|~cslogs.space|~dragonscave.space|~drgns.space|~embed-player.space|~filesafe.space|~hf.space|~httpjames.space|~hullseals.space|~hyper.space|~infosec.space|~ippen.space|~jetbrains.space|~keyboard-test.space|~latent.space|~link.space|~mapstodon.space|~melmac.space|~mempool.space|~metahub.space|~momonster.space|~nitter.space|~nuvioapp.space|~ocr.space|~oldbytes.space|~pod.space|~qwik.space|~roguecorp.space|~scurra.space|~searx.space|~slashtw.space|~takeb1nzyto.space|~tapframe.space|~telegram.space|~truepeople.space|~uexcorp.space
 ||sport^$doc,domain=~dyn.sport
 ||srl^$doc
-||store^$doc,domain=~adidashardware.store|~benz.store|~beyondagency.store|~bigtimerush.store|~bigtimerushuk.store|~cleanmasters.store|~cnckitchen.store|~ergomech.store|~ettoresoftware.store|~fbits.store|~g-h.store|~glitchproductions.store|~hacksmith.store|~heavysaurus.store|~hom.store|~immich.store|~myexpresscarwash.store|~myshopline.store|~pbshop.store|~peugeot.store|~pyrocynical.store|~roble.store|~rokomari.store|~shoplazza.store|~shopware.store|~sofascore.store|~stan.store|~tatemcraeeu.store|~tatemcrae.store|~timberjacks.store|~xqc.store
+||store^$doc,domain=~adidashardware.store|~benz.store|~beyondagency.store|~bigtimerush.store|~bigtimerushuk.store|~cleanmasters.store|~cnckitchen.store|~ergomech.store|~ettoresoftware.store|~fbits.store|~g-h.store|~glitchproductions.store|~hacksmith.store|~heavysaurus.store|~hom.store|~immich.store|~iqunix.store|~mchose.store|~myexpresscarwash.store|~myshopline.store|~pbshop.store|~peugeot.store|~pyrocynical.store|~roble.store|~rokomari.store|~shoplazza.store|~shopware.store|~sofascore.store|~stan.store|~stromae.store|~tatemcraeeu.store|~tatemcrae.store|~timberjacks.store|~xqc.store
 ||studio^$doc,domain=~affinity.studio|~ai.studio|~firebase.studio|~flourish.studio|~starapps.studio|~tivio.studio|~woodsea.studio|~zenn.studio
 ||style^$doc,domain=~nebula.style|~primer.style|~shiki.style
 ||su^$doc,domain=~encode.su|~jpg4.su|~jpg5.su|~jpg6.su|~promportal.su|~saint2.su
@@ -299,7 +299,7 @@
 ||win^$doc,domain=~activated.win|~communities.win|~debloat.win|~gametoolkit.win|~ios-countdown.win|~patriots.win|~realdeals.win|~vaultcord.win
 ||wine^$doc,domain=~nostr.wine
 ||work^$doc,domain=~doesmycode.work|~elphago.work|~frame.work|~funtuan.work|~koding.work|~mirror.work|~schueller.work|~spiegel.work|~starlightnet.work
-||world^$doc,domain=~betterme.world|~bevisioneers.world|~bk.world|~boo.world|~calckey.world|~camhub.world|~edgecdn.world|~heated.world|~ift.world|~juice.world|~lemmings.world|~lemmy.world|~mastodon.world|~maxwellcat.world|~meming.world|~mnetplus.world|~mnr.world|~shitposter.world|~unidays.world|~userstyles.world|~welocal.world|~wetdry.world|~wiz.world
+||world^$doc,domain=~betterme.world|~bevisioneers.world|~bk.world|~boo.world|~calckey.world|~camhub.world|~edgecdn.world|~heated.world|~ift.world|~juice.world|~lemmings.world|~lemmy.world|~mastodon.world|~maxwellcat.world|~meming.world|~mnetplus.world|~mnr.world|~shitposter.world|~tokki.world|~unidays.world|~userstyles.world|~welocal.world|~wetdry.world|~wiz.world
 ||wtf^$doc,domain=~akko.wtf|~bgp.wtf|~cyber.wtf|~e-mail.wtf|~fx.wtf|~ip.wtf|~jascha.wtf|~jsdate.wtf|~lemmy.wtf|~myip.wtf|~tigress.wtf|~wxx.wtf|~xo.wtf
 ||xin^$doc
 ||xx.kg^$doc

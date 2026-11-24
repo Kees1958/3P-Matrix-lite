@@ -11,7 +11,7 @@
 //
 // Format v2 sections (plain names, so a person can read and check the file):
 //   startupLevel · protections.disabled · saferRegions{addedTlds, removedTlds, activeTlds} ·
-//   allowList · lockedSites · showMatrixRules · onlineChecks · downloads (4.3.0)
+//   allowList · lockedSites · showMatrixRules · onlineChecks · downloads (4.3.0) · allowCategories (5.1.3; tamperGuard 5.1.0–5.1.2 gone)
 // stateSchema (4.3.2) = the state schema the file was written with (see fromSettingsFile).
 // downloads = warnRiskyDownloads's settings INCLUDING the VirusTotal API key (4.4.1, owner's decision: a backup
 // must restore a working setup on another machine). THE BACKUP FILE IS PLAIN TEXT AND NOW CONTAINS A SECRET —
@@ -27,6 +27,7 @@
 
 import { LEVEL, STATE_SCHEMA_VERSION } from "./constants.js";
 import { PROTECTIONS } from "./protections.js";
+import { ALLOW_CATEGORIES_STORED } from "./allow-categories.js";
 
 export const SETTINGS_FORMAT = "3p-matrix-settings";
 export const SETTINGS_FORMAT_VERSION = 2;
@@ -53,7 +54,8 @@ export function toSettingsFile(state, extVersion) {
       lockedSites,                                        // sites locked at levels 2–5
       showMatrixRules: JSON.parse(JSON.stringify(state.matrixRules)),
       onlineChecks: { firstDns: state.dns.first, secondDns: state.dns.second },
-      downloads: JSON.parse(JSON.stringify(state.downloads))     // 4.4.1: the VirusTotal key is included
+      downloads: JSON.parse(JSON.stringify(state.downloads)),    // 4.4.1: the VirusTotal key is included
+      allowCategories: JSON.parse(JSON.stringify(state.allowCategories))   // 5.1.3: the allow list's Firewall/Scam/Tamper lines
     }
   };
 }
@@ -77,6 +79,7 @@ export function fromSettingsFile(obj) {
     dns: { first: s.onlineChecks && s.onlineChecks.firstDns, second: s.onlineChecks && s.onlineChecks.secondDns },
     matrixRules: s.showMatrixRules,
     downloads: s.downloads,
+    allowCategories: s.allowCategories,                   // 5.1.3 — a file without it restores none (Download lines: downloads)
     // A file without stateSchema (≤ 4.3.1) counts as schema 1, so every migration runs on it — e.g. it
     // gets the 4.3.2 default-off protections unticked, exactly like a stored state from that time.
     schema: Number.isInteger(obj.stateSchema) ? obj.stateSchema : undefined
@@ -87,10 +90,13 @@ export function summarize(state) {
   const allow = state.siteLocksOrder.filter((s) => state.siteLocks[s] === LEVEL.ALLOW_ALL).length;
   const locked = state.siteLocksOrder.length - allow;
   const matrix = Object.values(state.matrixRules).reduce((n, m) => n + Object.keys(m).length, 0);
-  const off = Object.keys(state.disabledProtections).length;
+  // 5.1.0: switches only — protections without a checkbox of their own (switchable: false) follow tamper protection.
+  const switches = PROTECTIONS.filter((p) => p.switchable !== false);
+  const off = switches.filter((p) => state.disabledProtections[p.key] === true).length;
   const z = state.safeZone;
-  return `startup level ${state.startupLevel} · ${PROTECTIONS.length - off} of ${PROTECTIONS.length} protections on · ` +
+  return `startup level ${state.startupLevel} · ${switches.length - off} of ${switches.length} protections on · ` +
     `${z.tlds.length} safer-region TLDs (${z.manualTlds.length} added, ${z.excludedTlds.length} removed) · ` +
     `${allow} allow-list sites · ${locked} locked sites · ${matrix} Show Matrix rules · ` +
-    `${state.downloads.trustedDomains.length} trusted download domains`;
+    `${state.downloads.trustedDomains.length} allow-list download domains · ` +
+    `${ALLOW_CATEGORIES_STORED.reduce((n, c) => n + state.allowCategories[c].length, 0)} other allow-list category entries`;
 }

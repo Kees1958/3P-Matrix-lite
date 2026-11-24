@@ -36,7 +36,8 @@ import {
   MATRIX_RULE_ID_BASE, MATRIX_RULES_MAX, MATRIX_SCOPE, MATRIX_SCOPE_RESOURCE_TYPE, MATRIX_ACTION, MATRIX_SITE_ALL,
   TAB_BAND_RULES_MAX, LOG_PREFIX
 } from "../data/constants.js";
-import { ruleGroups, tabBandGroups, highRiskTabGroups, isProtectionActive, isProtectionEnabled, saferRegionsApply, GROUP_KIND } from "./policy.js";
+import { ruleGroups, tabBandGroups, highRiskTabGroups, isProtectionActive, isProtectionEnabled, saferRegionsApply, GROUP_KIND, allowSitesOf } from "./policy.js";
+import { ALLOW_CATEGORY } from "../data/allow-categories.js";
 import { PROTECTION_KEY, PROTECTION_BY_KEY } from "../data/protections.js";
 import { SPAM_TLDS, SPAM_TLD_EXCEPTIONS } from "../data/spam-tlds.js";
 import { SUSPICIOUS_HOSTING_DOMAINS } from "../data/suspicious-hosting.js";
@@ -72,6 +73,19 @@ function cond(...parts) {
   }
   return out;
 }
+// 5.1.3 — the allow list's category sites (Firewall for the network and header protections, Scam for the frames
+// block): a rule for the PAGE itself (main_frame only) skips them as the request's domain; every other rule (what a
+// page loads, frames included) skips requests those sites' pages start (excludedInitiatorDomains).
+const MAIN_FRAME = "main_frame";
+// The header rules that belong to Scam protection (blockRedirectsDialogs) — by local id (rule id % GROUP_ID_STRIDE).
+const SCAM_HEADER_IDS = new Set([ID.HDR_CSP_SUB, ID.HDR_HIGH_RISK_CSP_SANDBOX]);
+function withAllowExclusions(r, sites) {
+  if (!sites.length) return r;
+  const types = r.condition.resourceTypes || [];
+  const pageOnly = types.length > 0 && types.every((t) => t === MAIN_FRAME);
+  return { ...r, condition: cond(r.condition, pageOnly ? { excludedRequestDomains: sites } : { excludedInitiatorDomains: sites }) };
+}
+
 // group.priorityBase is TAB_BAND_BASE for the tab band, absent (0) for every dynamic group.
 function rule(group, localId, priority, action, condition) {
   return { id: GROUP_ID_STRIDE * group.index + localId, priority: (group.priorityBase || 0) + priority, action, condition };
@@ -216,7 +230,7 @@ function protectionRules(state, group, safeTlds) {
       }
     }
   }
-  return rules;
+  return rules.map((r) => withAllowExclusions(r, allowSitesOf(state, ALLOW_CATEGORY.FIREWALL)));   // 5.1.3: Firewall sites
 }
 
 // 4.7.0 — the ordinary tab band (level-lock) deliberately skips main_frame here (see withMain below):
@@ -226,8 +240,10 @@ function protectionRules(state, group, safeTlds) {
 // so it needs its OWN tabIds-scoped main_frame condition instead of the ordinary mainScope(group).
 function hrMainScope(group) { return group.highRiskOnly ? { tabIds: group.tabIds } : mainScope(group); }
 
-// ── Header rules (blockHighRiskEval, blockScpPrivacy/blockScpSecurity/blockSensorsNfc, blockRedirectsDialogs, blockWebsockets) ─────────────────────────────────
+// ── Header rules (blockScpPrivacy/blockScpSecurity, blockRedirectsDialogs, blockWebsockets) ─────────────────────────────────
 function headerRules(state, group, safeTlds) {
+  const firewallSites = allowSitesOf(state, ALLOW_CATEGORY.FIREWALL);   // 5.1.3
+  const scamSites = allowSitesOf(state, ALLOW_CATEGORY.SCAM);
   const L = group.level;
   const on = onFor(state, group, L);
   const rules = [];
@@ -244,7 +260,6 @@ function headerRules(state, group, safeTlds) {
   const pp = [];
   if (on(PROTECTION_KEY.BLOCK_SCP_PRIVACY))  pp.push(PP_VALUE.PRIVACY);
   if (on(PROTECTION_KEY.BLOCK_SCP_SECURITY)) pp.push(PP_VALUE.SECURITY);
-  if (on(PROTECTION_KEY.BLOCK_SENSORS_NFC))  pp.push(PP_VALUE.SENSORS);
   // Tab band: the top-level page's own headers come from the dynamic locked group (requestDomains),
   // so the band carries the frame (sub_frame) rules only — a header is never appended twice.
   // 4.7.0: the highRiskOnly band has no locked-group twin (see hrMainScope above) — it carries main_frame too.
@@ -254,10 +269,11 @@ function headerRules(state, group, safeTlds) {
     if (withMain) rules.push(rule(group, ID.HDR_PP_MAIN, PRIORITY.HEADERS, action, cond(hrMainScope(group), outsideSafe, { resourceTypes: ["main_frame"] })));
     rules.push(rule(group, ID.HDR_PP_SUB,  PRIORITY.HEADERS, action, cond(subScope(group),  outsideSafe, { resourceTypes: ["sub_frame"] })));
   }
-  // 16: sandbox CSP (outside safer regions at level 3).
+  // blockRedirectsDialogs: sandbox CSP on FRAMES (outside safer regions at level 3). 5.1.3 (owner): no longer on the
+  // top page — a sandboxed top page loses its own "Leave site?" prompt, print() and dialogs, and its popups inherit
+  // the sandbox; top-page dialog spam is Scam protection's dialog part (every site from level 2).
   if (on(PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS)) {
     const action = appendHeader("Content-Security-Policy", SANDBOX_CSP_VALUE);
-    if (withMain) rules.push(rule(group, ID.HDR_CSP_MAIN, PRIORITY.HEADERS, action, cond(hrMainScope(group), outsideSafe, { resourceTypes: ["main_frame"] })));
     rules.push(rule(group, ID.HDR_CSP_SUB,  PRIORITY.HEADERS, action, cond(subScope(group),  outsideSafe, { resourceTypes: ["sub_frame"] })));
   }
   // 4.7.0 — 29: WebSocket-blocking CSP (level 4–5 only — see PROTECTION_GROUPS' third entry; outsideSafe is
@@ -274,17 +290,8 @@ function headerRules(state, group, safeTlds) {
     // WebSocket to extensions at all (tested), so the network rule (ID.NET_WS) cannot. Ordinary scripts ignore it.
     rules.push(rule(group, ID.HDR_CSP_WS_SCRIPT, PRIORITY.HEADERS, action, cond(subScope(group), outsideSaferInitiators(L, safeTlds), { resourceTypes: ["script"] })));
   }
-  // 9: high-risk sites get the privacy + security Permissions-Policy on page and frames.
-  if (on(PROTECTION_KEY.BLOCK_HIGH_RISK_EVAL) && withMain) {
-    const hosts = group.kind === GROUP_KIND.LOCKED
-      ? HIGH_RISK_HOSTNAMES.filter((h) => group.sites.includes(h))
-      : HIGH_RISK_HOSTNAMES.filter((h) => !group.sites.includes(h));
-    if (hosts.length) {
-      rules.push(rule(group, ID.HDR_HIGH_RISK, PRIORITY.HEADERS,
-        appendHeader("Permissions-Policy", `${PP_VALUE.PRIVACY}, ${PP_VALUE.SECURITY}`),
-        { requestDomains: hosts, resourceTypes: ["main_frame", "sub_frame"] }));
-    }
-  }
+  // (5.1.3: the former blockHighRiskEval rule here — privacy + security Permissions-Policy on high-risk sites — is gone
+  // with that protection; blockScpPrivacy/-Security's alsoHighRisk rules below give the same headers there.)
   // 4.7.0 — alsoHighRisk STATIC half (17/18/19/21/29): a fixed high-risk host gets these headers
   // regardless of level/safer regions. Never for a TAB group — host-scoped (requestDomains), not
   // tab-scoped; the highRiskOnly TAB group already got the DYNAMIC half above via onFor()'s override.
@@ -295,10 +302,10 @@ function headerRules(state, group, safeTlds) {
       const hrPp = [];
       if (isProtectionEnabled(state, PROTECTION_KEY.BLOCK_SCP_PRIVACY)  && PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_SCP_PRIVACY].alsoHighRisk)  hrPp.push(PP_VALUE.PRIVACY);
       if (isProtectionEnabled(state, PROTECTION_KEY.BLOCK_SCP_SECURITY) && PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_SCP_SECURITY].alsoHighRisk) hrPp.push(PP_VALUE.SECURITY);
-      if (isProtectionEnabled(state, PROTECTION_KEY.BLOCK_SENSORS_NFC)  && PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_SENSORS_NFC].alsoHighRisk)  hrPp.push(PP_VALUE.SENSORS);
       if (hrPp.length) rules.push(rule(group, ID.HDR_HIGH_RISK_PP, PRIORITY.HEADERS, appendHeader("Permissions-Policy", hrPp.join(", ")), hrCond));
       if (isProtectionEnabled(state, PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS) && PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS].alsoHighRisk)
-        rules.push(rule(group, ID.HDR_HIGH_RISK_CSP_SANDBOX, PRIORITY.HEADERS, appendHeader("Content-Security-Policy", SANDBOX_CSP_VALUE), hrCond));
+        rules.push(rule(group, ID.HDR_HIGH_RISK_CSP_SANDBOX, PRIORITY.HEADERS, appendHeader("Content-Security-Policy", SANDBOX_CSP_VALUE),
+          { ...hrCond, resourceTypes: ["sub_frame"] }));                              // 5.1.3: frames only, as above
       if (isProtectionEnabled(state, PROTECTION_KEY.BLOCK_WEBSOCKETS) && PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_WEBSOCKETS].alsoHighRisk) {
         rules.push(rule(group, ID.HDR_HIGH_RISK_CSP_WS, PRIORITY.HEADERS, appendHeader("Content-Security-Policy", CSP_NO_WS_VALUE), hrCond));
         rules.push(rule(group, ID.HDR_HIGH_RISK_CSP_WS_SCRIPT, PRIORITY.HEADERS, appendHeader("Content-Security-Policy", CSP_NO_WS_VALUE),
@@ -308,7 +315,8 @@ function headerRules(state, group, safeTlds) {
       // protection itself — see data/protections.js.
     }
   }
-  return rules;
+  // 5.1.3: the frames block belongs to Scam protection, the rest to the Firewall — each skips its allow-list sites.
+  return rules.map((r) => withAllowExclusions(r, SCAM_HEADER_IDS.has(r.id % GROUP_ID_STRIDE) ? scamSites : firewallSites));
 }
 
 // ── Level (third-party) rules ────────────────────────────────────────────────

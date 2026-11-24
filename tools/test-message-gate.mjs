@@ -47,7 +47,12 @@ function documentListenerCount(src) {
 // 5.0.7 (C50): page scripts deliberately run no MutationObserver (cost on heavy pages). A new one must be listed
 // here with its limits (observed subtree, attributeFilter, work per callback, when it disconnects).
 const MUTATION_OBSERVER_RE = /\bnew\s+MutationObserver\b|\bMutationObserverCtor\b/g;
-const MUTATION_OBSERVER_ALLOWLIST = Object.freeze({});
+const MUTATION_OBSERVER_ALLOWLIST = Object.freeze({
+  "tamper-guard-bridge.js": { count: 1, reason: "5.1.0 Tamper Guard, ARMED pages only (banking/payment or the user's level): one observer on the " +
+    "document, childList+subtree + attributeFilter action/formaction/integrity; at most 200 records and 100 added elements " +
+    "per callback (MAX_RECORDS_PER_BATCH / MAX_NODES_PER_BATCH); disconnected on pagehide. ISOLATED world: the page cannot " +
+    "replace its built-ins." }
+});
 // 5.0.7 (C53): a wrapper around a page API hands back the NATIVE promise; side work runs on a side branch. A wrapper
 // that returns its own .then() chain makes every failure the page leaves unhandled an error of this extension.
 const OWN_CHAIN_RE = /return\s+(?:reflectApply\(\s*_native\w*[^;]*?\)|_native\w*\([^;]*?\))\s*\.then\(/g;

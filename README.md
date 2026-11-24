@@ -28,7 +28,8 @@ Level 5 — Strict mode.
 This is the strictest setting. All third-party scripts and frames are blocked. Only domains you have explicitly added to your domain whitelist are allowed through. Use this when you want maximum control and are prepared to whitelist what you need.
 
 NOTICE
-The scripting permission is used only to register the extension's own bundled content scripts that implement its security protections: blocking fake payment-handler and protocol-handler registration, alert/confirm dialog spam, ClickFix clipboard hijacking, eval() on high-risk sites, obfuscated eval, and NFC access. The scripts are registered or removed depending on the protection level and the user's settings. No remote code is loaded or executed, and no page data is read or sent anywhere.
+The scripting permission is used only to register the extension's own bundled content scripts that implement its security protections: blocking fake payment-handler and protocol-handler registration, alert/confirm dialog spam, ClickFix clipboard hijacking, eval() on high-risk sites, obfuscated eval, and NFC access. The scripts are registered or removed depending on the protection level and the user's settings. No remote code is loaded or executed, and no page data is sent anywhere.
+Tamper Protection (5.1.0) also uses bundled page scripts: they check whether the page's built-in functions were replaced and, on banking, payment and checkout pages, whether a password or card number is about to be sent to another site. For that check the value of a password or card field is compared with the outgoing request inside the page itself; it is never stored or sent anywhere — only the destination's host name is passed to the extension to decide on a warning.
 
 SUGGESTED USE
 The default startup level is 2. For everyday surfing, choose protection level 3. When surfing to dodgy websites, lock the level to 4; alternatively, lock the protection level to 1 for important websites.

@@ -11,7 +11,7 @@
 <div class="page">
   <header class="opt-hdr">
     <h1 class="mono"><img src="../icons/icon_2_32.png" alt="" width="28" height="28"><span>3P<span class="yellow"> Matrix</span> — Protections</span></h1>
-    <span class="hint">Browsing protections, download protection and your allow list, in one place.</span>
+    <span class="hint">Firewall, download, tamper and scam protection and your allow list, in one place.</span>
   </header>
 
   <p id="vtLine" class="vt-line" role="status">
@@ -20,9 +20,11 @@
   </p>
 
   <div class="tab-bar" role="tablist" aria-label="Protections">
-    <button id="tabBrowsing" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelBrowsing">Browsing Protection</button>
-    <button id="tabDownload" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelDownload">Download Protection Options</button>
-    <button id="tabAllow" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelAllow">Allow whitelist</button>
+    <button id="tabBrowsing" class="tab-btn" type="button" role="tab" aria-selected="true" aria-controls="panelBrowsing">Firewall protection</button>
+    <button id="tabDownload" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelDownload">Download protection</button>
+    <button id="tabScam" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelScam">Scam protection</button>
+    <button id="tabTamper" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelTamper">Tamper Protection</button>
+    <button id="tabAllow" class="tab-btn" type="button" role="tab" aria-selected="false" aria-controls="panelAllow">Allow (white) list</button>
   </div>
 
   <!-- ── Browsing Protection ─────────────────────────────────────────────── -->
@@ -32,8 +34,9 @@
 
   <!-- ── Download Protection ─────────────────────────────────────────────── -->
   <section id="panelDownload" class="tab-panel" role="tabpanel" aria-labelledby="tabDownload" hidden>
-    <!-- 4.7.0: warnRiskyDownloads (warn) and blockRiskyDownloads (block) moved to the Browsing Protection tab's list,
-         alongside every other protection — this tab now holds only the download-specific settings. -->
+    <!-- 5.1.0: a feature with its own tab owns its protections and its settings — warnRiskyDownloads and
+         blockRiskyDownloads are listed here again (they were in the Browsing list from 4.7.0 to 5.0.9). -->
+    <div id="downloadList" class="prot-list"></div>
     <section class="card" aria-labelledby="onlineH">
       <div class="card-head-row">
         <h2 id="onlineH" class="section-title">Online checks for suspicious sites and downloads</h2>
@@ -83,12 +86,13 @@
         <div class="opt-block">
           <!-- 4.7.2: "Trusted downloads" heading, "Trust app stores" and the always-skipped domain list
                condensed onto one line (user request) — was 3 lines across 2 nested blocks. -->
-          <div class="trust-row">
+          <!-- 5.1.3 (owner): "Trust app stores" is a tickbox (on by default); your own trusted domains moved to the
+               allow list as "Download: domain" lines. -->
+          <label class="trust-row"><input id="trustAppStores" type="checkbox">
             <strong>Trust app stores</strong>
             <span class="hint-line">(not checked) — <span class="mono" data-derived="trusted-download-builtin"></span></span>
-          </div>
-          <p class="hint-line">Your own trusted domains — up to <span data-derived="trusted-download-max"></span> (format: <span class="mono">domain.tld</span>).</p>
-          <div id="trustedInputs" class="domain-grid"></div>
+          </label>
+          <p class="hint-line">Your own trusted download domains are on the Allow list tab, as “Download: domain”.</p>
         </div>
 
         <div class="opt-block">
@@ -129,12 +133,61 @@
     </section>
   </section>
 
+  <!-- ── Tamper Protection (5.1.0): ONE switch, then what it looks for (most serious first) ── -->
+  <!-- 5.1.3 — Scam protection: built like the Tamper Protection tab — the switch and how it works on the left, the
+       protections it covers on the right (meaning on hover); one switch, no individual ticks. -->
+  <section id="panelScam" class="tab-panel" role="tabpanel" aria-labelledby="tabScam" hidden>
+    <div class="prot-list">
+      <div class="prot-col">
+        <div id="scamList" class="prot-list"></div>
+        <section class="card tg-fill" aria-labelledby="scHowH">
+          <h2 id="scHowH" class="section-title">How scam protection works</h2>
+          <ul class="tg-how">
+            <li>One switch covers every scam protection listed on the right (hover a line for what it does); it works from level <span data-derived="scam-level-from"></span>.</li>
+            <li>Each protection blocks or warns on its own, the moment it sees the scam — there is no risk rating here.</li>
+            <li>Redirects and dialogs from frames are blocked from level <span data-derived="scam-frames-level-from"></span>, outside safer regions.</li>
+            <li>Trusted websites (locked at level <span data-derived="level-allow-all"></span>) are not covered. “Always allow” or “Always ignore” in a scam warning adds “Scam: site” to your allow list.</li>
+          </ul>
+        </section>
+      </div>
+      <div id="scRules" class="prot-col" aria-label="What scam protection covers"></div>
+    </div>
+  </section>
+
+  <section id="panelTamper" class="tab-panel" role="tabpanel" aria-labelledby="tabTamper" hidden>
+    <!-- Two columns of the same height: the switch, its trigger ticks and how it works (left); the signs of tampering,
+         plain, most points first, points on hover (right; its heading is set by ui/protections.js TAMPER_LIST_HEAD). 5.1.3: the never-warn list moved to the allow list ("Tamper: site"). -->
+    <div class="prot-list">
+      <div class="prot-col">
+        <div id="tamperList" class="prot-list"></div>
+        <section class="card tg-fill" aria-labelledby="tgHowH">
+          <h2 id="tgHowH" class="section-title">How tamper protection works</h2>
+          <ul class="tg-how">
+            <li>Every page is checked for signs of tampering at levels <span data-derived="tamper-level-sensitive"></span>. The ticks above choose which pages are also watched closely (what is sent, forms, frames, scripts); from level <span data-derived="tamper-level-after-sign-from"></span> also a page with a sign of tampering, at levels <span data-derived="tamper-level-always"></span> every page.</li>
+            <li>Each sign adds points (hover a line on the right). The total gives the page a risk rating: Suspicious from <span data-derived="tamper-points-suspicious"></span>, High risk from <span data-derived="tamper-points-high"></span>, Critical from <span data-derived="tamper-points-critical"></span> points — × <span data-derived="tamper-sensitive-factor"></span> on banking and payment pages.</li>
+            <li>Critical and High risk open one window that lists every sign (High risk closes itself after <span data-derived="tamper-countdown-s"></span> s). Suspicious warns at levels <span data-derived="tamper-suspicious-always"></span>, at level <span data-derived="tamper-suspicious-outside"></span> only outside safer regions; otherwise only the toolbar icon shows <span data-derived="tamper-mark"></span>.</li>
+            <li>Trusted websites (locked at level <span data-derived="level-allow-all"></span>) are not guarded by tamper protection. “Always ignore on this site” in a warning adds “Tamper: site” to your allow list.</li>
+          </ul>
+          <p id="tgStatus" class="status" role="status"></p>
+        </section>
+      </div>
+      <div id="tgRules" class="prot-col"></div>
+    </div>
+  </section>
+
   <!-- ── Allow whitelist ─────────────────────────────────────────────────── -->
   <section id="panelAllow" class="tab-panel" role="tabpanel" aria-labelledby="tabAllow" hidden>
     <section class="card" aria-labelledby="allowH">
-      <h2 id="allowH" class="section-title">Allow list — locked at level <span data-derived="level-allow-all"></span></h2>
-      <p>One domain per line. Sites here get no protections and no warnings. “Trust this site” in the warning dialog adds to this list.</p>
-      <label><span class="sr-only">Allow list domains</span>
+      <h2 id="allowH" class="section-title">Allow list</h2>
+      <!-- 5.1.3 (owner): one list for every exception, "Category: domain" per line. -->
+      <p>One per line: <span class="mono">Category: domain</span>. <span class="mono">All</span> = no protection and no warnings at all (the site is locked at level <span data-derived="level-allow-all"></span>); <span class="mono">Download</span>, <span class="mono">Firewall</span>, <span class="mono">Scam</span> and <span class="mono">Tamper</span> = that tab's warnings are ignored and its blocks allowed on the site. A domain on its own counts as <span class="mono">All</span>. On Save the list is sorted, and <span class="mono">All</span> for a domain removes its other lines. “Always allow” / “Always ignore” in a warning adds a line.</p>
+      <div class="row-start">
+        <label class="field-inline">Search <input id="allowSearch" class="text-input mono" type="search" spellcheck="false" autocomplete="off" placeholder="domain"></label>
+        <button id="allowDeleteMatches" class="btn-ghost" type="button" disabled>Delete all for this domain</button>
+        <span id="allowMatchCount" class="hint-line" role="status"></span>
+      </div>
+      <pre id="allowMatches" class="mono allow-matches" hidden></pre>
+      <label><span class="sr-only">Allow list</span>
         <textarea id="allowList" rows="20" spellcheck="false" class="mono"></textarea>
       </label>
       <div class="row-end">
