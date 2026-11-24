@@ -12,6 +12,29 @@ analysis documents in this folder.
 
 ---
 
+## 5.1.4
+Compare at 5.1.3. Changed zips: extension, tools, docs. (5.1.3 was zipped and merged to GitHub main, not uploaded to
+the Chrome Web Store; owner asked for a bump.)
+
+- **tgSeedSent (owner, 2026-11-24 night):** data/constants.js TAMPER_SEED (word counts 12/15/18/21/24, words of 3–8
+  lower-case letters — the BIP-39 shape —, MATCH_WORDS 8, FIELDS_MAX 40); security/tamper-guard-page.js copy (SEED,
+  SEED_WORD_RE; test-tamper-guard checks both). seedPhrases(): a field (text input, password input or TEXTAREA — new
+  captured getter HTMLTextAreaElement.prototype.value) holding a whole phrase, or a run of ≥ 12 adjacent fields with one
+  word each (MetaMask-style boxes). checkOutgoing: letters-only text (as sent and URL-decoded) must contain the first
+  MATCH_WORDS words joined → report tgSeedSent (100 points, label "Recovery phrase copied to another site"). A typed
+  phrase also starts the outgoing check (holdsSecret / anySecretOnPage). Service worker: only the page's own site is
+  exempt (no provider ever needs a seed). Bridge PAGE_RULES copy + tgSeedSent. TAMPER_LABEL_MAX_CHARS 36 → 38 (fits:
+  measured to 51). Not browser-tested in this release (owner: quick checks only) — add an e2e case next time.
+- **"www-" site names (owner, 2026-11-24 night; URLhaus first page: 98 of 100 blocked or warned, the miss was
+  www-featherwallet.com):** lib/downloadsentinel/protection/SketchyUrlCheck.js check 7 — the REGISTERED domain starts
+  with "www-" → SCORES.WWW_DASH_DOMAIN 90 (site: −31, suspicious on its own; download: the same SketchyUrl input).
+  Subdomains ("www-01.ibm.com") never match; *.translate.goog (Google Translate's proxy) exempt. CrUX top 1M:
+  137 hits, 47 of them translate.goog, the other 90 mostly copy-cat download/piracy sites. NOTE: this file is shared
+  DownloadSentinel code — DownloadSentinel itself needs the same change (parity).
+- **Crypto trigger words (owner, same night):** data/constants.js TAMPER_CRYPTO_WORDS / TAMPER_CRYPTO_ENDINGS under the
+  checkout-words tick; core/tamper-guard.js hasAddressWord also matches them in the site's own name (siteNameTokens),
+  unlike the checkout words. Left out on purpose: eth, ledger, exodus, phantom, seed, swap, coin.
+
 ## 5.1.3
 Compare at 5.1.2. Changed zips: extension, tools, docs.
 
@@ -186,6 +209,8 @@ Owner decisions 2026-11-24 (restructure in five steps; nothing released since 5.
   flag — startCheck (incl. "Download anyway" while running), lateEntryRecord (incl. "Download anyway" after finishing),
   the completion re-check (record.noClick). Not swept here: DownloadSentinel itself has no click signal (it is a
   3P Matrix addition to the ported code).
+
+**tools 5.1.4:** test-tamper-guard + seed copies and destination; test-site-scorer + "www-" cases.
 
 **tools 5.1.3:** test-wasm-wrappers.mjs rewritten; new test-allow-list.mjs (wired into complete-check);
 test-tamper-guard.mjs rewritten for the rating (ratings, factor, Suspicious by level/safer regions and the mark, one

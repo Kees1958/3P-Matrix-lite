@@ -124,6 +124,12 @@ ok("every label fits the popup's one line (TAMPER_LABEL_MAX_CHARS)", R.TAMPER_RU
 ok("every rule has points, a label and a description; no severity left (5.1.3)",
    R.TAMPER_RULES.every((r) => Number.isInteger(r.points) && r.points > 0 && r.label && r.description && r.severity === undefined),
    R.TAMPER_RULES.filter((r) => !Number.isInteger(r.points)).map((r) => r.id));
+{ // 5.1.4 copies: the recovery-phrase shape
+  ok("page script SEED = data/constants.js TAMPER_SEED", JSON.stringify(constIn(page, "SEED")) === JSON.stringify(C.TAMPER_SEED), constIn(page, "SEED"));
+  const wordRe = page.match(/const SEED_WORD_RE = \/\^\[a-z\]\{(\d+),(\d+)\}\$\//);
+  ok("page script SEED_WORD_RE = TAMPER_SEED.WORD_MIN–WORD_MAX", !!wordRe && Number(wordRe[1]) === C.TAMPER_SEED.WORD_MIN &&
+     Number(wordRe[2]) === C.TAMPER_SEED.WORD_MAX, wordRe && wordRe.slice(1));
+}
 { // 5.1.3 copies: IBAN check, obfuscated-code event and sinks
   const ibanMod = constIn(page, "IBAN_MOD");
   ok("page script IBAN_MOD.DIVISOR/VALID = data/constants.js TAMPER_IBAN", !!ibanMod && ibanMod.DIVISOR === C.TAMPER_IBAN.DIVISOR &&
@@ -393,6 +399,14 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
   ok(`address words: ${HITS.length} checkout/cart/payment addresses in EU+ languages match`, wrongHits.length === 0, wrongHits);
   const wrongMisses = MISSES.filter(hit);
   ok("address words: parts of words, the site's own name and malformed escapes do not match", wrongMisses.length === 0, wrongMisses);
+  // 5.1.3 (owner, 2026-11-24): crypto-currency words — also in the site's own name, and "wallet" inside a longer name
+  const CRYPTO_HITS = ["https://www-featherwallet.com/download/files/release.exe", "https://metamask.io/",
+    "https://example.com/wallet/connect", "https://ledgerwallet-support.com/", "https://www.bitcoin.org/en/",
+    "https://airdrop.token.example/claim", "https://example.com/seedphrase"];
+  const CRYPTO_MISSES = ["https://news.example/article/sports", "https://app.example/swap", "https://ethz.example/"];
+  ok(`crypto words: ${CRYPTO_HITS.length} wallet/coin addresses (incl. the site name) match`, CRYPTO_HITS.every(hit), CRYPTO_HITS.filter((u) => !hit(u)));
+  ok("crypto words: ordinary pages and left-out words (swap, eth) do not", !CRYPTO_MISSES.some(hit), CRYPTO_MISSES.filter(hit));
+  ok("crypto words are kept out of the site-name rule for checkout words (kassa.example still no match)", !hit("https://kassa.example/"));
   ok("address words: a very long address is cut at TAMPER_ADDRESS_TOKENS_MAX tokens",
      !hit(`https://shop.example/${"x/".repeat(C.TAMPER_ADDRESS_TOKENS_MAX)}checkout`));
 
@@ -519,6 +533,10 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
   ok("IBAN to a known payment provider: no finding", eventsFor(TAB.G).length === n0);
   G.onReport(s, report(T.IBAN_SENT, D.DEST, [OTHER_HOST]), sender(TAB.G, PAY));
   ok("IBAN to another site: a finding", eventsFor(TAB.G).some((e) => e.rule === T.IBAN_SENT));
+  G.onReport(s, report(T.SEED_SENT, D.DEST, [`api.${payHost}`]), sender(TAB.G, PAY));
+  ok("5.1.4: recovery phrase to the page's own site: no finding", !eventsFor(TAB.G).some((e) => e.rule === T.SEED_SENT));
+  G.onReport(s, report(T.SEED_SENT, D.DEST, [OTHER_HOST]), sender(TAB.G, PAY));
+  ok("5.1.4: recovery phrase to another site: a finding", eventsFor(TAB.G).some((e) => e.rule === T.SEED_SENT));
   G.onReport(s, report(T.CARD_SENT, D.DEST, [OTHER_HOST]), sender(TAB.G, PAY));
   ok("card number to another site: the page is Critical", eventsFor(TAB.G).some((e) => e.rule === T.CARD_SENT) && riskOf(TAB.G).rating === RT.CRITICAL);
   G.onReport(s, report(T.PASSWORD_SENT, D.DEST, ["not a host"]), sender(TAB.G, PAY));

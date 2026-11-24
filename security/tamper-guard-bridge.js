@@ -51,7 +51,7 @@
     const PAGE_RULES = Object.freeze(['tgDataParsing', 'tgNetworkHooks', 'tgFunctionHooks', 'tgPrototypePollution', 'tgArrayExtended',
         'tgCryptoHooks', 'tgInputHooks', 'tgStorageHooks', 'tgDataEdited', 'tgPasswordSent', 'tgCardSent', 'tgFormChanged',
         'tgHiddenCredential', 'tgInvisibleFrame', 'tgIntegrityRemoved', 'tgSuspiciousScript', 'tgAddressScript', 'tgIbanSent',
-        'tgObfuscatedCode']);
+        'tgSeedSent', 'tgObfuscatedCode']);
     const RULE = Object.freeze({ FORM_CHANGED: 'tgFormChanged', HIDDEN_CREDENTIAL: 'tgHiddenCredential',
                                  INVISIBLE_FRAME: 'tgInvisibleFrame', INTEGRITY_REMOVED: 'tgIntegrityRemoved',
                                  SUSPICIOUS_SCRIPT: 'tgSuspiciousScript', OBFUSCATED_CODE: 'tgObfuscatedCode' });
