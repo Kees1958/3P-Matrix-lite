@@ -158,5 +158,16 @@ ok("Download ZIP disclaimer suppressed once a second signal corroborates it",
    zipCorroborated.severity === SEVERITY.SUSPECT && !zipCorroborated.signals.some((s) => s.includes(zipNote)),
    zipCorroborated.signals.join(" | "));
 
+// 5.1.3 (owner, 2026-11-24; URLhaus: www-featherwallet.com) — a registered domain starting with "www-" imitates
+// the real site's "www." and is suspicious on its own; a subdomain like that, or Google Translate's proxy, is not.
+{
+  const fake = scoreLocal("https://www-featherwallet.com/download/files/release.exe");
+  ok("\"www-\" registered domain: suspicious on its own", fake.severity === SEVERITY.SUSPECT, fake);
+  ok("…a subdomain starting with www- (www-01.ibm.com) is not", scoreLocal("https://www-01.ibm.com/support/").severity === SEVERITY.NONE);
+  ok("…Google Translate's proxy host (www-site-com.translate.goog) is not",
+     scoreLocal("https://www-scribd-com.translate.goog/doc/1").severity === SEVERITY.NONE);
+  ok("…the real site is not", scoreLocal("https://featherwallet.org/").severity === SEVERITY.NONE);
+}
+
 console.log(failed ? `test-site-scorer: ${failed} FAILED` : "test-site-scorer: all passed");
 process.exit(failed ? EXIT.FAILED : EXIT.OK);

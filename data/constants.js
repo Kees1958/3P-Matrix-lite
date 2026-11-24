@@ -663,6 +663,22 @@ export const TAMPER_ADDRESS_WORDS = Object.freeze({
 // "firecheckout", "onlinebanking", "anzahlung". Only words that are not the ending of an ordinary word.
 export const TAMPER_ADDRESS_ENDINGS = Object.freeze(["checkout", "payment", "banking", "warenkorb", "zahlung",
   "betaling", "betalning", "handlekurv", "winkelwagen"]);
+// 5.1.3 (owner, 2026-11-24) — crypto-currency words, under the same tick ("checkout and payment keywords"). Unlike the
+// words above they are ALSO matched in the site's own name (core/tamper-guard.js hasAddressWord): for crypto the name
+// is where fake wallet sites put the signal (URLhaus: www-featherwallet.com). Whole tokens; plus the endings below
+// inside a longer token ("featherwallet", "ledgerwallet"). Deliberately left out: words that are ordinary words or
+// short codes elsewhere ("eth", "ledger", "exodus", "phantom", "seed", "swap", "coin").
+export const TAMPER_CRYPTO_WORDS = Object.freeze(["wallet", "wallets", "crypto", "cryptocurrency", "bitcoin", "btc",
+  "ethereum", "usdt", "tether", "solana", "monero", "litecoin", "dogecoin", "metamask", "trezor", "coinbase", "binance",
+  "walletconnect", "seedphrase", "mnemonic", "airdrop", "staking", "defi", "web3"]);
+export const TAMPER_CRYPTO_ENDINGS = Object.freeze(["wallet", "crypto", "bitcoin"]);
+// 5.1.4 (owner, 2026-11-24) — tgSeedSent: a crypto wallet's recovery ("seed") phrase sent to another site
+// (security/tamper-guard-page.js carries a copy, checked by tools/test-tamper-guard.mjs). A phrase is WORD_COUNTS words
+// of WORD_MIN–WORD_MAX lower-case letters (the BIP-39 word shape), typed in ONE field (text field or text area) or one
+// word per field in at least the smallest WORD_COUNTS fields next to each other. It is found in outgoing data when
+// MATCH_WORDS of its words appear in order with only non-letters between them (any separator, JSON, URL encoding).
+export const TAMPER_SEED = Object.freeze({ WORD_COUNTS: [12, 15, 18, 21, 24], WORD_MIN: 3, WORD_MAX: 8, MATCH_WORDS: 8,
+                                           FIELDS_MAX: 40 });
 // Letters that keep their mark after Unicode decomposition (NFD), folded by hand: Polish ł, Nordic ø/æ, German ß,
 // Croatian đ, Icelandic þ/ð, French œ.
 export const TAMPER_ADDRESS_LETTER_FOLD = Object.freeze({ "ł": "l", "ø": "o", "æ": "ae", "ß": "ss", "đ": "d", "þ": "th",

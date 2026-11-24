@@ -3,6 +3,11 @@
 (Started with 4.5.4: earlier docs packages carried no CHANGELOG.md. Technical detail for 4.5.4 is in
 PERF_4.5.3_chrome_engine_and_proposals.md section 6 and the principles doc, v13.)
 
+## 5.1.4
+- **New tamper sign: a wallet's recovery phrase sent to another site.** When you type the 12 or 24 words of a crypto wallet's recovery phrase on a page tamper protection watches, and the page sends them to another site, you get a Critical warning at once — whoever has those words owns the wallet.
+- **Crypto words start close watching too:** "wallet", "bitcoin", "crypto", "metamask" and similar words in the address — this time also in the site's own name — make tamper protection watch the page (tick "Enable on pages with checkout and payment keywords").
+- **New warning sign: a site name starting with "www-"** (like www-featherwallet.com, a fake wallet found on URLhaus). It imitates the "www." of the real site and now counts as suspicious, for opening the site and for downloads. Google Translate's page proxy, which names sites this way, is exempt.
+
 ## 5.1.3
 - **A new tab layout on the Protections page:** Firewall protection (was Browsing Protection), Download protection, Scam protection (new), Tamper Protection and the Allow (white) list. Only Firewall protection keeps a tick per protection; the other tabs have one switch each, which loads their scripts once per page instead of one by one (faster pages).
 - **New tab: Scam protection — one switch, "Enable scam protection".** It covers the warnings about suspicious sites, sign-in code pages and links with script code, the fake browser lock-up (dialog spam), the "paste this command" scams (ClickFix, ConsentFix), notification prompts on every site, payment and protocol handlers, and — at level 3 and up, outside safer regions — dialogs and redirects in frames.

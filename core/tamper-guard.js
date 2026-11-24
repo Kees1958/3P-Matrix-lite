@@ -65,6 +65,7 @@
 import { LOG_PREFIX, TAMPER_RATING, TAMPER_RATING_MIN_POINTS, TAMPER_SENSITIVE_FACTOR, TAMPER_SUSPICIOUS_WARN,
          TAMPER_COLLECT_MS, TAMPER_SIGN_POINTS_MIN, TAMPER_SENSITIVE_POINTS, LEVEL,
          TAMPER_SENSITIVE_THRESHOLD, TAMPER_ADDRESS_WORDS, TAMPER_ADDRESS_ENDINGS, TAMPER_ADDRESS_TOKENS_MAX,
+         TAMPER_CRYPTO_WORDS, TAMPER_CRYPTO_ENDINGS,
          TAMPER_ADDRESS_LETTER_FOLD, TAMPER_COOLDOWN_MS, TAMPER_TABS_CAP, TAMPER_SCRIPT_VERDICTS_CAP, SEVERITY,
          TAMPER_SCRIPT_PROVIDERS, TAMPER_SCRIPT_TYPO,
          TAMPER_DETAIL_ITEMS_MAX, TAMPER_DETAIL_TEXT_MAX, TAMPER_FRAME_HOSTS_MAX } from "../data/constants.js";
@@ -114,6 +115,8 @@ function foldText(text) {
 // Built once at load from the per-language table (data/constants.js) — the table is the single source.
 const ADDRESS_WORDS = new Set(Object.values(TAMPER_ADDRESS_WORDS).flat().map(foldText));
 const ADDRESS_ENDINGS = Object.freeze(TAMPER_ADDRESS_ENDINGS.map(foldText));
+const CRYPTO_WORDS = new Set(TAMPER_CRYPTO_WORDS.map(foldText));      // 5.1.3: also matched in the site's own name
+const CRYPTO_ENDINGS = Object.freeze(TAMPER_CRYPTO_ENDINGS.map(foldText));
 // The trigger ticks (5.1.3, data/protections.js), each requiring the switch.
 const TRIGGER = Object.freeze({ SENSITIVE: PROTECTION_KEY.TAMPER_ON_SENSITIVE, HIDDEN: PROTECTION_KEY.TAMPER_ON_HIDDEN_FIELD,
                                 WORDS: PROTECTION_KEY.TAMPER_ON_CHECKOUT_WORDS, LOCKED: PROTECTION_KEY.TAMPER_ON_LOCKED_PAGES });
@@ -214,8 +217,17 @@ function addressTokens(url, host) {
   const sub = host.length > site.length ? host.slice(0, host.length - site.length) : "";
   return foldText(`${sub} ${path}`).split(TOKEN_SPLIT_RE).filter(Boolean).slice(0, TAMPER_ADDRESS_TOKENS_MAX);
 }
+// The site's own name without its public suffix ("www-featherwallet" for www-featherwallet.com), as tokens.
+function siteNameTokens(host) {
+  const site = registeredDomain(host);
+  const dot = site.indexOf(".");
+  return foldText(dot > 0 ? site.slice(0, dot) : site).split(TOKEN_SPLIT_RE).filter(Boolean);
+}
+function isCryptoToken(t) { return CRYPTO_WORDS.has(t) || CRYPTO_ENDINGS.some((e) => t.endsWith(e)); }
 export function hasAddressWord(url, host) {
-  return addressTokens(url, host).some((t) => ADDRESS_WORDS.has(t) || ADDRESS_ENDINGS.some((e) => t.endsWith(e)));
+  const tokens = addressTokens(url, host);
+  return tokens.some((t) => ADDRESS_WORDS.has(t) || ADDRESS_ENDINGS.some((e) => t.endsWith(e)) || isCryptoToken(t)) ||
+         siteNameTokens(host).some(isCryptoToken);                    // 5.1.3: crypto words in the site name too
 }
 // A real signal made the page sensitive: its score now counts × TAMPER_SENSITIVE_FACTOR (evaluated again).
 function updateSensitive(state, tabId, rec, pages) {
@@ -400,6 +412,8 @@ function dynamicFinding(def, detail, pages) {
     case TAMPER_RULE.PASSWORD_SENT:
     case TAMPER_RULE.FORM_CHANGED:
       if (ownSite || isInDomainList(dest, BUILTIN_SIGN_IN)) return null; break;
+    case TAMPER_RULE.SEED_SENT:                       // 5.1.4: only the page's own site (no provider ever needs it)
+      if (ownSite) return null; break;
     case TAMPER_RULE.CARD_SENT:
     case TAMPER_RULE.IBAN_SENT:                       // 5.1.3: as for card numbers
       if (ownSite || isInDomainList(dest, BUILTIN_PAYMENT)) return null; break;

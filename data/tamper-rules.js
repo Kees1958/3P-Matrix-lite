@@ -62,6 +62,7 @@ export const TAMPER_RULE = Object.freeze({
   SUSPICIOUS_SCRIPT:  "tgSuspiciousScript",       // 5.1.2
   ADDRESS_SCRIPT:     "tgAddressScript",          // 5.1.2
   IBAN_SENT:          "tgIbanSent",               // 5.1.3
+  SEED_SENT:          "tgSeedSent",               // 5.1.4
   OBFUSCATED_CODE:    "tgObfuscatedCode",         // 5.1.3
   PASSWORD_FORM:      "tgPasswordForm",           // 5.1.3 issue 3 — own warning (warnPasswordForms)
   PAYMENT_SKIMMER:    "tgPaymentSkimmer",         // 5.1.3 issue 3 — own warning (warnPaymentSkimmer)
@@ -182,6 +183,11 @@ export const TAMPER_RULES = Object.freeze([
   { id: TAMPER_RULE.IBAN_SENT, layer: TAMPER_LAYER.DYNAMIC, points: 60,
     label: "IBAN copied to another site", detailHead: "Where to:",
     description: "Your bank-account number (IBAN) is being sent to a site other than the one you are on — a sign that a script is copying it." },
+  // 5.1.4 (owner) — a crypto wallet's recovery phrase sent to another site (data/constants.js TAMPER_SEED). Whoever has
+  // the phrase owns the wallet: as serious as a password or card number.
+  { id: TAMPER_RULE.SEED_SENT, layer: TAMPER_LAYER.DYNAMIC, points: 100,
+    label: "Recovery phrase copied to another site", detailHead: "Where to:",
+    description: "The recovery phrase of a crypto wallet (the 12 or 24 words) is being sent to a site other than the one you are on. Whoever has it owns the wallet — no real wallet or support desk ever asks for it." },
   // 5.1.3 — blockObfuscatedEval (now under Tamper Protection) blocked obfuscated code on this page: the block still
   // protects; this signal lets the risk rating include it. Reported by security/tamper-guard-bridge.js on the block
   // event of security/sec-no-obfuscated-code.js (only raises scrutiny: a page faking it only rates itself higher).
@@ -212,7 +218,7 @@ export const TAMPER_RULES = Object.freeze([
 
 // The popup's "This page" box shows the worst sign's `label` on ONE line (owner, 2026-11-24): every label fits at this
 // length (5.1.3: all fit, measured in Chrome up to 51 characters); tools/test-tamper-guard.mjs fails a longer one.
-export const TAMPER_LABEL_MAX_CHARS = 36;   // owner: short, plain names — the longest today; a longer one fails the test
+export const TAMPER_LABEL_MAX_CHARS = 38;   // owner: short, plain names — the longest today; a longer one fails the test
 export const TAMPER_RULE_BY_ID = Object.freeze(Object.fromEntries(TAMPER_RULES.map((r) => [r.id, r])));
 export const TAMPER_RULE_IDS = Object.freeze(TAMPER_RULES.map((r) => r.id));
 // Every static target name → its rule (the page reports names; the service worker maps them back here).

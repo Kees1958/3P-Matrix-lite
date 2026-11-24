@@ -26,7 +26,9 @@
  *     script (the src/href setters and setAttribute) — the classic `new Image().src = ".../p.gif?d=<card>"` send —
  *     and a card number is also recognised by its VALUE in any text field (13–19 digits with a valid Luhn checksum),
  *     not only in fields named like a card field. 5.1.3: tgIbanSent — the same for an IBAN (a field named like one, or a
- *     typed value that passes the ISO 13616 MOD-97 check). Only the destination HOST is reported — never a value; the values
+ *     typed value that passes the ISO 13616 MOD-97 check). 5.1.4: tgSeedSent — a crypto wallet's recovery phrase (SEED:
+ *     12–24 lower-case words in one field or one word per field; found when SEED.MATCH_WORDS of them appear in order).
+ *     Only the destination HOST is reported — never a value; the values
  *     never leave this function. The service worker decides whether that host is "another site".
  *
  * ADDRESS layer (5.1.2, tgAddressScript — DOM-based XSS; independent of arming): at document_start the page's own
@@ -66,7 +68,8 @@
         PROTOTYPE_POLLUTION: 'tgPrototypePollution', ARRAY_EXTENDED: 'tgArrayExtended', CRYPTO_HOOKS: 'tgCryptoHooks',
         INPUT_HOOKS: 'tgInputHooks', STORAGE_HOOKS: 'tgStorageHooks',
         DATA_EDITED: 'tgDataEdited', PASSWORD_SENT: 'tgPasswordSent', CARD_SENT: 'tgCardSent',
-        IBAN_SENT: 'tgIbanSent'                                  // 5.1.3
+        IBAN_SENT: 'tgIbanSent',                                 // 5.1.3
+        SEED_SENT: 'tgSeedSent'                                  // 5.1.4
     });
     const STATIC_TARGETS = Object.freeze({
         tgDataParsing: ['JSON.parse', 'JSON.stringify', 'Response.prototype.json', 'Response.prototype.text'],
@@ -151,6 +154,12 @@
                                      TWO_DIGIT_MIN: 10, SHIFT_ONE: 10, SHIFT_TWO: 100 });   // a letter adds two digits
     const CHAR_CODE_A = 97;                   // 'a'
     const FORM_SPACE_RE = /\+/g;              // "+" is a space in form-encoded bodies
+    // 5.1.4 — tgSeedSent (= data/constants.js TAMPER_SEED): a wallet recovery phrase.
+    const SEED = Object.freeze({ WORD_COUNTS: [12, 15, 18, 21, 24], WORD_MIN: 3, WORD_MAX: 8, MATCH_WORDS: 8, FIELDS_MAX: 40 });
+    const SEED_WORD_RE = /^[a-z]{3,8}$/;                  // one word: WORD_MIN–WORD_MAX lower-case letters
+    const SEED_SPLIT_RE = /\s+/;
+    const NON_LETTER_RE = /[^a-z]+/g;
+    const SEED_FIELD_SELECTOR = 'textarea, input:not([type]), input[type="text"], input[type="password"]';
 
     // ── Captured builtins (C35) ──────────────────────────────────────────────
     const logInfo = console.info.bind(console);
@@ -172,6 +181,7 @@
     const strIncludes = String.prototype.includes;
     const strReplace = String.prototype.replace;
     const strToLower = String.prototype.toLowerCase;
+    const strTrim = String.prototype.trim;              // 5.1.4
     const strCharCode = String.prototype.charCodeAt;
     const reTest = RegExp.prototype.test;
     const arrIncludes = Array.prototype.includes;
@@ -199,6 +209,8 @@
     const qsAll = Document.prototype.querySelectorAll;
     const documentObj = document;
     const inputValueGet = getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').get;
+    const textareaValueGet = getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').get;   // 5.1.4
+    const HTMLTextAreaCtor = HTMLTextAreaElement;
     const encodeComponent = encodeURIComponent;
     const decodeComponent = decodeURIComponent;
     const toBase64 = btoa;
@@ -525,6 +537,42 @@
         }
         return out;
     }
+    // 5.1.4 — recovery phrases on the page, as word lists: a field holding a whole phrase, or a run of fields holding one
+    // word each (MetaMask-style 12/24 boxes). Bounded by SEED.FIELDS_MAX fields.
+    function fieldValue(el) {
+        try {
+            if (apply(instanceOf, HTMLTextAreaCtor, [el])) return apply(textareaValueGet, el, []);
+            return apply(inputValueGet, el, []);
+        } catch { return ''; }
+    }
+    function seedWordsOf(v) {
+        if (typeof v !== 'string') return null;
+        const words = apply(strSplit, apply(strToLower, apply(strTrim, v, []), []), [SEED_SPLIT_RE]);
+        if (!apply(arrIncludes, SEED.WORD_COUNTS, [words.length])) return null;
+        for (let i = 0; i < words.length; i++) if (!apply(reTest, SEED_WORD_RE, [words[i]])) return null;
+        return words;
+    }
+    function seedPhrases() {
+        const out = [];
+        let list;
+        try { list = apply(qsAll, documentObj, [SEED_FIELD_SELECTOR]); } catch { return out; }
+        let run = [];
+        function flush() { if (run.length >= SEED.WORD_COUNTS[0]) apply(arrPush, out, [run]); run = []; }
+        for (let i = 0; i < list.length && i < SEED.FIELDS_MAX; i++) {
+            const v = fieldValue(list[i]);
+            const whole = seedWordsOf(v);
+            if (whole) { flush(); apply(arrPush, out, [whole]); continue; }
+            const one = typeof v === 'string' ? apply(strToLower, apply(strTrim, v, []), []) : '';
+            if (apply(reTest, SEED_WORD_RE, [one])) apply(arrPush, run, [one]); else flush();
+        }
+        flush();
+        return out;
+    }
+    // MATCH_WORDS of the phrase in order, letters only (any separator, JSON or URL encoding between them disappears).
+    function containsSeed(lettersText, words) {
+        const n = words.length < SEED.MATCH_WORDS ? words.length : SEED.MATCH_WORDS;
+        return apply(strIncludes, lettersText, [apply(arrJoin, apply(arrSlice, words, [0, n]), [''])]);
+    }
     function cardValues() {
         const out = fieldValues(CARD_SELECTOR, MAX_SECRET_FIELDS);
         const typed = fieldValues(VALUE_SCAN_SELECTOR, CARD_VALUE_FIELDS_MAX);
@@ -573,7 +621,8 @@
             const passwords = fieldValues(PASSWORD_SELECTOR, MAX_SECRET_FIELDS);
             const cards = cardValues();
             const ibans = ibanValues();                                  // 5.1.3
-            if (!passwords.length && !cards.length && !ibans.length) return;
+            const seeds = seedPhrases();                                 // 5.1.4
+            if (!passwords.length && !cards.length && !ibans.length && !seeds.length) return;
             let text = StringCtor(address) + ' ' + bodyText(body);
             if (text.length > MAX_BODY_CHARS) text = apply(strSlice, text, [0, MAX_BODY_CHARS]);
             for (let i = 0; i < passwords.length; i++) {
@@ -595,6 +644,13 @@
                 const ibanText = compactText(text) + ' ' + compactText(decoded);
                 for (let i = 0; i < ibans.length; i++) {
                     if (apply(strIncludes, ibanText, [ibans[i]])) { sendOnce(RULE.IBAN_SENT, dest); break; }
+                }
+            }
+            if (seeds.length) {                                          // 5.1.4: letters only, as sent and decoded
+                const lettersText = apply(strReplace, apply(strToLower, text, []), [NON_LETTER_RE, '']) + ' ' +
+                                    apply(strReplace, apply(strToLower, decoded, []), [NON_LETTER_RE, '']);
+                for (let i = 0; i < seeds.length; i++) {
+                    if (containsSeed(lettersText, seeds[i])) { sendOnce(RULE.SEED_SENT, dest); break; }
                 }
             }
         } catch { /* never break the page's request */ }
@@ -769,16 +825,18 @@
     // a value, or any text field whose value is a card number or an IBAN.
     function holdsSecret(el) {
         try {
+            if (apply(instanceOf, HTMLTextAreaCtor, [el])) return !!seedWordsOf(fieldValue(el));   // 5.1.4
             if (!apply(instanceOf, HTMLInputCtor, [el])) return false;
             const v = apply(inputValueGet, el, []);
             if (typeof v !== 'string' || !v) return false;
             if (apply(inputTypeGet, el, []) === 'password') return v.length >= MIN_PASSWORD_CHARS;
             if (apply(elementMatches, el, [CARD_SELECTOR]) || apply(elementMatches, el, [IBAN_SELECTOR])) return true;
-            return isCardValue(v) || isIbanValue(v);
+            return isCardValue(v) || isIbanValue(v) || !!seedWordsOf(v) || seedPhrases().length > 0;   // 5.1.4
         } catch { return false; }
     }
     function anySecretOnPage() {
-        return fieldValues(PASSWORD_SELECTOR, MAX_SECRET_FIELDS).length > 0 || cardValues().length > 0 || ibanValues().length > 0;
+        return fieldValues(PASSWORD_SELECTOR, MAX_SECRET_FIELDS).length > 0 || cardValues().length > 0 || ibanValues().length > 0 ||
+               seedPhrases().length > 0;                                                                   // 5.1.4
     }
     function startOutgoing() {
         if (outgoingStarted) return;
