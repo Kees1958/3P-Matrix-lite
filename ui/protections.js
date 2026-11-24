@@ -3,6 +3,9 @@
 // three tabs: Browsing Protection (every protection except the two DOWNLOAD-mechanism ones),
 // Download Protection (those two + VT key + download settings + the online-checks DNS pair, moved
 // here from the old Options page), Allow whitelist (unchanged, + import/export, user request).
+// 5.1.0: four tabs — + Tamper Protection (its switch, what it looks for, how it watches, exceptions, this session's findings). Rule: a
+// feature with its own tab owns its protections and its settings; each tab's list comes from the registry's `tab`
+// field (data/protections.js) through the view model's groups (g.tab) — no tab keeps its own list.
 // Backup/Restore/Reset moved here too (footer, applies under every tab). Opened as the extension's
 // options page (manifest.json options_ui, open_in_tab) and from the popup's "Protections" button.
 // Every change round-trips through the service worker; every outcome — success or failure — is
@@ -11,16 +14,19 @@
 
 import * as M from "../data/message-types.js";
 import { DNS_NONE, VT_JOIN_URL, VT_API_KEY_RE, FP_LEVEL_ORDER, AUTO_ALLOW_THRESHOLD_MIN,
-         AUTO_ALLOW_THRESHOLD_MAX, TRUSTED_DOWNLOAD_DOMAINS_MAX, DOWNLOAD_DEFAULTS, DOWNLOAD_WARNING_TITLE_DEFAULT,
+         AUTO_ALLOW_THRESHOLD_MAX, DOWNLOAD_DEFAULTS, DOWNLOAD_WARNING_TITLE_DEFAULT,
          DOWNLOAD_WARNING_TITLE_MAX, RGB_CHANNEL_MAX, DECIMAL_RADIX,
-         IMPORT_FILE_MAX_BYTES, BYTES_PER_MEBIBYTE } from "../data/constants.js";
+         IMPORT_FILE_MAX_BYTES, BYTES_PER_MEBIBYTE, LEVEL } from "../data/constants.js";
+import { PROTECTION_TAB, PROTECTION_GROUPS, protectionsInGroup } from "../data/protections.js";
 import { fillDerivedText } from "./derived-text.js";
 import { showStatus, showError, releaseStatus } from "./status-line.js";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
-const TAB = Object.freeze({ BROWSING: "browsing", DOWNLOAD: "download", ALLOW: "allow" });
-const TAB_BTN_ID   = Object.freeze({ [TAB.BROWSING]: "tabBrowsing",   [TAB.DOWNLOAD]: "tabDownload",   [TAB.ALLOW]: "tabAllow" });
-const TAB_PANEL_ID = Object.freeze({ [TAB.BROWSING]: "panelBrowsing", [TAB.DOWNLOAD]: "panelDownload", [TAB.ALLOW]: "panelAllow" });
+const TAB = Object.freeze({ BROWSING: "browsing", DOWNLOAD: "download", SCAM: "scam", TAMPER: "tamper", ALLOW: "allow" });   // 5.1.3: + SCAM
+const TAB_BTN_ID   = Object.freeze({ [TAB.BROWSING]: "tabBrowsing",   [TAB.DOWNLOAD]: "tabDownload",   [TAB.SCAM]: "tabScam",   [TAB.TAMPER]: "tabTamper",   [TAB.ALLOW]: "tabAllow" });
+const TAB_PANEL_ID = Object.freeze({ [TAB.BROWSING]: "panelBrowsing", [TAB.DOWNLOAD]: "panelDownload", [TAB.SCAM]: "panelScam", [TAB.TAMPER]: "panelTamper", [TAB.ALLOW]: "panelAllow" });
+// 5.1.0: the list container of each registry tab (data/protections.js PROTECTION_TAB).
+const LIST_ID = Object.freeze({ [PROTECTION_TAB.BROWSING]: "browsingList", [PROTECTION_TAB.DOWNLOAD]: "downloadList", [PROTECTION_TAB.SCAM]: "scamList", [PROTECTION_TAB.TAMPER]: "tamperList" });
 const DEFAULT_TAB = TAB.BROWSING;
 const EXPORT_FILE_NAME = "3p-matrix-settings.json";
 const EXPORT_MIME = "application/json";
@@ -30,7 +36,6 @@ const EXPORT_JSON_INDENT = 2;
 const RESET_CONFIRM_TEXT = "Reset every 3P Matrix setting to its default (the VirusTotal key included)?";
 const VT_KEY_SET_PLACEHOLDER = "•••••••••••••••• (a key is saved — paste a new one to replace it)";
 const VT_KEY_EMPTY_PLACEHOLDER = "Paste your VT API key (64 hex characters)…";
-const TRUSTED_PLACEHOLDER = "e.g. example.com";
 const VT_KEY_STATUS = Object.freeze({
   SAVED:    "API key saved.",
   CLEARED:  "API key cleared.",
@@ -39,13 +44,24 @@ const VT_KEY_STATUS = Object.freeze({
   WITH_SETTINGS: "Download settings and API key saved."
 });
 const RGB_INPUTS = Object.freeze({ r: "colorR", g: "colorG", b: "colorB" });
-const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/i;   // DownloadSentinel's input check
 const ALLOW_LIST_SEPARATOR = "\n";
+const LINE_SPLIT_RE = /\r\n|\r|\n/;                                  // 5.1.3: allow-list search
+// 5.1.3 (issues 3, 5) — the Tamper Protection tab's signal list: its heading, the note on a row whose protection gives
+// its own warning (core/tamper-guard.js tamperView `warnsAtOnce`), and the tooltip's points text.
+const TAMPER_LIST_HEAD = "Signs of tampering — points add up to the page's risk rating";
+const TAMPER_WARNS_AT_ONCE = "warns at once";
+function tamperPointsText(points) { return `${points} points.`; }
+// 5.1.3 (owner) — on these tabs the switch the other rows depend on gets a card of its own ABOVE their group, titled
+// here; while it is off the whole tab is shown off (TAB_OFF_CLASS on its panel: dependent ticks disabled and unticked,
+// the explanation and lists dimmed). UI only: core/policy.js already makes every dependent protection inactive.
+const SWITCH_CARD_TITLE = Object.freeze({ [PROTECTION_TAB.TAMPER]: "Tamper protection" });
+const TAB_OFF_CLASS = "tab-off";
 
 // ── Page state (guarded: null until the first model arrives) ─────────────────
 let model = null;                      // last options/protections model
 
 function $(id) { return document.getElementById(id); }
+function masterOffText(label) { return `Does nothing while “${label}” is off.`; }
 
 function send(type, extra = {}) {
   return chrome.runtime.sendMessage({ type, ...extra })
@@ -60,10 +76,8 @@ function showTab(tab) {
   }
 }
 
-// ── Protections list (adapted from the popup's old "Protections ▼" dropdown) ─
-// 4.7.0: every protection lives in this one list on the Browsing Protection tab, including the two
-// DOWNLOAD-mechanism items (warnRiskyDownloads, blockRiskyDownloads) — the Download Protection tab now holds only the download-specific
-// settings (DNS checks, VT key, trusted domains, warning-page look), not a protection checklist.
+// ── Protections lists (adapted from the popup's old "Protections ▼" dropdown) ─
+// 5.1.0: one list per registry tab (LIST_ID) — Browsing, Download (warnRiskyDownloads, blockRiskyDownloads) and Tamper Guard.
 function buildProtGroup(g) {
   const wrap = document.createElement("div"); wrap.className = "prot-group";
   const head = document.createElement("div"); head.className = "prot-group-head";
@@ -72,12 +86,19 @@ function buildProtGroup(g) {
   head.append(title, from);
   wrap.append(head);
   g.items.forEach((it) => {
-    const lab = document.createElement("label"); lab.className = "prot-item" + (it.enabled ? "" : " off");
-    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = it.enabled;
+    const lab = document.createElement("label"); lab.className = "prot-item" + (it.enabled ? "" : " off") + (it.masterOff ? " master-off" : "");
+    // 5.1.3: its master is off → shown off and not clickable; the stored tick is kept and shows again with the master.
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = it.enabled && !it.masterOff;
+    cb.disabled = !!it.masterOff;
     cb.addEventListener("change", () => setProtection(it.key, cb.checked));
-    const num = document.createElement("span"); num.className = "p-num"; num.textContent = String(it.num);
+    // 5.1.0: an unnumbered row (Download / Tamper Protection tab) gets no number column at all — no empty gap.
+    const num = it.num ? Object.assign(document.createElement("span"), { className: "p-num", textContent: String(it.num) }) : null;
     const text = document.createElement("span"); text.className = "p-label"; text.textContent = it.label;
-    lab.append(cb, num, text);
+    if (it.masterOff) {                                              // 5.1.0: its master protection (`requires`) is off
+      const why = document.createElement("span"); why.className = "p-why"; why.textContent = masterOffText(it.masterLabel);
+      text.append(why);
+    }
+    lab.append(...(num ? [cb, num, text] : [cb, text]));
     // Hover/focus tooltip with what this protection does (data/protections.js' own description field —
     // never a copy typed here, C39a). CSS caps it to 3 lines (-webkit-line-clamp) as a guard against any
     // future description running long.
@@ -91,30 +112,81 @@ function buildProtGroup(g) {
   return wrap;
 }
 
-// 4.7.0: two-column layout — the first present group (level 2, "On every site") goes in the left
-// column on its own; every other group (level 3 "outside safer regions" + the level 4–5 "web-platform
-// blocks" group) stacks in the right column. PROTECTION_GROUPS' own order (data/protections.js) decides
-// which group is "first" — never a hardcoded level number here.
-function renderProtList(container) {
-  const groups = model.groups.filter((g) => g.items.length);
+// 5.1.3 (owner, 2026-11-24): ONE column — every group of the tab under the previous one, in PROTECTION_GROUPS' own
+// order (data/protections.js); the 4.7.0 two-column split (first group left, the rest right) is gone.
+// 5.1.3: the switch of a SWITCH_CARD_TITLE tab — the row the tab's other rows name as their master — in its own group.
+function splitSwitch(groups, tab) {
+  if (!SWITCH_CARD_TITLE[tab] || !groups.length) return groups;
+  const masters = new Set(groups.flatMap((g) => g.items).map((it) => it.masterLabel).filter(Boolean));
+  const first = groups[0];
+  const sw = first.items.filter((it) => masters.has(it.label));
+  if (!sw.length) return groups;
+  const rest = first.items.filter((it) => !masters.has(it.label));
+  const switchGroup = { ...first, title: SWITCH_CARD_TITLE[tab], items: sw };
+  return [switchGroup, ...(rest.length ? [{ ...first, items: rest }] : []), ...groups.slice(1)];
+}
+
+function renderProtList(container, tab) {
+  const groups = splitSwitch(model.groups.filter((g) => g.tab === tab && g.items.length), tab);
+  const panel = container.closest(".tab-panel");
+  if (panel && SWITCH_CARD_TITLE[tab]) panel.classList.toggle(TAB_OFF_CLASS, groups.some((g) => g.items.some((it) => it.masterOff)));
   if (!groups.length) {
     container.replaceChildren(Object.assign(document.createElement("p"), { className: "prot-empty", textContent: "Nothing in this group yet." }));
     return;
   }
-  const left = document.createElement("div"); left.className = "prot-col";
-  left.append(buildProtGroup(groups[0]));
-  const cols = [left];
-  if (groups.length > 1) {
-    const right = document.createElement("div"); right.className = "prot-col";
-    groups.slice(1).forEach((g) => right.append(buildProtGroup(g)));
-    cols.push(right);
-  }
-  container.replaceChildren(...cols);
+  const col = document.createElement("div"); col.className = "prot-col";
+  groups.forEach((g) => col.append(buildProtGroup(g)));
+  container.replaceChildren(col);
 }
 
 function renderProtLists() {
-  renderProtList($("browsingList"));
+  for (const [tab, id] of Object.entries(LIST_ID)) renderProtList($(id), tab);
 }
+
+// ── Tamper Protection tab (5.1.3): the signs of tampering, plain, most points first (core/tamper-guard.js tamperView);
+// the explanation and the points are the row's hover/focus tooltip — no severity headings. ──
+function tamperRow(r) {
+  const item = document.createElement("div"); item.className = "prot-item tg-item"; item.tabIndex = 0;
+  const label = document.createElement("span"); label.className = "p-label"; label.textContent = r.label;
+  if (r.warnsAtOnce) {                                             // issue 3: its own warning comes at once
+    const note = document.createElement("span"); note.className = "tg-at-once"; note.textContent = TAMPER_WARNS_AT_ONCE;
+    label.append(note);
+  }
+  const tip = document.createElement("span"); tip.className = "p-tip"; tip.setAttribute("role", "tooltip");
+  tip.textContent = `${r.description} ${tamperPointsText(r.points)}`;
+  item.append(label, tip);
+  return item;
+}
+
+// ── Scam protection tab (5.1.3): the rows under the switch, plain, the meaning on hover — like the Tamper tab, but
+// without severity groups (each scam protection acts on its own). Read straight from the registry (C21). ──
+function renderScamRules() {
+  const rows = PROTECTION_GROUPS.filter((g) => g.tab === PROTECTION_TAB.SCAM).flatMap(protectionsInGroup)
+    .filter((p) => p.switchable === false);
+  const box = document.createElement("div"); box.className = "prot-group";
+  for (const p of rows) {
+    const item = document.createElement("div"); item.className = "prot-item tg-item"; item.tabIndex = 0;
+    const label = document.createElement("span"); label.className = "p-label"; label.textContent = p.label;
+    const tip = document.createElement("span"); tip.className = "p-tip"; tip.setAttribute("role", "tooltip");
+    tip.textContent = p.fromLevel > LEVEL.MILD ? `${p.description} From level ${p.fromLevel}, outside safer regions.` : p.description;
+    item.append(label, tip);
+    box.append(item);
+  }
+  $("scRules").replaceChildren(box);
+}
+
+function renderTamper(view) {
+  const box = document.createElement("div"); box.className = "prot-group";
+  const head = document.createElement("div"); head.className = "prot-group-head"; head.textContent = TAMPER_LIST_HEAD;
+  box.append(head, ...view.rules.map(tamperRow));                 // the view's order: most points first
+  $("tgRules").replaceChildren(box);
+}
+
+async function loadTamper() {
+  try { renderTamper(await send(M.MSG_GET_TAMPER_VIEW)); }
+  catch (e) { showError($("tgStatus"), e, "Could not load tamper protection"); }
+}
+
 
 async function setProtection(key, enabled) {
   try {
@@ -137,6 +209,7 @@ function renderVtLine() {
 function render() {
   if (!model) return;
   renderProtLists();
+  renderScamRules();                                               // 5.1.3
   renderVtLine();
   fillSelect($("dnsFirst"), model.dns.first);
   fillSelect($("dnsSecond"), model.dns.second);
@@ -155,8 +228,6 @@ function fillSelect(sel, value) {
 }
 
 // ── Download protection ──────────────────────────────────────────────────────
-function trustedInput(i) { return $(`trusted_${i}`); }
-
 function buildDownloadControls() {
   $("autoAllowThreshold").min = String(AUTO_ALLOW_THRESHOLD_MIN);
   $("autoAllowThreshold").max = String(AUTO_ALLOW_THRESHOLD_MAX);
@@ -167,15 +238,6 @@ function buildDownloadControls() {
   for (const id of Object.values(RGB_INPUTS)) { $(id).min = "0"; $(id).max = String(RGB_CHANNEL_MAX); }
   $("warningTitle").maxLength = DOWNLOAD_WARNING_TITLE_MAX;
   $("warningTitle").placeholder = DOWNLOAD_WARNING_TITLE_DEFAULT;
-  const grid = $("trustedInputs");
-  for (let i = 0; i < TRUSTED_DOWNLOAD_DOMAINS_MAX; i++) {
-    const inp = document.createElement("input");
-    inp.type = "text"; inp.id = `trusted_${i}`; inp.className = "text-input mono";
-    inp.placeholder = TRUSTED_PLACEHOLDER; inp.spellcheck = false; inp.autocomplete = "off";
-    inp.setAttribute("aria-label", `Trusted download domain ${i + 1}`);
-    inp.addEventListener("input", () => inp.classList.toggle("invalid", !!inp.value.trim() && !DOMAIN_RE.test(inp.value.trim())));
-    grid.append(inp);
-  }
 }
 
 // 4.7.5: the per-level detail line (window threshold, via WarnPolicy) was dropped from the UI — the
@@ -212,7 +274,7 @@ function renderDownloads() {
   const fpIndex = Math.max(0, FP_LEVEL_ORDER.indexOf(d.fpReductionLevel));
   $("fpSlider").value = String(fpIndex);
   showFpLevel(fpIndex);
-  for (let i = 0; i < TRUSTED_DOWNLOAD_DOMAINS_MAX; i++) { trustedInput(i).value = d.trustedDomains[i] || ""; trustedInput(i).classList.remove("invalid"); }
+  $("trustAppStores").checked = d.trustAppStores;                // 5.1.3
   const custom = isCustomLook(d);
   $("personalize").checked = custom;
   $("personalizeBox").hidden = !custom;
@@ -230,14 +292,6 @@ function readColor() {
 
 // The form as a settings patch, or an error text when an input is invalid (nothing is sent then).
 function readDownloadForm() {
-  const trusted = [];
-  const bad = [];
-  for (let i = 0; i < TRUSTED_DOWNLOAD_DOMAINS_MAX; i++) {
-    const v = trustedInput(i).value.trim().toLowerCase();
-    if (!v) continue;
-    if (DOMAIN_RE.test(v)) trusted.push(v); else { bad.push(v); trustedInput(i).classList.add("invalid"); }
-  }
-  if (bad.length) return { error: `fix invalid domains first (format: domain.tld): ${bad.join(", ")}` };
   const personalize = $("personalize").checked;
   const threshold = Number.parseInt($("autoAllowThreshold").value, DECIMAL_RADIX);
   return {
@@ -249,7 +303,7 @@ function readDownloadForm() {
         ? Math.min(AUTO_ALLOW_THRESHOLD_MAX, Math.max(AUTO_ALLOW_THRESHOLD_MIN, threshold))
         : DOWNLOAD_DEFAULTS.autoAllowThreshold,
       fpReductionLevel: FP_LEVEL_ORDER[Number.parseInt($("fpSlider").value, DECIMAL_RADIX)] || DOWNLOAD_DEFAULTS.fpReductionLevel,
-      trustedDomains: trusted,
+      trustAppStores: $("trustAppStores").checked,                // 5.1.3 (domains: the allow list)
       // Personalize unticked = back to the defaults (DownloadSentinel: stale hidden values are never saved).
       warningColor: personalize ? readColor() : { ...DOWNLOAD_DEFAULTS.warningColor },
       warningTitle: personalize ? $("warningTitle").value.trim() : DOWNLOAD_DEFAULTS.warningTitle
@@ -325,6 +379,30 @@ async function saveDns() {
 }
 
 // ── Allow whitelist ───────────────────────────────────────────────────────────
+// 5.1.3 — search, like uBlock's "My rules": the lines that contain the search text (case-insensitive) are shown
+// under the field, and "Delete all for this domain" removes exactly those lines from the textarea. Nothing is saved
+// until Save (Revert still works). The textarea stays the editor; the check happens in the service worker on Save.
+function allowMatches() {
+  const q = $("allowSearch").value.trim().toLowerCase();
+  if (!q) return { q, lines: [] };
+  return { q, lines: $("allowList").value.split(LINE_SPLIT_RE).filter((l) => l.toLowerCase().includes(q)) };
+}
+function showAllowMatches() {
+  const { q, lines } = allowMatches();
+  $("allowMatches").hidden = !lines.length;
+  $("allowMatches").textContent = lines.join(ALLOW_LIST_SEPARATOR);
+  $("allowDeleteMatches").disabled = !lines.length;
+  $("allowMatchCount").textContent = q ? `${lines.length} line(s)` : "";
+}
+function deleteAllowMatches() {
+  const { lines } = allowMatches();
+  if (!lines.length) return;
+  const drop = new Set(lines);
+  $("allowList").value = $("allowList").value.split(LINE_SPLIT_RE).filter((l) => !drop.has(l)).join(ALLOW_LIST_SEPARATOR);
+  showAllowMatches();
+  showStatus($("allowStatus"), `${lines.length} line(s) removed — click Save to apply, or Revert.`);
+}
+
 async function saveAllowList() {
   try {
     model = await send(M.MSG_SET_ALLOW_LIST, { text: $("allowList").value });
@@ -386,6 +464,7 @@ async function importSettings(e) {
   try {
     model = await send(M.MSG_IMPORT_SETTINGS, { settings: JSON.parse(await readImportFile(file)) });
     render();
+    loadTamper();
     showStatus($("ioStatus"), `Restored: ${model.summary}`);
   } catch (err) { showError($("ioStatus"), err, "Not restored"); }
 }
@@ -395,6 +474,7 @@ async function resetSettings() {
   try {
     model = await send(M.MSG_RESET_SETTINGS);
     render();
+    loadTamper();
     showStatus($("ioStatus"), "All settings reset.");
   } catch (e) { showError($("ioStatus"), e, "Not reset"); }
 }
@@ -404,10 +484,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   buildDownloadControls();
   bindDownloadControls();
   for (const t of Object.values(TAB)) $(TAB_BTN_ID[t]).addEventListener("click", () => showTab(t));
+  $(TAB_BTN_ID[TAB.TAMPER]).addEventListener("click", loadTamper);   // fresh findings each time the tab is opened
   $("dnsFirst").addEventListener("change", saveDns);
   $("dnsSecond").addEventListener("change", saveDns);
   $("allowSave").addEventListener("click", saveAllowList);
-  $("allowRevert").addEventListener("click", () => { if (model) $("allowList").value = model.allowList; });
+  $("allowRevert").addEventListener("click", () => { if (model) $("allowList").value = model.allowList; showAllowMatches(); });
+  $("allowSearch").addEventListener("input", showAllowMatches);                 // 5.1.3
+  $("allowList").addEventListener("input", showAllowMatches);
+  $("allowDeleteMatches").addEventListener("click", deleteAllowMatches);
   $("allowExport").addEventListener("click", exportAllowList);
   $("allowImport").addEventListener("click", () => $("allowImportFile").click());
   $("allowImportFile").addEventListener("change", importAllowList);
@@ -420,6 +504,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     model = await send(M.MSG_GET_OPTIONS);
     render();
   } catch (e) { showError($("dnsStatus"), e, "Could not load the settings"); }
+  loadTamper();
 });
 
 window.addEventListener("pagehide", releaseStatus);          // release status timers with the page

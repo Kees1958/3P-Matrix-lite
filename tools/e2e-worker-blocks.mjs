@@ -61,13 +61,13 @@ const ALL = Object.values(WHERE);
 const EXPECT_ALL = (o) => Object.fromEntries(ALL.map((w) => [w, o]));
 // [what, level, kind, third-party host, expected per place, places that are a known Chrome limitation]
 const CASES = [
-  ["33 network half: 3P WebAssembly",            C.LEVEL.HIGH,  KIND.WASM, HOST.SAFER,      EXPECT_ALL(OUTCOME.BLOCKED), []],
-  ["31 network half + worker CSP: 3P WebSocket", C.LEVEL.HIGH,  KIND.WS,   HOST.SAFER,      EXPECT_ALL(OUTCOME.BLOCKED), []],
-  ["28: 3P WebAssembly from outside safer",      C.LEVEL.SMART, KIND.WASM, HOST.NOT_SAFER,  EXPECT_ALL(OUTCOME.BLOCKED), []],
-  ["28: 3P WebAssembly from a dubious host",     C.LEVEL.SMART, KIND.WASM, HOST.DUBIOUS,    EXPECT_ALL(OUTCOME.BLOCKED), []],
-  ["28: 3P WebAssembly from a safer host",       C.LEVEL.SMART, KIND.WASM, HOST.SAFER,      EXPECT_ALL(OUTCOME.ALLOWED), []],
-  ["10: WebSocket to an abused TLD",             C.LEVEL.MILD,  KIND.WS,   HOST.ABUSED_TLD, EXPECT_ALL(OUTCOME.BLOCKED), [WHERE.SHARED]],
-  ["10: WebSocket to an ordinary host",          C.LEVEL.MILD,  KIND.WS,   HOST.SAFER,      EXPECT_ALL(OUTCOME.ALLOWED), []],
+  ["blockWebAssembly network half: 3P WebAssembly",            C.LEVEL.HIGH,  KIND.WASM, HOST.SAFER,      EXPECT_ALL(OUTCOME.BLOCKED), []],
+  ["blockWebsockets network half + worker CSP: 3P WebSocket", C.LEVEL.HIGH,  KIND.WS,   HOST.SAFER,      EXPECT_ALL(OUTCOME.BLOCKED), []],
+  ["blockWasmDubious: 3P WebAssembly from outside safer",      C.LEVEL.SMART, KIND.WASM, HOST.NOT_SAFER,  EXPECT_ALL(OUTCOME.BLOCKED), []],
+  ["blockWasmDubious: 3P WebAssembly from a dubious host",     C.LEVEL.SMART, KIND.WASM, HOST.DUBIOUS,    EXPECT_ALL(OUTCOME.BLOCKED), []],
+  ["blockWasmDubious: 3P WebAssembly from a safer host",       C.LEVEL.SMART, KIND.WASM, HOST.SAFER,      EXPECT_ALL(OUTCOME.ALLOWED), []],
+  ["blockAbusedTlds: WebSocket to an abused TLD",             C.LEVEL.MILD,  KIND.WS,   HOST.ABUSED_TLD, EXPECT_ALL(OUTCOME.BLOCKED), [WHERE.SHARED]],
+  ["blockAbusedTlds: WebSocket to an ordinary host",          C.LEVEL.MILD,  KIND.WS,   HOST.SAFER,      EXPECT_ALL(OUTCOME.ALLOWED), []],
 ];
 
 // ── Local server: the page, its two workers, the .wasm file and the WebSocket endpoint ──
@@ -101,7 +101,7 @@ try {
   const top = `http://${HOST.PAGE}:${port}/`;
   await send({ type: M.MSG_RESET_SETTINGS });
   // The local server runs on an odd port over plain HTTP: blockSuspicious3p/block3pHttp would block every probe for that reason.
-  for (const key of [P.PROTECTION_KEY.BLOCK_3P_HTTP, P.PROTECTION_KEY.BLOCK_SUSPICIOUS_3P, P.PROTECTION_KEY.WARN_SUSPICIOUS_SITES])
+  for (const key of [P.PROTECTION_KEY.BLOCK_3P_HTTP, P.PROTECTION_KEY.BLOCK_SUSPICIOUS_3P, P.PROTECTION_KEY.ENABLE_SCAM_PROTECTION])
     await send({ type: M.MSG_SET_PROTECTION, key, enabled: false });
   const popup = await send({ type: M.MSG_GET_POPUP_STATE, url: top });
   for (const t of popup.data.safeZone.tlds) if (!SAFER_TLDS.includes(t)) await send({ type: M.MSG_SET_SAFE_ZONE, removeTld: t });

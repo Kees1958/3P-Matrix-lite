@@ -22,7 +22,10 @@ const DEFAULT_STATE_FILE = join(HERE, "package-release-state.json");
 const PERMISSION_KEYS = Object.freeze(["permissions", "host_permissions", "optional_permissions", "optional_host_permissions"]);
 // Approved additions, each with its reason and the version that added it. Empty = nothing new may appear.
 // Example shape: { "permissions:offscreen": "5.1.0 — VirusTotal hashing of large files needs an offscreen document" }
-const APPROVED_ADDITIONS = Object.freeze({});
+const APPROVED_ADDITIONS = Object.freeze({
+  // No install warning (Chrome's permission list), so existing users are not disabled on update (C36 satisfied).
+  "permissions:activeTab": "5.1.3 — the popup's firewall count: chrome.declarativeNetRequest.getMatchedRules for the tab the user clicked the icon on, instead of a background listener on every failed request"
+});
 
 function arg(name) { const i = process.argv.indexOf(`--${name}`); return i === -1 ? null : process.argv[i + 1]; }
 function didNotRun(msg) { console.error(`check-permission-additions: DID NOT RUN — ${msg}`); process.exit(EXIT.DID_NOT_RUN); }

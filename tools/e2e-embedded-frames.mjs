@@ -9,7 +9,7 @@
 //   level 1 lock  → allowAllRequests lets the whole frame tree through, whatever the session level
 //   level 2 lock  → tab band cancels the session level's blocks inside the tab
 //   level 4 lock  → tab band blocks the nested script even when the session level is 1
-// plus: the badge/popup count follows (our replay agrees with Chrome), the band is released when the
+// plus: the popup's firewall count follows (5.1.3: Chrome's matched rules, block rules counted), the band is released when the
 // tab navigates away, when the site is unlocked and when the tab closes.
 // Every level, message and key comes from the extension's own modules — nothing typed but test hosts.
 //
@@ -19,7 +19,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createServer } from "node:http";
-import { existsSync } from "node:fs";
+import { existsSync, cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -40,6 +41,19 @@ function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 const ext = arg("extension");
 if (!ext || !existsSync(join(ext, "manifest.json"))) didNotRun("missing or invalid --extension <folder>");
 const EXT = resolve(ext);
+// 5.1.3: the popup's firewall count uses getMatchedRules, which Chrome allows after the user clicked the icon
+// (activeTab). A test cannot click the toolbar icon, so it runs a COPY of the extension that also has
+// declarativeNetRequestFeedback — the same call, granted another way. The shipped manifest is never changed.
+const TEST_PERMISSION = "declarativeNetRequestFeedback";
+const RUN_EXT = mkdtempSync(join(tmpdir(), "3pm-frames-"));
+cpSync(EXT, RUN_EXT, { recursive: true, filter: (src) => !src.includes("node_modules") });
+{
+  const manifestPath = join(RUN_EXT, "manifest.json");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  manifest.permissions = [...new Set([...(manifest.permissions || []), TEST_PERMISSION])];
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+}
+process.on("exit", () => { try { rmSync(RUN_EXT, { recursive: true, force: true }); } catch { /* temp folder: best effort */ } });
 let chromium, C, M, P;
 try { ({ chromium } = await import("playwright")); } catch { didNotRun("the playwright package is not installed (npm i playwright)"); }
 try {
@@ -76,7 +90,7 @@ function ok(name, cond, info) {
 try {
   ctx = await chromium.launchPersistentContext("", {
     headless: false, executablePath: arg("chromium") || undefined,
-    args: ["--headless=new", `--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`,
+    args: ["--headless=new", `--disable-extensions-except=${RUN_EXT}`, `--load-extension=${RUN_EXT}`,
            `--host-resolver-rules=MAP *.${TLD} ${LOCAL_ADDRESS}`, "--no-proxy-server"]
   });
   let [sw] = ctx.serviceWorkers();
@@ -91,7 +105,7 @@ try {
   // site, and the suspicious-site warning (11) would replace the test page: turn them off, they are not under test.
   async function freshSettings() {
     await send({ type: M.MSG_RESET_SETTINGS });
-    for (const key of [P.PROTECTION_KEY.BLOCK_SUSPICIOUS_3P, P.PROTECTION_KEY.BLOCK_3P_HTTP, P.PROTECTION_KEY.WARN_SUSPICIOUS_SITES]) {
+    for (const key of [P.PROTECTION_KEY.BLOCK_SUSPICIOUS_3P, P.PROTECTION_KEY.BLOCK_3P_HTTP, P.PROTECTION_KEY.ENABLE_SCAM_PROTECTION]) {
       await send({ type: M.MSG_SET_PROTECTION, key, enabled: false });
     }
   }
@@ -111,8 +125,15 @@ try {
     await sleep(PAGE_SETTLE_MS);
     if (process.env.E2E_DEBUG) console.log("tabs:", JSON.stringify(await ui.evaluate(async () => (await chrome.tabs.query({})).map((t) => t.url))));
     const tabId = await ui.evaluate(async (u) => (await chrome.tabs.query({ url: u + "*" }))[0].id, url(host, PATH.page));
-    const model = await send({ type: M.MSG_GET_POPUP_STATE, tabId, url: url(host, PATH.page) });
-    return { frameLoaded: hits.has(PATH.frame), frameScriptLoaded: hits.has(PATH.frameScript), pageScriptLoaded: hits.has(PATH.pageScript), blocked: model.data.blocked };
+    // 5.1.3: the popup's firewall count — the rules Chrome says matched in the tab (getMatchedRules), counted by the
+    // service worker (block rules only). Asked here the way the popup asks it.
+    const matched = await ui.evaluate(async (id) => {
+      try { return { ids: ((await chrome.declarativeNetRequest.getMatchedRules({ tabId: id })).rulesMatchedInfo || []).map((x) => x.rule.ruleId) }; }
+      catch (e) { return { error: String(e && e.message || e) }; }
+    }, tabId);
+    if (matched.error) return { frameLoaded: hits.has(PATH.frame), frameScriptLoaded: hits.has(PATH.frameScript), pageScriptLoaded: hits.has(PATH.pageScript), blocked: null, error: matched.error };
+    const count = await send({ type: M.MSG_COUNT_FIREWALL_BLOCKS, ruleIds: matched.ids });
+    return { frameLoaded: hits.has(PATH.frame), frameScriptLoaded: hits.has(PATH.frameScript), pageScriptLoaded: hits.has(PATH.pageScript), blocked: count.data };
   }
   const tab = await ctx.newPage();
   const L = C.LEVEL;

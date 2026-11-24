@@ -54,7 +54,7 @@ const STEPS = Object.freeze([
   { id: "no-eval",               what: "no eval()/Function()/string-timer call sites in first-party code (C43, 4.5.1)", script: "check-no-eval.mjs" },
   { id: "derived-literals",      what: "UI shows derived values, never typed copies (C39a)", script: "check-derived-literals.mjs" },
   { id: "shipped-terms",         what: "LOG_PREFIX + obfuscation thresholds in sync; no uBD-only terms", script: "check-shipped-terms.mjs" },
-  { id: "obfuscation-shape",     what: "shared obfuscation-shape detector behind blockObfuscatedEval/Function/SetTimeout/SetInterval (4.4.3)", script: "test-obfuscation-shape.mjs" },
+  { id: "obfuscation-shape",     what: "shared obfuscation-shape detector behind blockObfuscatedEval: eval, Function, string timers in one scriptlet (4.4.3, merged 5.1.2)", script: "test-obfuscation-shape.mjs" },
   { id: "perf-guards",           what: "4.5.4 perf: lazy list modules, merged script scopes, apply dirty check, state snapshot", script: "test-perf-guards.mjs" },
   { id: "state-migration",       what: "schema migrations + Show Matrix normalization",   script: "test-matrix-migration.mjs" },
   { id: "tab-band",              what: "locks reach embedded frames: level-1 allowAllRequests, tab-band session rules, tab bookkeeping, shared-host domains (4.4.5)", script: "test-tab-band.mjs" },
@@ -64,9 +64,11 @@ const STEPS = Object.freeze([
   { id: "download-active-threat", what: "download check: active-threat floor is the ported site-scorer mechanism (C21), not reinvented (4.5.1)", script: "test-download-active-threat.mjs" },
   { id: "large-binary",          what: "download check: large (32 MB) and huge (650 MB) extensionless binary from a file-sharing host (4.5.6, 4.5.8)", script: "test-large-binary.mjs" },
   { id: "exfil-and-password",    what: "exfiltration rules per level/exemption + channel attribution, password-form decision, ISOLATED twin (4.6.0)", script: "test-exfil-and-password.mjs" },
+  { id: "tamper-guard",          what: "Tamper Guard: page-script copies = rules table, levels/arming, destination checks, own wrappers ignored, exceptions, caps (5.1.0)", script: "test-tamper-guard.mjs" },
+  { id: "allow-list",            what: "the one allow list: Category: domain format, storage per category, Always allow/ignore, exclusions and warnings per category (5.1.3)", script: "test-allow-list.mjs" },
   { id: "message-gate",          what: "sender kinds per message, fake sign-in warning on the warning page, window-capture listeners, page CSP (C46/C47/C19, 5.0.6); no document listener or MutationObserver in page scripts (5.0.7)", script: "test-message-gate.mjs" },
   { id: "dns-block-styles",      what: "site-check DNS: 5 providers' block rules + default pair and its schema-5 migration (4.5.8)", script: "test-dns-block-styles.mjs" },
-  { id: "wasm-wrappers",         what: "blockWebAssembly's fetch/arrayBuffer wrappers hand back the native promise; behaviour kept (5.0.7)", script: "test-wasm-wrappers.mjs" },
+  { id: "wasm-wrappers",         what: "blockWebAssembly never wraps fetch (5.1.3); its arrayBuffer/XHR wrappers hand back the native result; behaviour kept", script: "test-wasm-wrappers.mjs" },
   { id: "untrusted-input",       what: "seeded fuzz: settings import, domain helpers, message gate, ClickFix pattern cost; import size limit (C50, C51, 5.0.7)", script: "test-untrusted-input.mjs" },
   { id: "permission-additions",  what: "no permission added since the previous release without a stated approval (C36, 5.0.7)", script: "check-permission-additions.mjs" },
   { id: "release-contents",      what: "each release zip holds only what tools/package-release.mjs declares; changelog versions congruent (5.0.7)", script: "package-release.mjs",
@@ -80,6 +82,8 @@ const STEPS = Object.freeze([
   { id: "e2e-page-protections",  what: "real Chromium: browser-locker, notification prompts, password-form warning, exfiltration warning (4.6.0); ClickFix/skimmer warnings against a hostile page (5.0.7)", script: "e2e-page-protections.mjs",
     args: (ext, opts) => ["--extension", ext, ...(opts.chromium ? ["--chromium", opts.chromium] : [])] },
   { id: "e2e-worker-blocks",     what: "real Chromium: WebAssembly/WebSocket blocks hold in dedicated and shared workers; blockWasmDubious and blockAbusedTlds by host (5.0.5)", script: "e2e-worker-blocks.mjs",
+    args: (ext, opts) => ["--extension", ext, ...(opts.chromium ? ["--chromium", opts.chromium] : [])] },
+  { id: "e2e-tamper-guard",      what: "real Chromium: Tamper Guard warning windows — json-edit-like data edit, hostile page, card skimmer, exceptions, level 4 (5.1.0)", script: "e2e-tamper-guard.mjs",
     args: (ext, opts) => ["--extension", ext, ...(opts.chromium ? ["--chromium", opts.chromium] : [])] }
 ]);
 // Scripts in this folder that are deliberately NOT suite steps, with the reason.

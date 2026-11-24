@@ -17,8 +17,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { LEVEL, LEVEL_MIN, LEVEL_MAX, DOWNLOAD_BLOCK_EXEMPT_LEVELS, DOWNLOAD_PAGE_TRUST_LEVELS, SITE_DIALOG_FROM, SAFER_REGIONS_LEVELS, SCORE, LOG_PREFIX, AUTO_ALLOW_THRESHOLD_MIN,
-         AUTO_ALLOW_THRESHOLD_MAX, DOWNLOAD_DEFAULTS, TRUSTED_DOWNLOAD_DOMAINS_MAX, BUILTIN_TRUSTED_DOWNLOAD_DOMAINS,
-         DOWNLOAD_WARNING_TITLE_DEFAULT } from "../data/constants.js";
+         AUTO_ALLOW_THRESHOLD_MAX, DOWNLOAD_DEFAULTS, BUILTIN_TRUSTED_DOWNLOAD_DOMAINS,
+         DOWNLOAD_WARNING_TITLE_DEFAULT, TAMPER_COUNTDOWN_S, TAMPER_RATING, TAMPER_RATING_MIN_POINTS,
+         TAMPER_SUSPICIOUS_WARN, BADGE_TEXT } from "../data/constants.js";
 import { PROTECTION_BY_KEY, PROTECTION_KEY } from "../data/protections.js";
 
 const DERIVED_ATTR   = "data-derived";
@@ -59,14 +60,11 @@ const DERIVED_TEXT = Object.freeze({
                                     .map(([lvl, from]) => `${formatScore(from)} at level ${lvl}`).join(LIST_SEPARATOR),
   "protection-num-warn":    () => protectionNum(PROTECTION_KEY.WARN_SUSPICIOUS_SITES),
   "protection-label-warn":  () => protectionLabel(PROTECTION_KEY.WARN_SUSPICIOUS_SITES),
-  "protection-num-download":   () => protectionNum(PROTECTION_KEY.WARN_RISKY_DOWNLOADS),
   "protection-label-download": () => protectionLabel(PROTECTION_KEY.WARN_RISKY_DOWNLOADS),
-  "protection-num-block-download":   () => protectionNum(PROTECTION_KEY.BLOCK_RISKY_DOWNLOADS),
   "protection-label-block-download": () => protectionLabel(PROTECTION_KEY.BLOCK_RISKY_DOWNLOADS),
   "auto-allow-min":         () => String(AUTO_ALLOW_THRESHOLD_MIN),
   "auto-allow-max":         () => String(AUTO_ALLOW_THRESHOLD_MAX),
   "auto-allow-default":     () => String(DOWNLOAD_DEFAULTS.autoAllowThreshold),
-  "trusted-download-max":   () => String(TRUSTED_DOWNLOAD_DOMAINS_MAX),
   "trusted-download-builtin": () => BUILTIN_TRUSTED_DOWNLOAD_DOMAINS.join(LIST_SEPARATOR),
   // 4.5.5: where blockRiskyDownloads honours the trusted download domains, and where it blocks regardless
   "block-exempt-levels":    () => DOWNLOAD_BLOCK_EXEMPT_LEVELS.join(LIST_SEPARATOR),
@@ -74,8 +72,29 @@ const DERIVED_TEXT = Object.freeze({
   "block-strict-levels":    () => levelRange().filter((l) => l >= PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_RISKY_DOWNLOADS].fromLevel &&
                                                          !DOWNLOAD_BLOCK_EXEMPT_LEVELS.includes(l)).join(LIST_SEPARATOR),
   "warning-color-default":  () => RGB_CHANNELS.map((ch) => DOWNLOAD_DEFAULTS.warningColor[ch]).join(LIST_SEPARATOR),
-  "download-title-default": () => DOWNLOAD_WARNING_TITLE_DEFAULT
+  "download-title-default": () => DOWNLOAD_WARNING_TITLE_DEFAULT,
+  // 5.1.0 — Tamper Guard: from which level each option applies (its registry fromLevel), and the countdown
+  "tamper-level-sensitive": () => levelsFrom(PROTECTION_BY_KEY[PROTECTION_KEY.WATCH_TAMPER_SENSITIVE].fromLevel),
+  // 5.1.3 — Scam protection: from which level the switch (and its frames part) applies (registry fromLevel)
+  "scam-level-from":        () => String(PROTECTION_BY_KEY[PROTECTION_KEY.ENABLE_SCAM_PROTECTION].fromLevel),
+  "scam-frames-level-from": () => String(PROTECTION_BY_KEY[PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS].fromLevel),
+  // single "from" levels for the "How Tamper Guard works" lines
+  "tamper-countdown-s":     () => String(TAMPER_COUNTDOWN_S),
+  "protection-label-tamper": () => protectionLabel(PROTECTION_KEY.WATCH_TAMPER_SENSITIVE),
+  // 5.1.3 — the risk rating (data/constants.js TAMPER_RATING_*, TAMPER_SUSPICIOUS_WARN) and the quiet toolbar mark
+  "tamper-points-suspicious": () => String(TAMPER_RATING_MIN_POINTS[TAMPER_RATING.SUSPICIOUS]),
+  "tamper-points-high":       () => String(TAMPER_RATING_MIN_POINTS[TAMPER_RATING.HIGH]),
+  "tamper-points-critical":   () => String(TAMPER_RATING_MIN_POINTS[TAMPER_RATING.CRITICAL]),
+  "tamper-suspicious-always": () => levelsFrom(TAMPER_SUSPICIOUS_WARN.ALWAYS_FROM),
+  "tamper-suspicious-outside": () => String(TAMPER_SUSPICIOUS_WARN.OUTSIDE_SAFER_FROM),
+  "tamper-mark":              () => BADGE_TEXT.SUSPECT
 });
+
+// 5.1.0: "2–5" — the levels from `from` up to LEVEL_MAX.
+const RANGE_DASH = "–";
+function levelsFrom(from) {
+  return from === LEVEL_MAX ? String(from) : `${from}${RANGE_DASH}${LEVEL_MAX}`;
+}
 
 export function fillDerivedText(root) {
   if (!root || typeof root.querySelectorAll !== "function") return;

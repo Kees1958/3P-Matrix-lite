@@ -28,6 +28,14 @@
   <button id="lockBtn" class="lock-btn" type="button" aria-label="Lock level for this site"></button>
 </div>
 
+<!-- 5.1.3: "This page" — only what there is to know about the open page (hidden on a clean page). -->
+<section id="pageBox" class="page-box" aria-labelledby="pageBoxH" hidden>
+  <span id="pageBoxH" class="section-title">This page</span>
+  <div id="pageRisk" class="page-line" hidden><span id="pageRiskText"></span><span id="pageRiskWhy" class="page-why"></span></div>
+  <div id="pageTamper" class="page-line page-line-row" hidden><span class="page-text"><span id="pageTamperText"></span><span id="pageTamperWorst" class="page-why page-one-line"></span></span>
+    <button id="tamperDetailsBtn" class="action-btn" type="button">Details</button></div>
+  <div id="pageContinued" class="page-line page-plain" hidden>You chose Continue once on this site in this tab.</div>
+</section>
 <section class="slider-zone" aria-label="Protection level">
   <div class="level-label">
     <div id="levelNum" class="mono level-num accent-text"></div>
@@ -75,7 +83,7 @@
 <p id="popupStatus" class="status-line popup-status" role="status" hidden></p>
 
 <footer class="foot">
-  <span id="blockedText"></span>
+  <span id="blockedText"></span>   <!-- 5.1.3: the firewall count, asked from Chrome when the popup opens -->
 </footer>
 
 <script src="popup.js" type="module"></script>

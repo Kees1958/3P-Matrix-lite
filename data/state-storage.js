@@ -36,6 +36,11 @@
 //                          (4.3.4's trustAiDownloads dropped in 4.3.6: not copied, so it disappears on load) }
 //                        A new key, not a changed shape: older states simply get the defaults (no
 //                        migration step, schema unchanged). The DNS choice is the shared state.dns.
+//   allowCategories      5.1.3 { firewall, scam, tamper: registered domains[] } — the allow list's category lines
+//   (gone: tamper        5.1.0–5.1.2 never-warn list, never released) { exceptions: [{ rule, site }] } — "never warn again" choices; rule =
+//                        data/tamper-rules.js TAMPER_RULE value, site = a registered domain or TAMPER_EXCEPTION_ALL_SITES
+//                        ("*" = every site); capped at TAMPER_EXCEPTIONS_CAP, duplicates dropped. A new key (no
+//                        migration, schema unchanged), like `downloads`. Nothing about visited pages is stored here.
 //
 // Schema versions and migrations (C32, audit finding 9) — ONE ordered list, run from ONE place:
 //   normalizeState(raw) → migrateRaw(raw) applies every MIGRATIONS step whose `to` is above the
@@ -72,10 +77,12 @@ import {
   DOWNLOAD_DEFAULTS, FP_LEVEL, VT_API_KEY_RE, AUTO_ALLOW_THRESHOLD_MIN, AUTO_ALLOW_THRESHOLD_MAX,
   TRUSTED_DOWNLOAD_DOMAINS_MAX, DOWNLOAD_WARNING_TITLE_MAX, RGB_CHANNEL_MAX,
   DNS_PROVIDER, DNS_NONE, DEFAULT_DNS_FIRST, DEFAULT_DNS_SECOND, LEGACY_DNS_DEFAULT, LOG_PREFIX, DECIMAL_RADIX,
-  MATRIX_SCOPE, MATRIX_ACTION, MATRIX_OVERRIDES_CAP, MATRIX_SITE_ALL
+  MATRIX_SCOPE, MATRIX_ACTION, MATRIX_OVERRIDES_CAP, MATRIX_SITE_ALL, ALLOW_CATEGORY_CAP
 } from "./constants.js";
-import { PROTECTION_KEY, PROTECTION_KEYS, DEFAULT_OFF_KEYS } from "./protections.js";
+import { ALLOW_CATEGORIES_STORED } from "./allow-categories.js";
+import { PROTECTION_KEY, PROTECTION_KEYS, PROTECTION_BY_KEY, DEFAULT_OFF_KEYS } from "./protections.js";
 import { BASE_TLDS } from "./tld-constants.js";
+import { registeredDomain } from "../util/domain.js";
 // DownloadSentinel's region-aware DNS defaults. 4.5.8: read only by the schema-5 migration (legacyDefaultDns) —
 // a first install no longer uses a region rule.
 import { DnsDefaults } from "../lib/downloadsentinel/util/DnsDefaults.js";
@@ -100,7 +107,8 @@ export function defaultState() {
     },
     dns: defaultDns(),
     matrixRules: {},
-    downloads: defaultDownloads()
+    downloads: defaultDownloads(),
+    allowCategories: defaultAllowCategories()      // 5.1.3: the allow list's Firewall / Scam / Tamper lines
   };
 }
 
@@ -117,6 +125,26 @@ function legacyDefaultDns() {
   const region = DnsDefaults.get();
   const useRegion = region.region !== DnsDefaults.GLOBAL_REGION && DNS_IDS.has(region.first) && DNS_IDS.has(region.second);
   return useRegion ? { first: region.first, second: region.second } : { ...LEGACY_DNS_DEFAULT };
+}
+
+function defaultAllowCategories() {
+  return Object.fromEntries(ALLOW_CATEGORIES_STORED.map((c) => [c, []]));
+}
+// 5.1.3 — each stored category: valid hosts → registered domains, no duplicates, at most ALLOW_CATEGORY_CAP.
+function normalizeAllowCategories(raw) {
+  const out = defaultAllowCategories();
+  if (!raw || typeof raw !== "object") return out;
+  for (const c of ALLOW_CATEGORIES_STORED) {
+    if (!Array.isArray(raw[c])) continue;
+    for (const h of raw[c]) {
+      const host = String(h).trim().toLowerCase();
+      if (!isValidHost(host)) continue;
+      const site = registeredDomain(host);
+      if (!out[c].includes(site)) out[c].push(site);
+      if (out[c].length >= ALLOW_CATEGORY_CAP) break;
+    }
+  }
+  return out;
 }
 
 // A fresh, independent copy of the download-protection defaults (arrays/objects never shared).
@@ -175,7 +203,8 @@ export function normalizeState(raw) {
   // Built from the data only (not on top of defaultState's default-off entries — that would undo a tick):
   // data without the newest default-off keys gets them from STATE_MIGRATIONS, a fresh install from defaultState().
   s.disabledProtections = {};
-  for (const key of PROTECTION_KEYS) if (dis[key] === true) s.disabledProtections[key] = true;
+  // 5.1.0: a protection without a checkbox of its own (switchable: false) keeps no untick — it follows its master.
+  for (const key of PROTECTION_KEYS) if (dis[key] === true && PROTECTION_BY_KEY[key].switchable !== false) s.disabledProtections[key] = true;
 
   // safeZone
   const z = (r.safeZone && typeof r.safeZone === "object") ? r.safeZone : {};
@@ -191,6 +220,7 @@ export function normalizeState(raw) {
 
   s.matrixRules = normalizeMatrixRules(r.matrixRules);
   s.downloads = normalizeDownloads(r.downloads);
+  s.allowCategories = normalizeAllowCategories(r.allowCategories);   // 5.1.3 (the 5.1.0–5.1.2 never-warn list was never released: dropped)
 
   return s;
 }
@@ -230,6 +260,7 @@ function normalizeDownloads(raw) {
   for (const ch of RGB_CHANNELS) out.warningColor[ch] = clampInt(c[ch], 0, RGB_CHANNEL_MAX, d.warningColor[ch]);
   out.warningTitle         = typeof raw.warningTitle === "string" ? raw.warningTitle.trim().slice(0, DOWNLOAD_WARNING_TITLE_MAX) : d.warningTitle;
   out.vtKeyPromptDismissed = bool(raw.vtKeyPromptDismissed, d.vtKeyPromptDismissed);
+  out.trustAppStores       = bool(raw.trustAppStores, d.trustAppStores);   // 5.1.3
   return out;
 }
 

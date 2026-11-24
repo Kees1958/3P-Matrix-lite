@@ -41,6 +41,11 @@ export const EXFIL_CHANNELS = Object.freeze([
     ownDomains: ["microsoft.com", "office.com", "powerautomate.com", "powerplatform.com", "azure.com", "sharepoint.com", "live.com"] }
 ].map((c) => Object.freeze({ ...c, requestDomains: Object.freeze(c.requestDomains), ownDomains: Object.freeze(c.ownDomains) })));
 
+// 5.1.3 — the URL filter of background.js's exfiltration listener (webRequest.onErrorOccurred): every channel host and
+// its subdomains, so the service worker wakes only for requests to these hosts.
+function hostPattern(domain) { return `*://*.${domain}/*`; }
+export const EXFIL_URL_PATTERNS = Object.freeze([...new Set(EXFIL_CHANNELS.flatMap((c) => c.requestDomains))].map(hostPattern));
+
 export const EXFIL_CHANNEL_BY_ID = Object.freeze(Object.fromEntries(EXFIL_CHANNELS.map((c) => [c.id, c])));
 const BY_LOCAL_ID = new Map(EXFIL_CHANNELS.map((c) => [c.ruleLocalId, c]));
 

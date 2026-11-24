@@ -1,7 +1,7 @@
 // ── core/navigation-guard.js ──────────────────────────────────────────────────
 // First-party site check on every top-level navigation — warnSuspiciousSites
 // "Warn when opening suspicious sites" (PROTECTION_KEY.WARN_SUSPICIOUS_SITES).
-// Timing (4.2.3): onBeforeNavigate cannot hold a navigation — the tab is redirected to the warning
+// Timing (4.2.3): the listener cannot hold a navigation — the tab is redirected to the warning
 // page as fast as possible, but the first request to the site may already have been sent. The user
 // is always warned before using the page; "when", not "before", is the honest promise.
 // Active when the site's effective level ≥ its fromLevel (2) AND the user has not
@@ -11,7 +11,10 @@
 // the dialog page then asks for stage 2. A suspicious score below the line gets the orange badge only.
 //
 // Public interface:
-//   checkNavigation(details, state) — webNavigation.onBeforeNavigate handler body
+//   checkNavigation(details, state, warn = true) — 5.1.3: part of background.js's top-page request listener
+//                                     (webRequest.onBeforeRequest, main_frame; was webNavigation.onBeforeNavigate, which
+//                                     fires for every frame). warn = false: score and remember the risk, no redirect
+//                                     (another warning already took this navigation)
 //   allowOnce(tabId, site)          — Promise: "Continue once" — skip the check for this tab + site
 //   releaseTab(tabId)               — tab closed: drop its one-time allowances
 //   (4.5.4) the allowances live in a session store (core/session-map.js, SESSION_KEY.ALLOWED_ONCE):
@@ -35,7 +38,8 @@ import { isLeaving } from "./leave-site.js";
 import { createSessionMap } from "./session-map.js";
 import { BUILTIN_ALL } from "../data/builtin-domains.js";
 import { PROTECTION_KEY } from "../data/protections.js";
-import { effectiveLevel, isProtectionActive } from "./policy.js";
+import { effectiveLevel, isProtectionActive, isAllowedFor } from "./policy.js";
+import { ALLOW_CATEGORY } from "../data/allow-categories.js";
 import { scoreLocal, dialogDecision } from "./site-scorer.js";
 import { setRisk } from "./badge.js";
 import { parseHttpUrl, registeredDomain, isInDomainList } from "../util/domain.js";
@@ -66,14 +70,15 @@ export async function isAllowedOnce(tabId, site) {
   return !!sites && sites.includes(site);
 }
 
-export async function checkNavigation(details, state) {
+export async function checkNavigation(details, state, warn = true) {
   if (details.frameId !== 0 || details.tabId < 0 || isLeaving(details.tabId)) return;
   const p = parseHttpUrl(details.url);
   if (!p) return;
   const site = registeredDomain(p.host);
 
   const level = effectiveLevel(state, p.host);
-  if (!isProtectionActive(state, PROTECTION_KEY.WARN_SUSPICIOUS_SITES, level)) {
+  // 5.1.3: "Scam: site" on the allow list = this warning is ignored for the site being opened.
+  if (!isProtectionActive(state, PROTECTION_KEY.WARN_SUSPICIOUS_SITES, level) || isAllowedFor(state, ALLOW_CATEGORY.SCAM, p.host)) {
     setRisk(details.tabId, site, SEVERITY.NONE);               // level 1 / allow list / unticked
     return;
   }
@@ -85,7 +90,7 @@ export async function checkNavigation(details, state) {
   const local = scoreLocal(details.url);
   if (!local) { setRisk(details.tabId, site, SEVERITY.NONE); return; }
   setRisk(details.tabId, site, local.severity);                // badge colour: severity, whatever the dialog decision
-  if (!dialogDecision(local, level).warn) return;               // 4.4.1: staged by level, exceptions always open it
+  if (!warn || !dialogDecision(local, level).warn) return;      // 4.4.1: staged by level, exceptions always open it
 
   // Not silent: a failed redirect means the user was NOT warned (tab closed meanwhile is the usual cause).
   chrome.tabs.update(details.tabId, { url: warningUrlFor(details.url) }).catch((e) => console.warn(LOG_PREFIX, "warning redirect failed:", e));

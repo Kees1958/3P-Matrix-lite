@@ -110,7 +110,9 @@ ok("to a site the user trusts (allow list) → no warning",
    !decide(PHISH_PAGE, OTHER_SITE, stateAt(PF_STATE.level, (s) => { s.siteLocks["collector.example"] = C.LEVEL.ALLOW_ALL; s.siteLocksOrder.push("collector.example"); return s; })).warn);
 ok("page trusted (level 1) → no warning",
    !decide(PHISH_PAGE, OTHER_SITE, stateAt(PF_STATE.level, (s) => { s.siteLocks["login-secure.example"] = C.LEVEL.ALLOW_ALL; s.siteLocksOrder.push("login-secure.example"); return s; })).warn);
-ok("unticked → no warning", !decide(PHISH_PAGE, OTHER_SITE, stateAt(PF_STATE.level, (s) => { s.disabledProtections[K.WARN_PASSWORD_FORMS] = true; return s; })).warn);
+// 5.1.0: warnPasswordForms has no checkbox of its own any more — it runs under "Enable tamper protection" (its master).
+ok("tamper protection switched off → no warning", !decide(PHISH_PAGE, OTHER_SITE, stateAt(PF_STATE.level, (s) => { s.disabledProtections[K.WATCH_TAMPER_SENSITIVE] = true; return s; })).warn);
+ok("its own old untick no longer switches it off (follows the switch)", decide(PHISH_PAGE, OTHER_SITE, stateAt(PF_STATE.level, (s) => { s.disabledProtections[K.WARN_PASSWORD_FORMS] = true; return s; })).warn);
 ok("javascript:/mailto: destination → no warning", !decide(PHISH_PAGE, "javascript:void(0)").warn && !decide(PHISH_PAGE, "mailto:a@b.example").warn);
 ok("non-http page → no warning", !decide("chrome-extension://x/page.html", OTHER_SITE).warn);
 

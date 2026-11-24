@@ -5,10 +5,10 @@
 # Issues: https://github.com/hagezi/dns-blocklists/issues
 # Disclaimer: https://github.com/hagezi/dns-blocklists/blob/main/README.md#disclaimer
 # Expires: 8 hours
-# Last modified: 03 Nov 2026 10:40 UTC
-# Version: 2026.1103.1040.51
+# Last modified: 23 Nov 2026 08:50 UTC
+# Version: 2026.1123.0850.26
 # Syntax: Domains (without subdomains)
-# Number of entries: 1533
+# Number of entries: 1496
 #
 dyn.addr.tools
 changeip.co.uk
@@ -26,10 +26,8 @@ d-n-s.org.uk
 dynamicdns.org.uk
 limit.org.uk
 h4g3z1-dyndns.web.app
-dyndns.za.org
 0000000000000000000000.com
 001www.com
-0rg.us
 0x.no
 100mountain.com
 10dv.com
@@ -55,7 +53,6 @@ dyndns.za.org
 3trust.com
 3utilities.com
 404.mn
-4cloud.click
 4dq.com
 4khdcamera.com
 4mydomain.com
@@ -109,10 +106,8 @@ ath.cx
 atholdinginc.com
 atlantatruckdrivingschool.us
 auraria.org
-australia.ai
 authorizeddns.net
 authorizeddns.org
-authorizeddns.us
 autoipset.com
 avandns.com
 awiki.org
@@ -124,6 +119,7 @@ baden.ru
 bagus.org
 baikabibai.com
 bakli.ru
+barbaforte.org
 barrel-of-knowledge.info
 barrell-of-knowledge.info
 baselinux.net
@@ -134,7 +130,6 @@ better-than.tv
 bgdsupport.com
 bhms.com
 bigbluezoo.com
-bigmoney.biz
 bine.me
 birdriver.org
 biz.st
@@ -146,6 +141,7 @@ blogdns.com
 blogdns.net
 blogdns.org
 blogsite.org
+blogsite.xyz
 blogsyte.com
 bloodforthebloodgod.com
 bloom.us
@@ -154,6 +150,7 @@ boblove.org
 boldlygoingnowhere.org
 bot.nu
 bounceme.net
+bouncers4rent.com
 boxathome.net
 brajkovic.com
 brasilia.me
@@ -172,14 +169,12 @@ cashit.info
 cbopelousas.com
 cbu.net
 cechire.com
-celebsplay.com
 celltrak.mobi
 centserver.com
 cf.gs
 changeip.biz
 changeip.co
 changeip.com
-changeip.me
 changeip.name
 changeip.net
 changeip.org
@@ -216,13 +211,13 @@ cloudwatch.net
 cloudxns.net
 cmirg.com
 cnstefancelmare.ro
-coalnet.ru
 codns.com
 colegiotorrevilano.es
 collegefan.org
 compress.to
 compuinter.com
 computersforpeace.net
+compy.ca
 con-ip.com
 conditsis.com
 contepsa.com
@@ -282,9 +277,7 @@ dhis.org
 dhs.org
 digikabel.hu
 digitalgroupe.com
-dip.jp
 diskstation.eu
-diskstation.me
 diskstation.org
 ditchyourip.com
 dive2.net
@@ -355,12 +348,7 @@ dray-dns.de
 drayddns.com
 dropfiles.net
 drunkensailor.org
-dscloud.me
-dscloud.mobi
 dsmtp.com
-dsmynas.com
-dsmynas.net
-dsmynas.org
 dtdns.com
 dtdns.net
 dtdns.org
@@ -372,7 +360,6 @@ duia.eu
 duia.ro
 duia.us
 duiadns.net
-dumb1.com
 dvr-ddns.com
 dvrcam.info
 dvrdns.org
@@ -441,6 +428,7 @@ dynme.ovh
 dynnamn.ru
 dynns.com
 dyns.be
+dyns.cx
 dyns.net
 dynserv.org
 dynssl.com
@@ -464,7 +452,6 @@ easydns.org
 eating-organic.net
 eatuo.com
 echoparklake.com
-edns.biz
 effers.com
 eiresol.com
 elchemi.com
@@ -506,11 +493,9 @@ ezxdev.org
 f-parts.net
 f3322.net
 f3322.org
+fagdns.com
 fairuse.org
 falcongreen.com
-familyds.com
-familyds.net
-familyds.org
 fantasyleague.cc
 faqserv.com
 farted.net
@@ -618,7 +603,6 @@ gally.jp
 game-host.org
 game-server.cc
 garmanage.com
-garypatel.com
 gastright.com
 geekgalaxy.com
 geobattery.com
@@ -725,7 +709,6 @@ https443.org
 hulichicken.com
 humorvisite.eu
 hunnur.com
-i234.me
 iamallama.com
 ics.tw
 ideasciviles.com
@@ -752,7 +735,6 @@ instanthq.com
 invitee.net
 ionexusa.com
 iot64.de
-iownyour.biz
 iownyour.org
 ip-ddns.com
 ip-dynamic.com
@@ -760,7 +742,6 @@ ip-dynamic.org
 ipnodns.ru
 ipq.co
 iprowave.com
-ipupdater.com
 ipv64.de
 ipv64.net
 is-a-anarchist.com
@@ -882,11 +863,9 @@ k22.su
 kanda.ru
 kaohsiung.tv
 kck-saratov.ru
-keenetic.link
-keenetic.name
-keenetic.pro
 keine-panik.net
 kellserve.com
+kfco.net
 kicks-ass.net
 kicks-ass.org
 klapa.eu
@@ -981,7 +960,6 @@ mlbfan.org
 mmafan.biz
 mnode.net
 moneyhome.biz
-monitorip.com
 monopolepower.com
 moonangel.com
 mooo.com
@@ -1014,7 +992,6 @@ myddns.rocks
 mydissent.net
 mydns.bz
 mydns.jp
-myds.me
 myeffect.net
 myftp.biz
 myftp.info
@@ -1024,7 +1001,6 @@ myhouse.tv
 myip.org
 myiphost.com
 myjino.ru
-mylftv.com
 mylogisoft.com
 mymediapc.net
 mymom.info
@@ -1050,7 +1026,6 @@ mysecuritycamera.com
 mysecuritycamera.net
 mysecuritycamera.org
 myserver.org
-mysynology.net
 myvnc.com
 mywebworld.info
 mywire.org
@@ -1059,7 +1034,6 @@ myxop.com
 myz.info
 n-e-t.name
 n0p.at
-n4t.co
 nard.ca
 nas64.de
 nat-ddns.com
@@ -1081,6 +1055,7 @@ networkoutpost.com
 nflfan.org
 nhlfan.net
 ninth.biz
+nip.io
 no-domain.name
 no-ip.biz
 no-ip.ca
@@ -1107,17 +1082,14 @@ now-dns.com
 now-dns.net
 now-dns.org
 nowddns.com
-ns01.biz
 ns01.info
 ns01.us
 ns02.biz
 ns02.info
-ns02.us
 ns1.name
 ns2.name
 ns3.name
 nsupdate.info
-ntdll.top
 nufszone.com
 nx.tc
 ocry.com
@@ -1177,7 +1149,6 @@ port0.org
 port25.biz
 portfwd.com
 portmap.host
-portrelay.com
 possessed.us
 prettyweak.com
 priamaakcia.sk
@@ -1227,7 +1198,6 @@ root.sx
 root64.de
 roth.ca
 route64.de
-routemehome.com
 roxa.org
 rpz.su
 rr.nu
@@ -1299,7 +1269,6 @@ sexmistrz.pl
 sexxxy.biz
 shacknet.biz
 shacknet.us
-shadir.com
 sharkltd.com
 sheatfish.org
 sheepindonesia.org
@@ -1350,7 +1319,6 @@ squirly.info
 srv64.de
 srvdns.de
 ssitech.bg
-ssl443.org
 sslip.io
 ssmailer.com
 star.is
@@ -1377,7 +1345,6 @@ syno-ds.de
 synology-diskstation.de
 synology-ds.de
 synoserver.com
-syntereo.com
 sysadminetworks.com
 system-ns.com
 systes.net
@@ -1412,14 +1379,12 @@ tinyrealm.com
 tobuy.us
 toh.info
 topdns.com
-topsddns.net
 toshibanetcam.com
 toythieves.com
 tpddns.cn
 traeumtgerade.de
 trailsendlodge.org
 trickip.net
-trickip.org
 trieditmyself.com
 tru.io
 truthvid.com
@@ -1429,6 +1394,7 @@ tunnelbroker.net
 tvlinux.com
 twilightparadox.com
 twodns.de
+twsuser.com
 tzo.com
 ucvradio.cl
 udp64.de
@@ -1478,7 +1444,6 @@ vxe6.net
 wakingmoon.com
 wan64.de
 wanip.ch
-warp9computers.com
 webhop.biz
 webhop.info
 webhop.me
@@ -1507,7 +1472,6 @@ worse-than.tv
 writesthisblog.com
 www1.biz
 wwwhost.biz
-wwwhost.us
 x24hr.com
 x443.pw
 xddns.de
@@ -1515,7 +1479,6 @@ xname.org
 xpresit.net
 xxuz.com
 xxxxx.tw
-xxxy.biz
 xxxy.info
 yao.cl
 ydns.eu

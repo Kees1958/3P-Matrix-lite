@@ -1,7 +1,7 @@
 // ── util/ObfuscationShape.js ────────────────────────────────────────────────────
 // Single source of truth for the "does this string look like obfuscated code"
-// test shared by blockObfuscatedEval/Function/SetTimeout/SetInterval (security/sec-noeval.js, sec-nofunction.js,
-// sec-nosettimeout.js, sec-nosetinterval.js).
+// test behind blockObfuscatedEval — eval, Function, string setTimeout/setInterval (security/sec-no-obfuscated-code.js;
+// four separate scriptlets and protections until 5.1.2).
 //
 // Those four files are MAIN-world content scripts (document_start, run inside the
 // page) and so CANNOT import this module — chrome.scripting injects them as

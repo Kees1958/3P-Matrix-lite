@@ -11,7 +11,7 @@ import { fillDerivedText } from "./derived-text.js";
 import { showError, releaseStatus } from "./status-line.js";
 
 // ── Settings (one place) ─────────────────────────────────────────────────────
-const BUTTON_IDS = Object.freeze(["btnOk", "btnAnyway"]);
+const BUTTON_IDS = Object.freeze(["btnOk", "btnAnyway", "btnAlwaysAllow"]);   // 5.1.3: + Always allow
 const GONE_TEXT = "This blocked download is no longer active — you can close this window.";
 
 let busy = false;
@@ -56,6 +56,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   fillDerivedText(document);
   $("btnOk").addEventListener("click", () => act(M.BLOCKED_DOWNLOAD_ACTION.OK));
   $("btnAnyway").addEventListener("click", () => act(M.BLOCKED_DOWNLOAD_ACTION.DOWNLOAD_ANYWAY));
+  $("btnAlwaysAllow").addEventListener("click", () => act(M.BLOCKED_DOWNLOAD_ACTION.ALWAYS_ALLOW));   // 5.1.3: "Download: host"
   $("btnOk").focus();
   try {
     const res = await chrome.runtime.sendMessage({ type: M.MSG_GET_BLOCKED_DOWNLOAD });

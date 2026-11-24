@@ -14,7 +14,7 @@
 import * as M from "../data/message-types.js";
 import { SEVERITY, ICON_DIR, LOG_PREFIX, WARNING_TARGET_PARAM, WARNING_REASON_PARAM, WARNING_REFERRER_PARAM, LEVEL, LEVEL_INFO, ICON_UI_SIZE } from "../data/constants.js";
 import { EXFIL_CHANNEL_BY_ID } from "../data/exfil-channels.js";
-import { PAGE_SCAM_REASON_BY_ID, RUN_PLACE_BY_OS, UNKNOWN_REFERRER_TEXT, LOOK } from "../data/page-scam-reasons.js";
+import { PAGE_SCAM_REASON_BY_ID, RUN_PLACE_BY_OS, UNKNOWN_REFERRER_TEXT, LOOK, ALLOW_FROM, ALWAYS_LABEL } from "../data/page-scam-reasons.js";
 import { fillDerivedText } from "./derived-text.js";
 import { showError, releaseStatus } from "./status-line.js";
 
@@ -102,7 +102,16 @@ function showSignals(list) {
 
 // 4.7.0 — a page-scam reason may replace the button labels, hide Trust (canTrust: false) and replace the small
 // print (note); everything else (exfiltration, ordinary site warnings) keeps the page's defaults.
+// 5.1.3: the Trust button is "Always allow" (a block) / "Always ignore" (a warning) — it adds one allow-list line of
+// the warning's category (decided by the service worker). Hidden when the line would name the sender and there is none.
+function applyAlwaysButton() {
+  const label = pageScam ? (pageScam.allow && pageScam.allow.label) : (exfilChannel ? ALWAYS_LABEL.ALLOW : ALWAYS_LABEL.IGNORE);
+  if (label) $("btnTrust").textContent = label;
+  if (pageScam && pageScam.allow && pageScam.allow.from === ALLOW_FROM.SENDER && !params.get(WARNING_REFERRER_PARAM)) $("btnTrust").hidden = true;
+}
+
 function applyPageScamLayout() {
+  applyAlwaysButton();
   if (!pageScam) return;
   if (pageScam.back) $("btnBack").textContent = pageScam.back;
   if (pageScam.cont) $("btnContinue").textContent = pageScam.cont;

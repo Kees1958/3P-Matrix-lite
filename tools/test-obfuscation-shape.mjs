@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // ── tools/test-obfuscation-shape.mjs ─────────────────────────────────────────────
 // Functional test for util/ObfuscationShape.js — the single source behind
-// blockObfuscatedEval/Function/SetTimeout/SetInterval (sec-noeval.js, sec-nofunction.js, sec-nosettimeout.js,
-// sec-nosetinterval.js). Each scriptlet inlines a byte-for-byte copy of this logic
+// blockObfuscatedEval (security/sec-no-obfuscated-code.js — eval, Function, setTimeout, setInterval; four scriptlets
+// until 5.1.2). The scriptlet inlines a byte-for-byte copy of this logic
 // (MAIN-world scripts cannot import ES modules); check-shipped-terms.mjs keeps the
 // inlined thresholds in sync, so testing this module directly tests all four.
 //

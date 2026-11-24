@@ -48,8 +48,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { SCRIPT_ID_PREFIX, SCRIPT_ID_SUFFIX, SCRIPT_ID_GROUP_JOIN, BUILTIN_EXEMPT_LEVELS, LEVEL } from "../data/constants.js";
-import { PROTECTIONS, SCOPE } from "../data/protections.js";
-import { isProtectionEnabled, saferRegionsApply } from "./policy.js";
+import { PROTECTIONS, SCOPE, tabOf } from "../data/protections.js";
+import { ALLOW_CATEGORY_OF_TAB } from "../data/allow-categories.js";
+import { isProtectionEnabled, saferRegionsApply, allowSitesOf } from "./policy.js";
 import { hostMatchPattern, tldMatchPattern, isInDomainList } from "../util/domain.js";
 import { BUILTIN_ALL } from "../data/builtin-domains.js";
 import { HIGH_RISK_HOSTNAMES } from "../data/network-data.js";
@@ -69,6 +70,11 @@ function trustedHostsFor(p) {
 // The files of the scope computation: the MAIN-world scripts, or (4.7.0) the isolated ones when there are none.
 function scopeFiles(p) {
   return p.scripts && p.scripts.length ? p.scripts : (p.isolatedScripts || []);
+}
+
+// 5.1.3 — the allow list's sites for p's category (data/allow-categories.js ALLOW_CATEGORY_OF_TAB).
+function categoryAllowed(state, p) {
+  return allowSitesOf(state, ALLOW_CATEGORY_OF_TAB[tabOf(p)]);
 }
 
 function baseRegistration(id, p, matches, excludeMatches) {
@@ -105,7 +111,8 @@ function mainRegistrationsFor(state, p) {
   const locks = state.siteLocksOrder.map((site) => ({ site, level: state.siteLocks[site] }));
   const fixedHosts = p.matchHosts ? [...p.matchHosts] : null;
   function allowedHost(site) { return !fixedHosts || fixedHosts.includes(site); }
-  const extraExcludes = p.extraExcludes ? [...p.extraExcludes] : [];
+  // 5.1.3: the sites on the allow list under this protection's category (its tab's) never get its scripts.
+  const extraExcludes = [...(p.extraExcludes || []), ...categoryAllowed(state, p).map(hostMatchPattern)];
   const id = SCRIPT_ID_PREFIX + p.key;
 
   // Locked sites where this protection runs: level high enough, not exempt by safer regions
@@ -156,7 +163,8 @@ function mainRegistrationsFor(state, p) {
 function highRiskRegistrationsFor(state, p) {
   if (!p.alsoHighRisk || !scopeFiles(p).length || !isProtectionEnabled(state, p.key)) return [];
   const trusted = new Set(state.siteLocksOrder.filter((s) => state.siteLocks[s] === LEVEL.ALLOW_ALL));
-  const hosts = HIGH_RISK_HOSTNAMES.filter((h) => !trusted.has(h));
+  const allowed = new Set(categoryAllowed(state, p));                 // 5.1.3
+  const hosts = HIGH_RISK_HOSTNAMES.filter((h) => !trusted.has(h) && !allowed.has(h));
   if (!hosts.length) return [];
   return [baseRegistration(SCRIPT_ID_PREFIX + p.key + SCRIPT_ID_SUFFIX.HIGH_RISK, p, hosts.map(hostMatchPattern), [])];
 }

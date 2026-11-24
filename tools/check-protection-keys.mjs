@@ -46,8 +46,20 @@ const registryKeys = R.PROTECTIONS.map((p) => p.key);
 for (const k of registryKeys) if (!enumValues.includes(k)) problems.push(`${REGISTRY_FILE}: registry key "${k}" missing from PROTECTION_KEY`);
 for (const k of enumValues) if (!registryKeys.includes(k)) problems.push(`${REGISTRY_FILE}: PROTECTION_KEY value "${k}" has no registry row`);
 if (new Set(registryKeys).size !== registryKeys.length) problems.push(`${REGISTRY_FILE}: duplicate registry key`);
-const nums = R.PROTECTIONS.map((p) => p.num).sort((a, b) => a - b);
-nums.forEach((n, i) => { if (n !== FIRST_NUM + i) problems.push(`${REGISTRY_FILE}: display numbers not ${FIRST_NUM}…${R.PROTECTIONS.length} without gaps (got ${nums.join(",")})`); });
+// 5.1.0: only numbered rows (switchable, on a numbered tab — R.isNumbered) carry `num`; every other row carries none.
+const numbered = R.PROTECTIONS.filter((p) => R.isNumbered(p));
+for (const p of R.PROTECTIONS) if (!R.isNumbered(p) && p.num !== undefined) problems.push(`${REGISTRY_FILE}: "${p.key}" is not numbered (no checkbox or an unnumbered tab) but has num ${p.num}`);
+const nums = numbered.map((p) => p.num).sort((a, b) => a - b);
+nums.forEach((n, i) => { if (n !== FIRST_NUM + i) problems.push(`${REGISTRY_FILE}: display numbers not ${FIRST_NUM}…${numbered.length} without gaps (got ${nums.join(",")})`); });
+// 5.1.0: `requires` one level deep, master never from a higher level; `switchable: false` needs a master.
+for (const p of R.PROTECTIONS) {
+  const m = p.requires ? R.PROTECTION_BY_KEY[p.requires] : null;
+  if (p.requires && !m) problems.push(`${REGISTRY_FILE}: "${p.key}" requires unknown "${p.requires}"`);
+  if (m && (m.requires || m.fromLevel > p.fromLevel)) problems.push(`${REGISTRY_FILE}: "${p.key}" requires "${m.key}", which has a master itself or starts at a higher level`);
+  if (p.switchable === false && !m) problems.push(`${REGISTRY_FILE}: "${p.key}" has no checkbox (switchable: false) but no master (requires)`);
+}
+const grouped = new Set(R.PROTECTION_GROUPS.flatMap(R.protectionsInGroup).map((p) => p.key));
+for (const p of R.PROTECTIONS) if (!grouped.has(p.key)) problems.push(`${REGISTRY_FILE}: "${p.key}" belongs to no PROTECTION_GROUPS entry (never shown)`);
 // 5.0.7: the numbers must also run in DISPLAY order — PROTECTION_GROUPS in their own order, each with its rows
 // in registry order (data/protections.js protectionsInGroup, which core/view-models.js renders). A row filed at the wrong place in the
 // table otherwise ships a level-2 list reading "…, 17, 30" (user report, 5.0.5).
@@ -56,7 +68,7 @@ nums.forEach((n, i) => { if (n !== FIRST_NUM + i) problems.push(`${REGISTRY_FILE
 if (Array.isArray(R.PROTECTIONS_IN_DISPLAY_ORDER)) {
   const shown = R.PROTECTIONS_IN_DISPLAY_ORDER;
   shown.forEach((p, i) => { if (p.num !== FIRST_NUM + i) problems.push(`${REGISTRY_FILE}: "${p.key}" is shown at position ${FIRST_NUM + i} but numbered ${p.num} — numbers must follow group order, then row order`); });
-  if (shown.length !== R.PROTECTIONS.length) problems.push(`${REGISTRY_FILE}: ${R.PROTECTIONS.length - shown.length} protection(s) belong to no PROTECTION_GROUPS entry (never shown)`);
+  if (shown.length !== numbered.length) problems.push(`${REGISTRY_FILE}: ${numbered.length - shown.length} numbered protection(s) missing from the display order`);
 } else didNotRun(`${REGISTRY_FILE} lacks PROTECTIONS_IN_DISPLAY_ORDER`);
 
 const quoted = new RegExp(`(["'\`])(${enumValues.join("|")})\\1`, "g");
@@ -76,5 +88,5 @@ if (problems.length) {
   for (const p of new Set(problems)) console.error("  " + p);
   process.exit(EXIT.FOUND);
 }
-console.log(`check-protection-keys: PASS — ${registryKeys.length} protections, enum complete, numbers ${FIRST_NUM}…${registryKeys.length}, no quoted keys`);
+console.log(`check-protection-keys: PASS — ${registryKeys.length} protections (${numbered.length} numbered ${FIRST_NUM}…${numbered.length}), enum complete, no quoted keys`);
 process.exit(EXIT.OK);

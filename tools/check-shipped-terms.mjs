@@ -13,11 +13,11 @@
 //    point to features that do nothing here. Provenance comments ("ported from uBlock Stripped
 //    Dynamic 10.2.1") are wanted for troubleshooting and are NOT flagged.
 //    Deliberately kept (not matched by any pattern): window.eval.__uBolNoEvalInstalled in
-//    sec-noeval.js — an internal install guard shared with uBD, so eval is wrapped once when both
+//    sec-no-obfuscated-code.js — an internal install guard shared with uBD, so eval is wrapped once when both
 //    extensions run; never shown to the user.
 //
-// 3. OBFUSCATION THRESHOLDS IN SYNC (4.4.3) — security/sec-noeval.js, sec-nofunction.js,
-//    sec-nosettimeout.js and sec-nosetinterval.js each carry their own inlined copy of the
+// 3. OBFUSCATION THRESHOLDS IN SYNC (4.4.3) — security/sec-no-obfuscated-code.js (5.1.2: was four
+//    scriptlets, sec-noeval/-nofunction/-nosettimeout/-nosetinterval.js) carries its own inlined copy of the
 //    OBFUSC_MIN_* thresholds (MAIN-world scripts cannot import util/ObfuscationShape.js, the
 //    single source). This check imports that module and fails if any copy's value drifts from it.
 //
@@ -47,7 +47,7 @@ const SHARED_SCRIPT_CONSTS = Object.freeze(["PASSWORD_SUBMIT_EVENT", "PASSWORD_S
 // Obfuscation-threshold copies (finding 3 above): file name → inline constant name → the
 // util/ObfuscationShape.js OBFUSCATION_CONFIG key it must equal.
 const OBFUSC_SHAPE_FILES = Object.freeze(
-  ["sec-noeval.js", "sec-nofunction.js", "sec-nosettimeout.js", "sec-nosetinterval.js"]
+  ["sec-no-obfuscated-code.js"]                                    // 5.1.2: the four former scriptlets in one
 );
 const OBFUSC_CONST_RE = Object.freeze([
   ["OBFUSC_MIN_B64_LEN", "MIN_B64_LEN"],

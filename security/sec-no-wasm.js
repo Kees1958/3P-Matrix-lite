@@ -10,9 +10,10 @@
  *     own .url, checked directly against location.origin. This is the recommended, fast-path way to load
  *     WASM (`WebAssembly.instantiateStreaming(fetch(url))`), so it covers the common case.
  *   - WebAssembly.instantiate(bytes, imports) / compile(bytes) — the byte-array form carries no origin
- *     info by the time it reaches WebAssembly, so origin is tracked further upstream: fetch()'s
- *     Response.arrayBuffer() and XMLHttpRequest's `response` getter (responseType "arraybuffer") tag the
- *     ArrayBuffer they hand back, IF the request's URL was cross-origin, in CROSS_ORIGIN_BUFFERS (a
+ *     info by the time it reaches WebAssembly, so origin is tracked further upstream: Response.prototype.
+ *     arrayBuffer() and XMLHttpRequest's `response` getter (responseType "arraybuffer") tag the ArrayBuffer
+ *     they hand back, IF the response's own URL (Response.url / XMLHttpRequest.responseURL — the browser's,
+ *     after redirects) is cross-origin, in CROSS_ORIGIN_BUFFERS (a
  *     WeakSet — self-clearing: an untagged buffer is simply garbage-collected like any other, no manual
  *     release needed, so this doubles as the "guard" for that resource). WebAssembly.instantiate/compile
  *     then check the buffer they were given against that set.
@@ -23,8 +24,10 @@
  * reliable origin signal without much heavier instrumentation, so they are left alone rather than guessed
  * at (a wrong guess reintroduces the exact false-positive problem this rewrite fixes).
  *
- * Must run at document_start, before any page script can reach window.fetch / XMLHttpRequest / WebAssembly
- * — see sec-no-webtransport.js's header for the same "not retroactive" note (data/protections.js' 4.7.0
+ * 5.1.3: fetch() and XMLHttpRequest.open are NOT wrapped any more (see the note at Response.prototype.arrayBuffer).
+ *
+ * Must run at document_start, before any page script can reach Response / XMLHttpRequest / WebAssembly
+ * — a one-shot global replacement is "not retroactive" (data/protections.js' 4.7.0
  * alsoHighRisk comment applies here too: the dynamic (mid-session) half of alsoHighRisk cannot reach a
  * SCRIPT-mechanism protection like this one for a page that already started loading).
  *
@@ -38,7 +41,7 @@
     const LOG_PREFIX = '[3PMCF]';
 
     // ── init guard: install exactly once per realm ──────────────────────────────
-    // Resource being guarded: window.fetch, XMLHttpRequest.prototype.response and the WebAssembly
+    // Resource being guarded: Response.prototype.arrayBuffer, XMLHttpRequest.prototype.response and the WebAssembly
     // methods below. A MAIN-world content script can in principle run more than once in the same realm
     // (e.g. a same-document navigation) — re-wrapping an already-wrapped function would stack wrappers
     // and leak the previous native function's closure for the life of the page.
@@ -51,10 +54,15 @@
     const reflectApply = Reflect.apply;
     const logInfo = console.info.bind(console);
     const WA = window.WebAssembly;
-    const _nativeFetch = window.fetch;
-    const _nativeXhrOpen = window.XMLHttpRequest && window.XMLHttpRequest.prototype.open;
+    const _responseProto = window.Response && window.Response.prototype;
+    const _nativeArrayBuffer = _responseProto && _responseProto.arrayBuffer;
+    const _responseUrlDesc = _responseProto && Object.getOwnPropertyDescriptor(_responseProto, 'url');
+    const _responseUrlGet = _responseUrlDesc && _responseUrlDesc.get;
     const _responseDesc = window.XMLHttpRequest &&
         Object.getOwnPropertyDescriptor(window.XMLHttpRequest.prototype, 'response');
+    const _responseUrlXhrDesc = window.XMLHttpRequest &&
+        Object.getOwnPropertyDescriptor(window.XMLHttpRequest.prototype, 'responseURL');
+    const _xhrResponseUrlGet = _responseUrlXhrDesc && _responseUrlXhrDesc.get;
     const _nativeInstantiate = WA.instantiate;
     const _nativeCompile = WA.compile;
     const _nativeInstantiateStreaming = WA.instantiateStreaming;
@@ -89,49 +97,39 @@
         return Promise.reject(new TypeError('WebAssembly blocked: third-party module'));
     }
 
-    // ── fetch(): tag the ArrayBuffer behind a cross-origin response's .arrayBuffer() ─────────────────
-    // 5.0.7 — TRANSPARENT: the page gets the browser's OWN promise back, never one built with .then(). Until 5.0.6
-    // the wrapper returned its own .then() chain, so a fetch failure the page left unhandled (on a level 4–5 page
-    // often a request 3P Matrix itself blocked) was reported as an error OF THIS EXTENSION on the browser's
-    // extension error page. Now the tagging runs on a side branch: it is registered on the native promise BEFORE
-    // the promise is returned, so it runs before any reaction the page adds (reactions run in registration
-    // order) — the page's own .then/await already sees the tagging arrayBuffer(). The side branch handles a
-    // rejection with a noop so it never creates an extension-owned unhandled rejection; a page that handles the
-    // failure still gets the very same error on the promise it holds. Accepted side effect: because the side
-    // branch counts as a handler, a failure the page IGNORES raises no "unhandled rejection" any more (not under
-    // this extension, not in the page's console; Chrome still logs the failed request itself). The alternative —
-    // a side branch without a rejection handler — is exactly the bug fixed here. Guarded by tools/test-wasm-wrappers.mjs.
+    // ── Response.prototype.arrayBuffer(): tag the ArrayBuffer of a cross-origin response ───────────────
+    // 5.1.3 — fetch() itself is no longer wrapped. Until 5.1.2 it was, and although the wrapper handed back the
+    // browser's own promise (5.0.7), a fetch that failed was still listed under THIS extension on the browser's
+    // extension error page ("Uncaught (in promise) TypeError: Failed to fetch … sec-no-wasm.js"): the error is
+    // created inside the native fetch, and the browser files it under the script of the JavaScript frame that called
+    // it — our wrapper. Any wrapper around fetch has that frame, so the only fix is not to wrap it. The URL is not
+    // needed from fetch anyway: the response carries its own (Response.url — the browser's, after redirects; empty for
+    // a page-made `new Response(bytes)`, which counts as same-origin). The tagging runs on a side branch of the
+    // browser's own arrayBuffer() promise, registered before it is returned, so the page's own .then/await sees the
+    // tagged buffer; a rejection there is handled with a noop (never an extension-owned unhandled rejection).
+    // Remaining frame of ours: a failing BODY read (rare — the response already arrived). Guarded by
+    // tools/test-wasm-wrappers.mjs.
     function noop() {}
-    function wrapArrayBuffer(response, url) {
-        if ( !response || typeof response.arrayBuffer !== 'function' ) { return; }
-        const _nativeArrayBuffer = response.arrayBuffer.bind(response);
-        response.arrayBuffer = function() {
-            const pending = _nativeArrayBuffer();
-            pending.then((buf) => { tagIfCrossOrigin(buf, response.url || url); }, noop);
-            return pending;
-        };
+    function urlOf(obj, getter) {
+        try { return (getter && reflectApply(getter, obj, [])) || location.href; } catch { return location.href; }
     }
-    if ( typeof _nativeFetch === 'function' ) {
-        window.fetch = function(...args) {
-            const url = (args[0] && args[0].url) || args[0] || location.href;
-            const pending = reflectApply(_nativeFetch, this, args);
-            pending.then((response) => { wrapArrayBuffer(response, url); }, noop);
-            return pending;
+    if ( typeof _nativeArrayBuffer === 'function' ) {
+        _responseProto.arrayBuffer = function arrayBuffer() {
+            const pending = reflectApply(_nativeArrayBuffer, this, arguments);
+            const url = urlOf(this, _responseUrlGet);
+            pending.then((buf) => { tagIfCrossOrigin(buf, url); }, noop);
+            return pending;                                            // the browser's own promise
         };
     }
 
     // ── XMLHttpRequest: tag the ArrayBuffer behind a cross-origin response's `.response` getter ──────
-    if ( typeof _nativeXhrOpen === 'function' && _responseDesc && typeof _responseDesc.get === 'function' ) {
-        const xhrUrls = new WeakMap();
-        window.XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-            try { xhrUrls.set(this, new URL(url, location.href).href); } catch { /* keep default (same-origin) */ }
-            return reflectApply(_nativeXhrOpen, this, [ method, url, ...rest ]);
-        };
+    // 5.1.3: the URL comes from the native responseURL (after redirects) — XMLHttpRequest.open is no longer wrapped.
+    if ( _responseDesc && typeof _responseDesc.get === 'function' ) {
         const _nativeResponseGetter = _responseDesc.get;
         Object.defineProperty(window.XMLHttpRequest.prototype, 'response', Object.assign({}, _responseDesc, {
             get: function() {
                 const value = reflectApply(_nativeResponseGetter, this, []);
-                if ( this.responseType === 'arraybuffer' ) { tagIfCrossOrigin(value, xhrUrls.get(this) || location.href); }
+                if ( this.responseType === 'arraybuffer' ) { tagIfCrossOrigin(value, urlOf(this, _xhrResponseUrlGet)); }
                 return value;
             }
         }));

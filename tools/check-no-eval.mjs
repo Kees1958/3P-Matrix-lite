@@ -17,7 +17,7 @@
 // scriptlets intercept eval/Function/setTimeout/setInterval ON THIRD-PARTY PAGES the user visits —
 // a security FEATURE this project ships. This check is about OUR OWN first-party code never doing
 // the thing those scriptlets exist to catch elsewhere. The scriptlets reach the real native function
-// through Reflect.apply (indirection, not a literal call-site), by design (sec-noeval.js's own
+// through Reflect.apply (indirection, not a literal call-site), by design (sec-no-obfuscated-code.js's own
 // header explains why) — so they do not, and should not, need an allowlist entry here; if a future
 // scriptlet ever did need one, it goes in ALLOWLIST below with a stated reason (C25).
 //

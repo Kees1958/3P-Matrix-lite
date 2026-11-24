@@ -5,8 +5,12 @@
 //
 // Model (DownloadSentinel V2.0+): an information/warning tool, never a blocker — the download always
 // completes; nothing is paused, resumed or cancelled.
-//   onCreated  → monitored file type? start host reputation (DNS threat-intel + RDAP + lists + URL /
-//                filename heuristics) and, with a key, the VirusTotal URL check; record startedAt
+//   onCreated  → 5.1.3 (issue 6): FIRST, for every download the warning or the block could apply to, asks the page
+//                that started it whether there was a click (core/download-gesture.js) — the page's click flag is only
+//                fresh now; the answer is kept in _clicks until the download is released, so a LATE ENTRY (file name
+//                only known at completion) gets the signal too. Then: monitored file type? start host reputation
+//                (DNS threat-intel + RDAP + lists + URL / filename heuristics) and, with a key, the VirusTotal URL
+//                check; record startedAt
 //   onChanged  → download complete: wait what is left of DS_APP.VT_WAIT_BUDGET_MS, re-check with the
 //                confirmed filename/size, combine the scores, then stay silent ("Silent when probably
 //                safe") or open the warning window (ui/download-warning.html)
@@ -26,7 +30,7 @@
 //                                     download; warnRiskyDownloads then always checks it)
 //
 // Also exported, but NOT part of the above (background.js never calls it) — test-only access to a
-// pure function, per C42: applyActiveThreatFloor(result, urls) — urls = [final address, original link] (4.5.9). See tools/test-download-active-threat.mjs.
+// pure function, per C42: withNoClickSignal(result) (5.1.3) and applyActiveThreatFloor(result, urls) — urls = [final address, original link] (4.5.9). See tools/test-download-active-threat.mjs.
 //
 // blockRiskyDownloads "Block risky downloads" (4.3.2, off by default): a monitored file type (the same
 // classifyDownload() gate as warnRiskyDownloads) from a page outside safer regions (level 3) or from any page
@@ -60,12 +64,17 @@
 //                                        where an entry enters, cleared by onAlarm() once they are all empty
 //   _checked  Set<downloadId>          — onChanged fires several times per download: dedup guard
 //   _windows  Map<windowId, downloadId> — open warning windows; released when closed
+//   _clicks   Map<downloadId, { askedAt, answer: Promise<true|false|null> }> — 5.1.3 (issue 6): the page's click flag
+//                                        asked at the download's start; released with the download (releaseClick in
+//                                        every release path, the "not ours" completion, erase), swept like _pending
+//                                        (max age DS_APP.ENTRY_MAX_AGE_MS) and capped at DOWNLOAD_GESTURE.ENTRIES_MAX
 // — in chrome.storage.session (survives the idle stop):
 //   _blocked  session map downloadId → blockRiskyDownloads lane entry (above)
 // Every release path goes through release(): record, dedup entry, lane entry, window link and in-flight
 // VirusTotal request (BrowserProtection.abandonPendingRequests) together — no partial cleanup.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { UrlUtils } from "../lib/downloadsentinel/util/UrlUtils.js";
 import { LOG_PREFIX, DOWNLOAD_WARNING_PAGE, DOWNLOAD_ID_PARAM, DOWNLOAD_WARNING_TITLE_DEFAULT,
          DOWNLOAD_BLOCKED_PAGE, DOWNLOAD_BLOCKED_WINDOW, DOWNLOAD_BLOCK_PHASE as PHASE, SESSION_KEY,
          VT_KEY_PROMPT_PAGE, VT_KEY_PROMPT_WINDOW, CHROME_DOWNLOAD_COMPLETE, CHROME_DOWNLOAD_INTERRUPTED } from "../data/constants.js";
@@ -78,7 +87,8 @@ import { WarnPolicy } from "../lib/downloadsentinel/protection/WarnPolicy.js";  
 import { dsSettingsView, vtKeyIsSet, isDownloadCheckActive, isTrustedDownload, shouldOfferVtKey,
          downloadBlockReason, downloadSiteHost, isPageMadeDownload } from "./download-settings.js";
 import { BLOCKED_DOWNLOAD_ACTION, MSG_DOWNLOAD_VT_UPDATE } from "../data/message-types.js";
-import { SCORE } from "../data/constants.js";
+import { SCORE, DOWNLOAD_NO_CLICK_LABEL, DOWNLOAD_GESTURE } from "../data/constants.js";
+import { startedWithoutClick } from "./download-gesture.js";   // 5.1.3
 import { parseHttpUrl } from "../util/domain.js";
 import { matchActiveThreatDelivery, activeThreatLabel, ACTIVE_THREAT_SIGNAL_SOURCE, ACTIVE_THREAT_NOTE_SIGNAL_SOURCE, PLATFORM_SIGNAL_SOURCE } from "../data/active-threat-hosts.js";   // 4.5.1 — see applyActiveThreatFloor() below
 import { createSessionMap } from "./session-map.js";
@@ -93,6 +103,7 @@ const DOWNLOAD_EXT_DESKTOP = "desktop";          // DS-H001 Linux launcher (File
 const _pending = new Map();
 const _checked = new Set();
 const _windows = new Map();
+const _clicks = new Map();    // 5.1.3 (issue 6): downloadId → { askedAt, answer } (see the header)
 const _blocked = createSessionMap(SESSION_KEY.BLOCKED_DOWNLOADS);
 let _initialized = false;
 let _sweepArmed = false;      // in memory: false after a SW restart, so the next entry (re)creates the alarm
@@ -100,7 +111,7 @@ let _sweepArmed = false;      // in memory: false after a SW restart, so the nex
 // ── Sweep alarm lifecycle (4.5.4, perf P1) ───────────────────────────────────
 // The maps the sweep cleans; the alarm is only needed while one of them holds an entry.
 function holdsSweptEntries() {
-  return _pending.size > 0 || _checked.size > 0 || _blocked.map.size > 0;
+  return _pending.size > 0 || _checked.size > 0 || _blocked.map.size > 0 || _clicks.size > 0;
 }
 
 // Called where an entry enters a swept map. create() with the same name replaces an alarm left over from
@@ -130,6 +141,7 @@ function release(downloadId, reason) {
     BrowserProtection.abandonPendingRequests(downloadId, reason);
   }
   _checked.delete(downloadId);
+  releaseClick(downloadId);
   dropLaneEntry(downloadId);
   for (const [windowId, id] of _windows) if (id === downloadId) _windows.delete(windowId);
 }
@@ -139,6 +151,7 @@ function release(downloadId, reason) {
 // sweep / onErased clean it as before. Any VirusTotal request in flight is aborted.
 function releaseWithoutWarning(downloadId, reason) {
   _pending.delete(downloadId);
+  releaseClick(downloadId);
   BrowserProtection.abandonPendingRequests(downloadId, reason);
 }
 
@@ -148,6 +161,23 @@ function releaseAll(downloadId, reason) {
   BrowserProtection.abandonPendingRequests(downloadId, reason);
   release(downloadId, reason);
 }
+
+// ── 5.1.3 (issue 6): the page's click flag, asked at EVERY download start ───────
+// Asked once per download, at onCreated (the page's activation is only fresh then), when the warning or the block
+// could apply to it; kept until the download is released. A record (onCreated or late entry) reads it with clickFlag.
+function askClick(item, state) {
+  if (!item || !item.referrer || _clicks.has(item.id)) return;
+  if (!isDownloadCheckActive(state, item) && !downloadBlockReason(state, item)) return;   // nothing would use it
+  _clicks.set(item.id, { askedAt: Date.now(), answer: startedWithoutClick(item.referrer) });
+  while (_clicks.size > DOWNLOAD_GESTURE.ENTRIES_MAX) _clicks.delete(_clicks.keys().next().value);   // guard: oldest first
+  armSweep();
+}
+// true = started without a click, false = clicked, null = unknown (not asked, no referrer, no answer in time).
+function clickFlag(downloadId) {
+  const entry = _clicks.get(downloadId);
+  return entry ? entry.answer : Promise.resolve(null);
+}
+function releaseClick(downloadId) { _clicks.delete(downloadId); }
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────
 export function init() {
@@ -165,6 +195,7 @@ export async function onAlarm(alarm) {
   const cutoff = Date.now() - DS_APP.ENTRY_MAX_AGE_MS;
   for (const [id, r] of _pending) if ((r.startedAt || 0) < cutoff) releaseAll(id, "stale entry swept");
   for (const id of _checked) if (!_pending.has(id)) _checked.delete(id);   // orphaned by a SW restart
+  for (const [id, c] of _clicks) if (c.askedAt < cutoff && !_pending.has(id)) _clicks.delete(id);   // 5.1.3: never completed
   for (const [id, b] of [..._blocked.map]) {
     if (b.blockedAt >= cutoff) continue;
     if (b.phase === PHASE.HELD) await discardHeld(id, "stale notice swept");   // never decided: the safe choice
@@ -235,6 +266,24 @@ function firstActiveThreatHit(urls) {
 // A row that counts as an alarming signal: negative and not `explained` (shown, never counted — DeliveryContext).
 function isCountedNegative(e) { return !!e && e.score < 0 && !e.explained; }
 
+// 5.1.3 — "Download started without a click on the page" (core/download-gesture.js): an addend to the host score, in both
+// host verdicts; classification and headline rebuilt like the floor below. A hard-rule verdict keeps its own.
+export const NO_CLICK_SIGNAL_SOURCE = "DownloadNoClick";
+export function withNoClickSignal(result) {
+  if (!result) return result;
+  if (result.heuristicsOnly) {
+    const { heuristicsOnly, ...vtKnown } = result;
+    return { ...withNoClickSignal(vtKnown), heuristicsOnly: withNoClickSignal(heuristicsOnly) };
+  }
+  const entries = [...(Array.isArray(result.breakdown) ? result.breakdown : []),
+                   { score: SCORE.DOWNLOAD_NO_CLICK, label: DOWNLOAD_NO_CLICK_LABEL, source: NO_CLICK_SIGNAL_SOURCE }];
+  const score = Math.max(SCORE.FLOOR, (result.score ?? 0) + SCORE.DOWNLOAD_NO_CLICK);
+  if (result.hardRuleApplied) return { ...result, breakdown: entries };
+  const classification = ScoringEngineV2.classifyByScore(score);
+  const signalCount = entries.filter(isCountedNegative).length;
+  return { ...result, score, classification, label: ScoringEngineV2.heuristicLabel(signalCount, classification), breakdown: entries };
+}
+
 export function applyActiveThreatFloor(result, urls) {
   const found = firstActiveThreatHit(urls);
   if (!found) return result;
@@ -302,6 +351,7 @@ export async function onCreated(item, state) {
   // Guard: a tiny download can complete before this handler's state load resolved — onChanged then
   // already built a late-entry record (or blocked it); a second pass would double checks and windows.
   if (_checked.has(item.id) || _pending.has(item.id) || _blocked.map.has(item.id)) return;
+  askClick(item, state);                                           // 5.1.3 (issue 6): first — every download start
   if (blockIfNeeded(item, state)) return;                          // blockRiskyDownloads
   startCheck(item, state);
 }
@@ -325,13 +375,22 @@ function startCheck(item, state) {
     sizeKnown: (item.totalBytes || 0) > 0,                          // Chrome often reports 0 at creation
     ...emptyVt(),
     hostDone: false, hostResult: null,
+    noClick: null,                                                  // 5.1.3: true = started without a click (unknown: null)
     ...settingsSnapshot(state)
   };
   _pending.set(item.id, record);
   armSweep();
 
-  hostReputation(record, c.ext, record.totalBytes, null, record.filename, record.sizeKnown, c.isLinuxLauncher)
-    .then((hostResult) => { const r = _pending.get(item.id); if (r) { r.hostDone = true; r.hostResult = hostResult; } })
+  // 5.1.3: the click flag asked at the download's start (askClick; waits ≤ DOWNLOAD_GESTURE.TIMEOUT_MS), with the host check.
+  Promise.all([hostReputation(record, c.ext, record.totalBytes, null, record.filename, record.sizeKnown, c.isLinuxLauncher),
+               clickFlag(item.id)])
+    .then(([hostResult, noClick]) => {
+      const r = _pending.get(item.id);
+      if (!r) return;
+      r.noClick = noClick;
+      r.hostDone = true;
+      r.hostResult = noClick === true ? withNoClickSignal(hostResult) : hostResult;
+    })
     .catch((e) => console.warn(LOG_PREFIX, "download host reputation:", e));
 
   const s = dsSettingsView(state);
@@ -407,11 +466,14 @@ async function lateEntryRecord(item, state) {
     filename, mime: item.mime || "", totalBytes: item.fileSize || 0, referrer: item.referrer || null,
     sizeKnown: true,                                               // complete: fileSize is final
     ...emptyVt(), vtDone: true, vtUnknown: true,                   // no budget left for VirusTotal
-    hostDone: false, hostResult: null,
+    hostDone: false, hostResult: null, noClick: null,
     ...settingsSnapshot(state),
     state: CHROME_DOWNLOAD_COMPLETE, lateEntry: true, obfuscation
   };
-  record.hostResult = await hostReputation(record, c.ext, record.totalBytes, obfuscation, filename, true, c.isLinuxLauncher);
+  const [hostResult, noClick] = await Promise.all([
+    hostReputation(record, c.ext, record.totalBytes, obfuscation, filename, true, c.isLinuxLauncher), clickFlag(downloadId)]);
+  record.noClick = noClick;                                        // 5.1.3 (issue 6): asked at the start (askClick)
+  record.hostResult = noClick === true ? withNoClickSignal(hostResult) : hostResult;
   record.hostDone = true;
   _pending.set(downloadId, record);
   armSweep();
@@ -432,7 +494,7 @@ export async function onChanged(delta, state) {
     if (item && !isForced(item.id) && blockIfNeeded(item, state)) return;   // completed before onCreated ran
     record = await lateEntryRecord(item, state);
   }
-  if (!record) { _checked.delete(delta.id); return; }             // not ours: release the guard entry
+  if (!record) { _checked.delete(delta.id); releaseClick(delta.id); return; }   // not ours: release the guard entries
 
   const waitLeft = Math.max(0, DS_APP.VT_WAIT_BUDGET_MS - (Date.now() - record.startedAt));
   if (waitLeft > 0) await new Promise((r) => setTimeout(r, waitLeft));
@@ -463,8 +525,9 @@ export async function onChanged(delta, state) {
     : FilenameAnalysis.getObfuscationSignal(record.ext, confirmedExt);
   const sizeNewlyKnown = !record.lateEntry && !record.sizeKnown && confirmedTotalBytes > 0;
   if ((obfuscation || sizeNewlyKnown || shapeChanged) && record.hostDone) {
-    record.hostResult = await hostReputation(record, confirmedExt, confirmedTotalBytes, obfuscation,
-                                             confirmedFilename, true, confirmedExt === DOWNLOAD_EXT_DESKTOP);
+    const recheck = await hostReputation(record, confirmedExt, confirmedTotalBytes, obfuscation,
+                                         confirmedFilename, true, confirmedExt === DOWNLOAD_EXT_DESKTOP);
+    record.hostResult = record.noClick === true ? withNoClickSignal(recheck) : recheck;   // 5.1.3: keep the signal
     record.totalBytes = confirmedTotalBytes;
     record.sizeKnown = true;
   }
@@ -598,6 +661,14 @@ export async function blockedModel(downloadId) {
   await _blocked.ready();
   const b = _blocked.map.get(downloadId);
   return b && b.phase === PHASE.HELD ? JSON.parse(JSON.stringify(b)) : null;
+}
+
+// 5.1.3 — the host an "Always allow" / "Always ignore" puts on the allow list ("Download: host"): the file's own web
+// host, else the page it came from (a page-made blob:/data: file). From the record the page belongs to (C28), or "".
+export function allowHostFor(downloadId) {
+  const r = _pending.get(downloadId) || _blocked.map.get(downloadId);
+  if (!r) return "";
+  return (r.url && UrlUtils.getHostname(r.url)) || r.site || "";
 }
 
 // "Download anyway": the SAME download continues (nothing is fetched again) and warnRiskyDownloads checks it.
