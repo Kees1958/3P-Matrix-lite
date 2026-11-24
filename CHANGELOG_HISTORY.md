@@ -12,6 +12,33 @@ analysis documents in this folder.
 
 ---
 
+## 5.1.5
+Compare at 5.1.4. Changed zips: extension, tools, docs. (5.1.4 was zipped and merged to GitHub main.)
+
+- **Password-form guard (user report, Ziggo GO, "Form submission canceled because the form is not connected" at
+  security/password-form-guard.js:70):** every password form was held (preventDefault + stopImmediatePropagation)
+  until the service worker answered, then re-sent with requestSubmit — a single-page app that re-rendered meanwhile
+  had removed the form. Now a form whose destination host = the page's host is never held (sameHost, in the guard and
+  in security/sec-form-submit-hook.js for form.submit()); core/password-form.js could not warn there anyway. A held
+  form that is no longer connected is not re-sent. e2e-page-protections + an SPA sign-in case (passes on 5.1.3 code too:
+  the original race needs a slow, sleeping service worker).
+- **Support-scam signs → warning page (owner, 2026-11-24):** security/scam-guard-page.js reports the first sign
+  (DIALOG_SPAM_MIN dialogs, keyboard lock, fullscreen re-entry) as LOCKER_SIGN_EVENT; scam-guard-bridge.js sends
+  MSG_PAGE_SCAM_BLOCKED kind browserLocker once (data/page-scam-reasons.js BROWSER_LOCKER, leave NEW_TAB). "Leave
+  site?" is blocked only after a sign (BeforeUnloadEvent.prototype.preventDefault, returnValue, onbeforeunload) —
+  a page's prompt blocks chrome.tabs.update/remove, so it must go first. Typing detector removed.
+- **Mac-only Script Editor check:** security/scam-guard-mac.js (ENABLE_SCAM_PROTECTION.macScripts); script-builder
+  takes { os }, apply-manager caches chrome.runtime.getPlatformInfo().os.
+- **Popup per-tab lines:** core/policy.js protectionCounts; Download = tab protections + DNS slots on + heuristics +
+  VirusTotal with a key (DOWNLOAD_CHECK_COUNT, max 6). test-allow-list section P.
+- **XSS texts (owner):** tgAddressScript label "Cross-site scripting (XSS)" + plain description; warnXssLinks label
+  "Warn about links with hidden code (XSS)", description, and the xssLink warning intro/signal (title kept). XSS stays
+  under Scam (owner, after discussion).
+
+**tools 5.1.5:** e2e-page-protections — support-scam warning page, Leave-site only after a sign, SPA sign-in form;
+test-allow-list section P (download count, mac-only script); check-shipped-terms + LOCKER_SIGN_EVENT, DIALOG_SPAM_MIN,
+CLICKFIX_BLOCKED_EVENT.
+
 ## 5.1.4
 Compare at 5.1.3. Changed zips: extension, tools, docs. (5.1.3 was zipped and merged to GitHub main, not uploaded to
 the Chrome Web Store; owner asked for a bump.)

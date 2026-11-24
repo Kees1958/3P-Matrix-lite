@@ -8,7 +8,13 @@
  * the form is sent at once. Warning → an in-page dialog: "Go back" leaves the site (core/leave-site.js, no history
  * kept), "Continue" sends the form. Forms without a password field are never touched.
  *
- * Cost: nothing until a form is submitted; then one selector query; for a password form one message round-trip.
+ * 5.1.5 (user report, Ziggo GO: "Form submission canceled because the form is not connected" under this script):
+ * a password form that sends to the page's OWN host is never held — the check could not warn there anyway, and
+ * holding a single-page app's sign-in (which re-renders and removes its form meanwhile) broke the re-send. Only a
+ * form whose destination is another host is held and checked. A held form the page removed meanwhile is not sent
+ * again (there is nothing left to send; requestSubmit on it only logged that error).
+ * Cost: nothing until a form is submitted; then one selector query; for a password form to another host one message
+ * round-trip.
  * Fail-open guard: if the service worker cannot answer (extension reloaded, error), the form is sent — a login
  * must never be broken by the check itself.
  * Lifecycle: the dialog host is created on demand, removed (with its listeners) on every outcome; one dialog at
@@ -52,6 +58,11 @@
     const approved = new WeakSet();          // forms whose next submit is the approved re-send
     let openDialog = null;                   // guard: one dialog at a time
 
+    // 5.1.5: the destination is the page's own host (relative or empty action included) — nothing to check.
+    function sameHost(url) {
+        try { return new URL(url, location.href).host === location.host; } catch { return false; }
+    }
+
     function hasPassword(form) {
         try { return !!form.querySelector(PASSWORD_SELECTOR); } catch { return false; }
     }
@@ -65,6 +76,7 @@
     // Sends the form for real: a submitter-driven submit goes through requestSubmit (validation, page handlers);
     // a form.submit() hand-over uses this world's own (unhooked) submit, exactly what the page asked for.
     function send(form, submitter, viaSubmitCall) {
+        if (!form.isConnected) return;                               // 5.1.5: the page removed it meanwhile — nothing to send
         if (viaSubmitCall) { form.submit(); return; }
         approved.add(form);
         try { form.requestSubmit(submitter && submitter.form === form ? submitter : undefined); }
@@ -131,6 +143,7 @@
         if (!(form instanceof HTMLFormElement)) return;
         if (approved.has(form)) { approved.delete(form); return; }   // the approved re-send: let it go
         if (!hasPassword(form)) return;
+        if (sameHost(destinationOf(form, e.submitter))) return;      // 5.1.5: own host — never held
         e.preventDefault();
         e.stopImmediatePropagation();                                // page handlers run on the approved re-send
         check(form, e.submitter, false);

@@ -51,7 +51,8 @@ export const PAGE_SCAM_KIND = Object.freeze({
   PAYMENT_SKIMMER: "paymentSkimmer",   // 5.0.2
   FAKE_SIGN_IN_WINDOW: "fakeSignInWindow",  // 5.0.6
   XSS_LINK:        "xssLink",           // 5.1.2
-  SHARED_CODE:     "sharedCode"         // 5.1.3 — blockSharedCodes (never-share codes)
+  SHARED_CODE:     "sharedCode",        // 5.1.3 — blockSharedCodes (never-share codes)
+  BROWSER_LOCKER:  "browserLocker"      // 5.1.5 — blockDialogSpam: a support-scam sign (dialog loop, keyboard lock, fullscreen)
 });
 
 // Where a pasted command would run, per chrome.runtime.getPlatformInfo().os (user decision 2026-11-06: Linux
@@ -65,6 +66,13 @@ export const RUN_PLACE_BY_OS = Object.freeze({
 });
 
 export const PAGE_SCAM_REASONS = Object.freeze([
+  // 5.1.5 (owner, 2026-11-24): a fake "your computer is infected" page showed a lock-up trick. Red; "Go back" goes
+  // straight to a new tab (the scam page is the one to get away from; its history is often filled with itself).
+  { id: PAGE_SCAM_KIND.BROWSER_LOCKER, look: LOOK.PHISHING, leave: LEAVE.NEW_TAB, scoreSite: true, canTrust: true, allow: { category: ALLOW_CATEGORY.SCAM, from: ALLOW_FROM.PAGE, label: ALWAYS_LABEL.ALLOW },
+    title: "This page tried to lock your browser",
+    intro: "Fake \u201cyour computer is infected\u201d pages trap you with endless pop-ups, full screen or a locked keyboard, then ask you to call a number or install something. Your computer is fine. Do not call, do not install anything — close this page.",
+    signal: "This page tried to trap the browser — typical of a tech-support scam",
+    back: null, cont: null, note: null },
   { id: PAGE_SCAM_KIND.CLICK_FIX, look: LOOK.PHISHING, leave: LEAVE.SITE, scoreSite: true, canTrust: true, allow: { category: ALLOW_CATEGORY.SCAM, from: ALLOW_FROM.PAGE, label: ALWAYS_LABEL.ALLOW },
     title: "This page tried to make you run a command on your computer",
     intro: "No real CAPTCHA, update or error message ever asks you to paste something into {place}. The command was not copied. Close this page.",
@@ -93,8 +101,8 @@ export const PAGE_SCAM_REASONS = Object.freeze([
     back: null, cont: null, note: null },
   { id: PAGE_SCAM_KIND.XSS_LINK, look: LOOK.ATTENTION, leave: LEAVE.NEW_TAB, scoreSite: false, canTrust: true, allow: { category: ALLOW_CATEGORY.SCAM, from: ALLOW_FROM.SENDER, label: ALWAYS_LABEL.IGNORE },
     title: "This link carries script code",
-    intro: "{referrer} sent you to this page with script code hidden in the link. That is how cross-site scripting (XSS) attacks work: if the site copies the code into its page, it runs as you — with your sign-in on this site. Only continue if you trust where the link came from.",
-    signal: "Script code in the address of a link opened from another website",
+    intro: "{referrer} sent you to this page with code hidden in the link. This is called cross-site scripting (XSS): if this site runs that code, it acts as you — with your sign-in. Only continue if you trust where the link came from.",
+    signal: "Hidden code in a link from another website",
     back: "Leave", cont: "Continue anyway",
     note: "“Continue anyway” opens the page for this tab only. Links within the same site never show this warning." },
   { id: PAGE_SCAM_KIND.SHARED_CODE, look: LOOK.ATTENTION, leave: LEAVE.NEW_TAB, scoreSite: false, canTrust: true, allow: { category: ALLOW_CATEGORY.SCAM, from: ALLOW_FROM.PAGE, label: ALWAYS_LABEL.ALLOW },

@@ -1,5 +1,5 @@
 // ── core/xss-link-guard.js ────────────────────────────────────────────────────
-// 5.1.2 — warnXssLinks "Warn when another site sends you a link with script code in it" (reflected XSS).
+// 5.1.2 — warnXssLinks "Warn about links with hidden code (XSS)" (reflected XSS).
 // A reflected cross-site-scripting attack is a link, on the attacker's site or in their message, to a page of a site
 // the user is signed in to, with script code in the address; the vulnerable site copies it into its page, where it
 // runs as the user. Chrome dropped its own XSS filter in 2019. NoScript's InjectionChecker is the prior art; this is

@@ -6,7 +6,8 @@
  * (security/password-form-guard.js) would never see it. This hook catches form.submit() on a form WITH a password
  * field and hands it to the guard as a PASSWORD_SUBMIT_EVENT on the form instead of submitting; the guard checks
  * the destination and submits itself (its own, unhooked form.submit) when that is fine or the user says Continue.
- * Forms without a password field submit untouched. Cost: one selector query per submit() call.
+ * Forms without a password field submit untouched. 5.1.5: so do password forms whose action is the page's own host
+ * (nothing to check there — see security/password-form-guard.js). Cost: one selector query per submit() call.
  *
  * Captured builtins (C35); Proxy handler with `__proto__: null`. World: MAIN, all frames, document_start.
  */
@@ -26,11 +27,19 @@
     const formQuery = Element.prototype.querySelector;
     const dispatch = EventTarget.prototype.dispatchEvent;
     const CustomEventCtor = CustomEvent;
+    const formActionGet = Reflect.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'action').get;   // 5.1.5
+    const URLCtor = URL;
+    const urlHostGet = Reflect.getOwnPropertyDescriptor(URL.prototype, 'host').get;
+    const locationObj = location;                       // unforgeable: a page cannot redefine its properties
+    function sameHost(form) {
+        try { return apply(urlHostGet, new URLCtor(apply(formActionGet, form, []), locationObj.href), []) === locationObj.host; }
+        catch { return false; }
+    }
 
     HTMLFormElement.prototype.submit = new Proxy(HTMLFormElement.prototype.submit, { __proto__: null, apply: function(target, self, args) {
         let hasPassword = false;
         try { hasPassword = !!apply(formQuery, self, [PASSWORD_SELECTOR]); } catch { /* not a form element */ }
-        if (!hasPassword) return apply(target, self, args);
+        if (!hasPassword || sameHost(self)) return apply(target, self, args);     // 5.1.5: own host — untouched
         logInfo(LOG_PREFIX + ' password form submit() handed to the password-form check');
         apply(dispatch, self, [new CustomEventCtor(PASSWORD_SUBMIT_EVENT)]);
         return undefined;

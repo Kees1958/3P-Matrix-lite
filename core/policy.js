@@ -32,14 +32,20 @@
 //                                         (data/allow-categories.js; "All" = locked at level 1 — handled by the levels)
 //   allowSitesOf(state, category)       — 5.1.3: that category's sites (registered domains), for exclusions
 //                                         — for a mechanism that decides per request (DOWNLOAD today)
-//   protectionCounts(state, level)      — { active, total, outside: { active, total } } for the popup
+//   protectionCounts(state, level)      — 5.1.5: per Protections-page tab, for the popup's policy lines:
+//                                         { firewall: { active, total, outside: { active, total } },
+//                                           download: { on, active (tab protections + DNS + heuristics + VT) }, scam: { on, active }, tamper: { on, signs } }
+//                                         — switches and trigger ticks are not counted as protections
 //   saferRegionsApply(level)            — does the safer-regions list have any effect at this level?
 //   isInSaferRegions(state, host)       — 5.1.3: is the host's site inside the safer regions (its TLD on the list)?
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { LEVEL, LEVEL_MIN, LEVEL_MAX, SAFER_REGIONS_LEVELS, LOG_PREFIX, SEVERITY,
-         TAB_BAND_BASE, TAB_BAND_LEVELS, TAB_BAND_TABS_MAX, HIGH_RISK_GROUP_INDEX, HIGH_RISK_TAB_BASE } from "../data/constants.js";
-import { PROTECTIONS, PROTECTION_BY_KEY, SCOPE } from "../data/protections.js";
+         TAB_BAND_BASE, TAB_BAND_LEVELS, TAB_BAND_TABS_MAX, HIGH_RISK_GROUP_INDEX, HIGH_RISK_TAB_BASE,
+         DNS_NONE, DOWNLOAD_CHECK_COUNT } from "../data/constants.js";
+import { isValidVtKey } from "../data/state-storage.js";     // 5.1.5: VirusTotal counts once a key is entered
+import { PROTECTIONS, PROTECTION_BY_KEY, PROTECTION_KEY, PROTECTION_TAB, SCOPE, tabOf } from "../data/protections.js";
+import { TAMPER_RULES } from "../data/tamper-rules.js";   // 5.1.5: the popup counts tamper signs
 import { HIGH_RISK_HOSTNAMES } from "../data/network-data.js";
 import { registeredDomain, isInDomainList } from "../util/domain.js";
 import { ALLOW_CATEGORIES_STORED } from "../data/allow-categories.js";
@@ -135,15 +141,35 @@ export function isProtectionActiveOrHighRisk(state, key, level, host, risk = nul
   return !!(p && p.alsoHighRisk && isProtectionEnabled(state, key) && isHighRiskSite(state, host, risk));
 }
 
+// 5.1.5 (owner): the checks a download gets besides the Download-tab protections — DNS slots that are on, the
+// heuristics, VirusTotal with a key (data/constants.js DOWNLOAD_CHECK_COUNT).
+function downloadChecks(state) {
+  const dns = [state.dns?.first, state.dns?.second].filter((id) => id && id !== DNS_NONE).length;
+  return dns * DOWNLOAD_CHECK_COUNT.PER_DNS_SLOT + DOWNLOAD_CHECK_COUNT.HEURISTICS +
+    (isValidVtKey(state.downloads?.vtApiKey) ? DOWNLOAD_CHECK_COUNT.VIRUSTOTAL : 0);
+}
+
 // 5.1.0: + `outside` — the protections scoped outside safer regions (the popup's level-3 bullet). Before 5.1.0 the
 // popup counted the whole level-3 GROUP, which also held blockWasmDubious (every site); groups are per tab now, so
 // the count is taken from the scope itself.
 export function protectionCounts(state, level) {
   const applicable = PROTECTIONS.filter((p) => level >= p.fromLevel);
-  const outside = applicable.filter((p) => p.scope === SCOPE.OUTSIDE_SAFER_REGIONS);
+  function onTab(tab) { return applicable.filter((p) => tabOf(p) === tab); }
   function activeIn(list) { return list.filter((p) => isProtectionEnabled(state, p.key)).length; }
-  return { active: activeIn(applicable), total: applicable.length,
-           outside: { active: activeIn(outside), total: outside.length } };
+  function switchOn(key) { return level >= PROTECTION_BY_KEY[key].fromLevel && isProtectionEnabled(state, key); }
+  const firewall = onTab(PROTECTION_TAB.BROWSING);
+  const outside = firewall.filter((p) => p.scope === SCOPE.OUTSIDE_SAFER_REGIONS);
+  const scamOn = switchOn(PROTECTION_KEY.ENABLE_SCAM_PROTECTION);
+  const tamperOn = switchOn(PROTECTION_KEY.WATCH_TAMPER_SENSITIVE);
+  const downloadOn = switchOn(PROTECTION_KEY.WARN_RISKY_DOWNLOADS);
+  return {
+    firewall: { active: activeIn(firewall), total: firewall.length, outside: { active: activeIn(outside), total: outside.length } },
+    download: { on: downloadOn, active: downloadOn ? activeIn(onTab(PROTECTION_TAB.DOWNLOAD)) + downloadChecks(state) : 0 },
+    // the protections under the switch (its members), not the switch itself
+    scam: { on: scamOn, active: scamOn ? onTab(PROTECTION_TAB.SCAM).filter((p) => p.requires === PROTECTION_KEY.ENABLE_SCAM_PROTECTION).length : 0 },
+    // the signs it watches for (data/tamper-rules.js) — the trigger ticks only choose which pages
+    tamper: { on: tamperOn, signs: tamperOn ? TAMPER_RULES.length : 0 }
+  };
 }
 
 // ── 5.1.3: allow-list categories (Firewall / Scam / Tamper; Download is core/download-settings.js) ──

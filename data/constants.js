@@ -271,6 +271,8 @@ export const SCRIPT_ID_SUFFIX = Object.freeze({
   ISOLATED:       "-isolated",                        // 4.6.0: the ISOLATED-world twin of a registration (isolatedScripts)
   HIGH_RISK:      "-highrisk"                          // 4.7.0: alsoHighRisk's extra registration, fixed to HIGH_RISK_HOSTNAMES, level-independent
 });
+// 5.1.5 — chrome.runtime.getPlatformInfo().os value of macOS (data/protections.js macScripts).
+export const PLATFORM_OS_MAC = "mac";
 export const NOEVAL_EXTRA_EXCLUDES = Object.freeze(["*://*/*login*", "*://*/*Login*", "*://*/*LOGIN*", "*://*/*.aspx*"]);
 
 // ── Suspicious-site detection (stage 1 local / stage 2 online) ───────────────
@@ -353,6 +355,10 @@ export const DNS_PROVIDER = Object.freeze({
   CLEANBROWSING: DS_APP.DNS_PROVIDERS.cleanbrowsing
 });
 export const DNS_NONE = DS_APP.DNS_NONE;              // "none" — a DNS check slot that is switched off
+// 5.1.5 (owner): the popup's "Download protection: N" counts the checks a download gets (core/policy.js
+// protectionCounts): its Download-tab protections (1–2) + each DNS slot that is not DNS_NONE (0–2) + the URL/filename
+// heuristics (always 1) + VirusTotal once a key is entered (0–1) — at most 6.
+export const DOWNLOAD_CHECK_COUNT = Object.freeze({ PER_DNS_SLOT: 1, HEURISTICS: 1, VIRUSTOTAL: 1 });
 // First-install defaults (3P Matrix's own pair — differs from DS's Quad9 + Control D). 4.5.8: Control D +
 // DNS4EU Protective (they block more malware than Quad9 + Cloudflare), the same pair in every region: DS's
 // region rule (France → Control D + Cloudflare) only exists to avoid Quad9, which this pair does not use.

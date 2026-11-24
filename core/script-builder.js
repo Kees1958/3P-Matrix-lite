@@ -3,7 +3,8 @@
 // No Chrome API calls.
 //
 // Public interface:
-//   buildScriptRegistrations(state, { grouped }) — RegisteredContentScript[] for chrome.scripting
+//   buildScriptRegistrations(state, { grouped, os }) — RegisteredContentScript[] for chrome.scripting; `os` (5.1.5) is
+//                       chrome.runtime.getPlatformInfo().os — a protection's `macScripts` are added only on PLATFORM_OS_MAC
 //
 // For each protection with scripts, where does it run?
 //   active globally (state.level >= fromLevel, enabled):
@@ -47,7 +48,7 @@
 // data/protections.js' 4.7.0 alsoHighRisk comment — so there is no dynamic counterpart here.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { SCRIPT_ID_PREFIX, SCRIPT_ID_SUFFIX, SCRIPT_ID_GROUP_JOIN, BUILTIN_EXEMPT_LEVELS, LEVEL } from "../data/constants.js";
+import { SCRIPT_ID_PREFIX, SCRIPT_ID_SUFFIX, SCRIPT_ID_GROUP_JOIN, BUILTIN_EXEMPT_LEVELS, LEVEL, PLATFORM_OS_MAC } from "../data/constants.js";
 import { PROTECTIONS, SCOPE, tabOf } from "../data/protections.js";
 import { ALLOW_CATEGORY_OF_TAB } from "../data/allow-categories.js";
 import { isProtectionEnabled, saferRegionsApply, allowSitesOf } from "./policy.js";
@@ -91,8 +92,10 @@ function baseRegistration(id, p, matches, excludeMatches) {
   return reg;
 }
 
-function registrationsFor(state, p) {
-  const main = mainRegistrationsFor(state, p);
+function registrationsFor(state, p, os) {
+  let main = mainRegistrationsFor(state, p);
+  // 5.1.5: macOS-only files ride along in the MAIN-world registrations (same scope); other systems never get them.
+  if (os === PLATFORM_OS_MAC && p.macScripts && p.macScripts.length) main = main.map((reg) => ({ ...reg, js: [...reg.js, ...p.macScripts] }));
   if (!p.isolatedScripts || !p.isolatedScripts.length) return main;
   // 4.7.0: isolated-only protection — the computed registrations ARE the isolated ones.
   if (!p.scripts || !p.scripts.length) return main.map((reg) => ({ ...reg, id: reg.id + SCRIPT_ID_SUFFIX.ISOLATED, world: WORLD.ISOLATED }));
@@ -195,7 +198,7 @@ function groupRegistrations(regs) {
 
 // opts.grouped (default true) — false returns the per-protection registrations before merging; used
 // only by tools/test-perf-guards.mjs to prove the merge changes no file's scope.
-export function buildScriptRegistrations(state, { grouped = true } = {}) {
-  const regs = PROTECTIONS.flatMap((p) => [...registrationsFor(state, p), ...highRiskRegistrationsFor(state, p)]);
+export function buildScriptRegistrations(state, { grouped = true, os = null } = {}) {
+  const regs = PROTECTIONS.flatMap((p) => [...registrationsFor(state, p, os), ...highRiskRegistrationsFor(state, p)]);
   return grouped ? groupRegistrations(regs) : regs;
 }

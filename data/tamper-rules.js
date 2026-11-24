@@ -172,8 +172,8 @@ export const TAMPER_RULES = Object.freeze([
   // on every page where tamper protection runs, armed or not. A report of this rule arms the page itself (the
   // address with script code is the tampering sign). 60: High wherever it is seen.
   { id: TAMPER_RULE.ADDRESS_SCRIPT, layer: TAMPER_LAYER.DYNAMIC, points: 60,
-    label: "Script from the link run on the page", detailHead: "Where it was put:",
-    description: "This page's address carries script code, and the page copied that code into itself — a cross-site scripting (XSS) attack that can act as you on this site. Leave the page unless you know why the link looks like this.",
+    label: "Cross-site scripting (XSS)", detailHead: "Where it was put:",
+    description: "This page's web address had hidden code in it, and the page ran that code. That code works as if it were you on this site and can read what you type. Close the page and open the site yourself, not through that link or address.",
     sinks: ["Element.prototype.innerHTML", "Element.prototype.outerHTML", "Element.prototype.insertAdjacentHTML",
             "Element.prototype.setHTMLUnsafe", "ShadowRoot.prototype.innerHTML", "Document.prototype.write",
             "Document.prototype.writeln", "Range.prototype.createContextualFragment", "HTMLIFrameElement.prototype.srcdoc",
