@@ -60,4 +60,3 @@ Start at level 2. For everyday surfing, choose level 3. Lock dodgy websites to l
 
 Chrome Web Store: https://chromewebstore.google.com/detail/3p-matrix-%E2%80%94-content-firew/oljiiikeojepiiaoaicpddpgpfiloejj?pli=1
 
-Chrome Web Store: https://chromewebstore.google.com/detail/3p-matrix-%E2%80%94-content-firew/oljiiikeojepiiaoaicpddpgpfiloejj?pli=1
