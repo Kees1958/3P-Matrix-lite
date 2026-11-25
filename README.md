@@ -60,3 +60,27 @@ Start at level 2. For everyday surfing, choose level 3. Lock dodgy websites to l
 
 Chrome Web Store: https://chromewebstore.google.com/detail/3p-matrix-%E2%80%94-content-firew/oljiiikeojepiiaoaicpddpgpfiloejj?pli=1
 
+# SCREEN PRINTS OF THE EXTENSION
+<img width="1280" height="800" alt="image" src="https://github.com/user-attachments/assets/2fce3374-f25a-4c48-bb82-6916cf48a7c1" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite2" src="https://github.com/user-attachments/assets/51b93470-321e-4d68-81bd-7dacd345f4fa" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite3" src="https://github.com/user-attachments/assets/f1531528-1a4f-404f-b0a6-5ff939834f99" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite4" src="https://github.com/user-attachments/assets/9791fb55-3650-4ce8-9951-08d8919a8dec" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite5" src="https://github.com/user-attachments/assets/cd04ec2f-2bda-49c3-8d96-256910ce3f4e" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite6" src="https://github.com/user-attachments/assets/1620d052-2aef-4f63-951b-49aeb3ff1415" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite7" src="https://github.com/user-attachments/assets/a26ad5ab-28e2-4cef-82af-f03cac03af8c" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite8" src="https://github.com/user-attachments/assets/c5f00ad2-b9b1-4161-8432-093761a95b89" />
+
+
+
+
+
+
+
+
