@@ -376,6 +376,14 @@ function riskOf(tabId) { return G.pageRisk(tabId); }
   G.onReport(s, report(T.DATA_PARSING, D.TARGETS, ["Response.prototype.json"]), sender(TAB.D, SHOP));
   await settle();
   ok("…and what the page held back counts (× factor): High, a warning", windows.length === before + 1 && riskOf(TAB.D).rating === RT.HIGH, riskOf(TAB.D));
+  // 5.1.6 (CNN): a payment provider's HIDDEN helper frame (Stripe's 1-px metrics frame) reports from inside itself.
+  {
+    const NEWS = "https://news.example/", HELPER = `https://${payHost}/v3/m-outer.html`;
+    ok("5.1.6: a payment provider's hidden frame (frameSeen false) does not make a news page a payment page",
+       G.onSignals(stateAt(C.LEVEL.MILD), { card: false, bank: false, frames: ["m.helper.example"], frameSeen: false }, sender(TAB.E, NEWS, HELPER)).arm === false);
+    ok("5.1.6: …the same frame when it can be seen (a real card form) does",
+       G.onSignals(stateAt(C.LEVEL.MILD), { card: false, bank: false, frames: ["m.helper.example"], frameSeen: true }, sender(TAB.E, NEWS, HELPER)).arm === true);
+  }
   ok("signals with only frames from unknown hosts do not arm",
      G.onSignals(stateAt(C.LEVEL.MILD), { card: false, bank: false, frames: ["ads.example"] }, sender(TAB.E, "https://blog.example/")).arm === false);
   ok("a frame from a payment host reaches the threshold",

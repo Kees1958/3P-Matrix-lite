@@ -24,6 +24,8 @@
    only where a tab puts two columns side by side in its HTML (Scam, Tamper: explanation left, list right). */
 .prot-list { display: flex; gap: 14px; }
 .prot-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.prot-col.prot-row { flex-direction: row; }                     /* 5.1.6: Download tab — groups side by side */
+.prot-col.prot-row > .prot-group { flex: 1; min-width: 0; }
 .prot-group { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .prot-group-head { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow); }
 .prot-group-head .from { font-family: var(--mono); color: var(--muted); }

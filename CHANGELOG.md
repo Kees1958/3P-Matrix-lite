@@ -3,6 +3,11 @@
 (Started with 4.5.4: earlier docs packages carried no CHANGELOG.md. Technical detail for 4.5.4 is in
 PERF_4.5.3_chrome_engine_and_proposals.md section 6 and the principles doc, v13.)
 
+## 5.1.6
+- **Fixed: news sites flagged as payment pages.** A payment provider's hidden helper frame (such as Stripe's invisible measuring frame on CNN) no longer makes a page count as a banking or payment page. Only a payment frame you can see — a real card form — does. So those sites are no longer watched closely, and no longer get tamper warnings for ordinary ad and measuring code.
+- **Scam protection list in a clearer order:** blocks first, then warnings, generic before specific. "Warn when opening a site that looks suspicious" is now the last line, so you notice it.
+- **Download protection:** the two groups ("On every site" and "Extra — outside safer regions") stand side by side again.
+
 ## 5.1.5
 - **Fixed: "Form submission canceled because the form is not connected" listed under 3P Matrix** (seen on Ziggo GO). The password-form check held every sign-in form for a moment; a site that rebuilds its page meanwhile lost the form. Now a sign-in form that sends to the site's own address is never held — only a form that sends your password to another site is checked, as before.
 - **Fake "your PC is infected" pages now go straight to the red warning page** at the first sign: a loop of dialogs, a keyboard lock, or going fullscreen again after you left it. The warning page's button opens a new tab. Such a page can no longer hold you with "Leave site?". An ordinary page keeps its own "Leave site?" — 3P Matrix no longer watches what you type to decide this.

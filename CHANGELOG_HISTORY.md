@@ -12,6 +12,20 @@ analysis documents in this folder.
 
 ---
 
+## 5.1.6
+Compare at 5.1.5. Changed zips: extension, tools, docs.
+
+- **Hidden payment frames (owner, CNN report 2026-11-25):** CNN armed close watching via REASON.PAYMENT_FRAME — the
+  only js.stripe.com frame was Stripe's metrics controller (m-outer, 1 px high, visibility hidden). tamper-guard-bridge.js
+  now reports only frames that pass seen() and sends `frameSeen` (this frame's own viewport > INVISIBLE_MAX_PX); core/
+  tamper-guard.js counts the reporting frame's own Payment-list host only when frameSeen. Cost: one checkVisibility +
+  getBoundingClientRect per frame at the three existing signal moments; fewer pages armed.
+- **Scam list order (owner):** data/protections.js SCAM_LIST_ORDER, used by ui/protections.js renderScamRules.
+- **Download tab side by side (owner):** ui/protections.js SIDE_BY_SIDE_TABS → .prot-col.prot-row.
+
+**tools 5.1.6:** test-tamper-guard (frameSeen false/true), e2e-tamper-guard (/article-hidden-pay, /article-pay — browser
+run passed during development; the release used quick checks only, owner's choice).
+
 ## 5.1.5
 Compare at 5.1.4. Changed zips: extension, tools, docs. (5.1.4 was zipped and merged to GitHub main.)
 
