@@ -1,3 +1,5 @@
+# 3P MATRIX LITE — content firewall 
+
 NOTE: TO USE DOWNLOAD PROTECTION, GET A FREE VIRUSTOTAL API KEY (A REPUTATION CHECK WITH 70+ ANTIVIRUS ENGINES).
 
 3P Matrix gives you control over third-party traffic with a simple five-level slider. Most privacy and security problems come from third-party scripts and frames that load silently in the background: trackers, fingerprinting, ad networks and malicious injections. 3P Matrix lets you decide how much of that you allow, and makes it easy to dial back when something breaks.
@@ -5,7 +7,7 @@ NOTE: TO USE DOWNLOAD PROTECTION, GET A FREE VIRUSTOTAL API KEY (A REPUTATION CH
 3P matrix Lite Mv3 is inspired by the classic uMatrix Mv2, but built on Chrome's own filtering engine (DNR). Because it uses a slider, you can change protection on the fly, making it easier to use than uMatrix Mv2 on which 3P Matrix Lite Mv3 is inspired. Another killer feature is the padlock. You can lock a level for a website. On next visits to that website that protection level be automatically applied. Locking protection works great to tune down protection (e.g. allow all) or increase protection (e.g. set adult websites to level 4). 
 
 
-#PROTECTIONS
+# PROTECTIONS
 
 FIREWALL PROTECTION
 
