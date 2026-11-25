@@ -112,7 +112,9 @@ function buildPages(port) {
     "/article": `<!doctype html><title>article</title><p>news<script>${JSON_EDIT}</script>`,
     // 5.1.6 (CNN): a news page with a payment provider's HIDDEN helper frame (like Stripe's 1-px metrics frame), and the
     // same page with that provider's frame visible (a real card form).
-    "/article-hidden-pay": `<!doctype html><title>article</title><p>news<iframe src="http://${PAY_HOST}:${port}/frame"
+    // 5.1.7: the hidden frame holds a normal-sized frame of its own (like Stripe's m-outer → m.stripe.network).
+    "/nest": `<!doctype html><title>nest</title><iframe src="http://${PAY_HOST}:${port}/frame"></iframe>`,
+    "/article-hidden-pay": `<!doctype html><title>article</title><p>news<iframe src="http://${PAY_HOST}:${port}/nest"
       style="position:fixed;top:0;left:0;width:100%;height:1px;border:0;visibility:hidden"></iframe><script>${JSON_EDIT}</script>`,
     "/article-pay": `<!doctype html><title>article</title><p>news<iframe src="http://${PAY_HOST}:${port}/frame"
       width="300" height="80"></iframe><script>${JSON_EDIT}</script>`,
@@ -300,7 +302,7 @@ try {
   pg = await open(HOST_B, "/article-hidden-pay");
   await sleep(ARM_SETTLE_MS);
   const hiddenPay = await badgeNow(url(HOST_B, "/article-hidden-pay"));
-  ok("5.1.6: news page with a payment provider's hidden 1-px frame: not a payment page (Chrome's count, no \"?\")", isChromeCount(hiddenPay), hiddenPay);
+  ok("5.1.6: news page with a payment provider's hidden 1-px frame (with a normal-sized frame inside): not a payment page (Chrome's count, no \"?\")", isChromeCount(hiddenPay), hiddenPay);
   await pg.close();
   pg = await open(HOST_B, "/article-pay");
   const shownPay = await badgeOf(url(HOST_B, "/article-pay"), C.BADGE_TEXT.SUSPECT);

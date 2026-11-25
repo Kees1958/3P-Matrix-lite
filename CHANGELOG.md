@@ -3,6 +3,14 @@
 (Started with 4.5.4: earlier docs packages carried no CHANGELOG.md. Technical detail for 4.5.4 is in
 PERF_4.5.3_chrome_engine_and_proposals.md section 6 and the principles doc, v13.)
 
+## 5.1.8
+- **Confirmed fixed: CNN no longer shows a tamper warning.** The cause was a normal-sized frame inside Stripe's invisible measuring frame; since 5.1.7 a hidden frame no longer reports the frames inside it.
+- **The diagnostic log from 5.1.7 is switched off again.**
+
+## 5.1.7
+- **Diagnostic version (temporary):** when a page counts as a banking or payment page, the extension's own console (chrome://extensions → 3P Matrix → "service worker") says why — which frame and which site. Only site names, and nothing leaves your browser. It will be switched off again once the CNN false alarm is solved.
+- **Fixed: a hidden frame no longer reports the frames inside it** (Stripe's invisible measuring frame holds a normal-sized frame of its own).
+
 ## 5.1.6
 - **Fixed: news sites flagged as payment pages.** A payment provider's hidden helper frame (such as Stripe's invisible measuring frame on CNN) no longer makes a page count as a banking or payment page. Only a payment frame you can see — a real card form — does. So those sites are no longer watched closely, and no longer get tamper warnings for ordinary ad and measuring code.
 - **Scam protection list in a clearer order:** blocks first, then warnings, generic before specific. "Warn when opening a site that looks suspicious" is now the last line, so you notice it.

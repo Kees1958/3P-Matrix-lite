@@ -12,6 +12,29 @@ analysis documents in this folder.
 
 ---
 
+## 5.1.8
+Compare at 5.1.7. Extension zip only (owner; not on GitHub yet — GitHub main is 5.1.6).
+
+- **CNN confirmed (owner, 2026-11-25 07:28):** on 5.1.7 the SW console showed no "Tamper debug:" line on cnn.com —
+  no payment signal, nothing armed. Cause: Stripe's 1905×1 m-outer frame holds a normal-sized inner frame
+  (m.stripe.network, Payment list) that the bridge in m-outer reported; fixed in 5.1.7 (frameSeen gates inner frames).
+  The lab /nest case does not reproduce this on 5.1.6 (Chrome's real hidden-frame behaviour differs) — keep it as a
+  guard anyway.
+- **TAMPER_DEBUG_LOG = false** (kept as a switch for the next diagnosis).
+
+**tools 5.1.8:** no tool changes (version recorded, B4).
+
+## 5.1.7
+Compare at 5.1.6. Extension zip only (owner: diagnostic build, not on GitHub).
+
+- **TAMPER_DEBUG_LOG (temporary, data/constants.js):** core/tamper-guard.js debugLog() — payment signals (page, reporting
+  frame, frameSeen, frames, payFrames, card, bank), known payment site, and arm() (armedBy, reasons). Hosts only, SW
+  console only. To find why cnn.com still arms on 5.1.6 (the top page no longer reports Stripe's 1905×1 hidden frame).
+- **Bridge:** a frame that cannot be seen (frameSeen false) reports no frames inside it. e2e /nest case passes, but it
+  also passed on 5.1.6 — so not proven to be the CNN cause.
+
+**tools 5.1.7:** e2e-tamper-guard /nest (a normal-sized frame inside the hidden payment frame).
+
 ## 5.1.6
 Compare at 5.1.5. Changed zips: extension, tools, docs.
 
