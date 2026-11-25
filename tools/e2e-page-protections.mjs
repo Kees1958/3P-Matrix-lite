@@ -94,6 +94,9 @@ function buildPages(port) {
   "/support-scam": `<!doctype html><title>infected</title><button id="b">click</button>
     <script>window.onbeforeunload = () => "Do not leave";
       document.getElementById("b").onclick = () => { for (let i = 0; i < 5; i++) alert("Your computer is infected! Call now"); };</script>`,
+  // 5.1.9 — GitHub's editor: one "discard changes?" confirm per click; a person clicks slower than the loop window.
+  "/slow-dialogs": `<!doctype html><title>editor</title><button id="b">cancel</button>
+    <script>document.getElementById("b").onclick = () => { confirm("Discard your changes?"); };</script>`,
   "/trap": `<!doctype html><title>trap</title><p>trap
     <script>for (let i = 0; i < ${PUSHED_ENTRIES}; i++) history.pushState({ i }, "", "#t" + i);
       addEventListener("popstate", () => history.pushState({}, "", "#again"));</script>`,
@@ -246,6 +249,18 @@ try {
     ok("5.1.5: a dialog loop sends the page to the warning page, its \"Leave site?\" does not stop it",
        (await lockerWarned(sp)) && !prompted, { url: sp.url(), prompted });
     await sp.close();
+  }
+
+  // ── 5.1.9: dialogs spread over time (a person clicking Cancel) are not a loop ──
+  {
+    const SLOW_CLICK_GAP_MS = 700;                    // 3 clicks span 1.4 s > the page's 1 s loop window
+    const SLOW_CLICKS = 3;
+    const sd = await open(HOST_A, "/slow-dialogs");
+    for (let i = 0; i < SLOW_CLICKS; i++) { await sd.click("#b"); await sleep(SLOW_CLICK_GAP_MS); }
+    await sleep(SLOW_CLICK_GAP_MS);
+    ok("5.1.9: three dialogs a person clicks over time stay on the page (no warning page)",
+       sd.url() === url(HOST_A, "/slow-dialogs"), sd.url());
+    await sd.close();
   }
 
   // ── blockDialogSpam: "Leave site?" on an ordinary page (5.1.5: untouched until a scam sign) ──

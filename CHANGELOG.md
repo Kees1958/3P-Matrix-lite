@@ -3,6 +3,9 @@
 (Started with 4.5.4: earlier docs packages carried no CHANGELOG.md. Technical detail for 4.5.4 is in
 PERF_4.5.3_chrome_engine_and_proposals.md section 6 and the principles doc, v13.)
 
+## 5.1.9
+- **Fixed: GitHub's editor went to the "This page tried to lock your browser" warning.** Pressing Cancel a few times asks "Discard your changes?" each time, and three such dialogs counted as a scam loop. Now only three dialogs within one second count — the speed of a scam loop, not of a person clicking.
+
 ## 5.1.8
 - **Confirmed fixed: CNN no longer shows a tamper warning.** The cause was a normal-sized frame inside Stripe's invisible measuring frame; since 5.1.7 a hidden frame no longer reports the frames inside it.
 - **The diagnostic log from 5.1.7 is switched off again.**

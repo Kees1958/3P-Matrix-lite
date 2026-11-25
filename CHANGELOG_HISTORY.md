@@ -12,6 +12,18 @@ analysis documents in this folder.
 
 ---
 
+## 5.1.9
+Compare at 5.1.8. Changed zips: extension, tools, docs.
+
+- **Dialog loop window (owner, GitHub README editor false alarm 2026-11-25):** security/scam-guard-page.js alert and
+  dialog parts counted DIALOG_SPAM_MIN dialogs over the page's whole life (GitHub is a single-page app, so its
+  "discard changes?" confirms added up). Now countDialog(): the last DIALOG_SPAM_MIN times (performance.now, bounded
+  array, released after the sign), a loop only within DIALOG_LOOP_WINDOW_MS = 1000; sign sent once per page.
+  check-shipped-terms keeps DIALOG_LOOP_WINDOW_MS equal in both parts.
+
+**tools 5.1.9:** e2e-page-protections /slow-dialogs (3 confirms 700 ms apart → no warning page; fails on 5.1.8,
+passes on 5.1.9); check-shipped-terms + DIALOG_LOOP_WINDOW_MS.
+
 ## 5.1.8
 Compare at 5.1.7. Extension zip only (owner; not on GitHub yet — GitHub main is 5.1.6).
 
