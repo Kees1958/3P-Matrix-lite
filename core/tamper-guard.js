@@ -68,7 +68,7 @@ import { LOG_PREFIX, TAMPER_RATING, TAMPER_RATING_MIN_POINTS, TAMPER_SENSITIVE_F
          TAMPER_CRYPTO_WORDS, TAMPER_CRYPTO_ENDINGS,
          TAMPER_ADDRESS_LETTER_FOLD, TAMPER_COOLDOWN_MS, TAMPER_TABS_CAP, TAMPER_SCRIPT_VERDICTS_CAP, SEVERITY,
          TAMPER_SCRIPT_PROVIDERS, TAMPER_SCRIPT_TYPO,
-         TAMPER_DETAIL_ITEMS_MAX, TAMPER_DETAIL_TEXT_MAX, TAMPER_FRAME_HOSTS_MAX } from "../data/constants.js";
+         TAMPER_DETAIL_ITEMS_MAX, TAMPER_DETAIL_TEXT_MAX, TAMPER_FRAME_HOSTS_MAX, TAMPER_DEBUG_LOG } from "../data/constants.js";
 import { MSG_TAMPER_ARM } from "../data/message-types.js";
 import { PROTECTION_KEY } from "../data/protections.js";
 import { TAMPER_RULE, TAMPER_RULES, TAMPER_RULE_BY_ID, TAMPER_PAGE_RULES, TAMPER_RULE_OF_TARGET, TAMPER_ADDED_PROPS,
@@ -203,6 +203,8 @@ function modeFor(state, host) {
 
 // ── Sensitive pages (banking / payment) ──
 function addReason(rec, reason) { rec.reasons.add(reason); }
+// 5.1.7 TEMPORARY (TAMPER_DEBUG_LOG): why a page counts as a payment page / what armed it — service-worker console only.
+function debugLog(what, info) { if (TAMPER_DEBUG_LOG) console.info(LOG_PREFIX, "Tamper debug:", what, JSON.stringify(info)); }
 function sensitivePoints(rec) {
   let points = 0;
   for (const r of rec.reasons) points += TAMPER_SENSITIVE_POINTS[r] || 0;
@@ -242,6 +244,7 @@ function arm(state, tabId, rec, armedBy, pages) {
   if (rec.phase === TAMPER_PHASE.ENHANCED) return;
   if (!transition(rec, TAMPER_PHASE.ENHANCED)) return;
   rec.armedBy = armedBy;
+  debugLog("close watching started", { page: pages.host, armedBy, reasons: [...rec.reasons] });
   chrome.tabs.sendMessage(tabId, { type: MSG_TAMPER_ARM }).catch(() => { /* no listening frame (yet) */ });
   evaluate(state, tabId, rec, pages);                // findings recorded before arming count now
 }
@@ -255,7 +258,7 @@ export function onHello(state, sender) {
   const mode = modeFor(state, pages.host);
   if (!mode.on) return { arm: false };
   const rec = watchOf(pages.tabId, pages.site);
-  if (isInDomainList(pages.host, BUILTIN_PAYMENT)) addReason(rec, REASON.KNOWN_PAYMENT_SITE);
+  if (isInDomainList(pages.host, BUILTIN_PAYMENT)) { addReason(rec, REASON.KNOWN_PAYMENT_SITE); debugLog("known payment site", { page: pages.host }); }
   const sensitive = updateSensitive(state, pages.tabId, rec, pages);
   if (sensitive && mode.onSensitive) arm(state, pages.tabId, rec, ARMED_BY.SENSITIVE, pages);
   else if (rec.phase === TAMPER_PHASE.COOLDOWN && Date.now() < rec.cooldownUntil) arm(state, pages.tabId, rec, ARMED_BY.COOLDOWN, pages);
@@ -275,6 +278,10 @@ export function onSignals(state, msg, sender) {
   const payFrames = frames.filter((h) => isInDomainList(h, BUILTIN_PAYMENT));
   // 5.1.6: the reporting frame's own host counts only when that frame can be seen (msg.frameSeen from the bridge).
   if (pages.frameHost !== pages.host && msg.frameSeen === true && isInDomainList(pages.frameHost, BUILTIN_PAYMENT)) payFrames.push(pages.frameHost);
+  if (payFrames.length || msg.card === true || msg.bank === true) {
+    debugLog("payment signal", { page: pages.host, fromFrame: pages.frameHost, frameSeen: msg.frameSeen, frames,
+      payFrames, card: msg.card === true, bank: msg.bank === true });
+  }
   if (payFrames.length) {
     addReason(rec, REASON.PAYMENT_FRAME);
     for (const h of payFrames) if (rec.paymentHosts.size < TAMPER_FRAME_HOSTS_MAX) rec.paymentHosts.add(h);

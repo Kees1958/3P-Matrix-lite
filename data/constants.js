@@ -632,6 +632,9 @@ export const TAMPER_SENSITIVE_POINTS = Object.freeze({
   BANK_FIELD:         60,      // an IBAN / bank-account field
 });
 export const TAMPER_SENSITIVE_THRESHOLD = 60;
+// 5.1.7 TEMPORARY diagnostics (owner, CNN false alarm): log to the service-worker console why a page became a banking
+// or payment page and what started close watching (hosts only, nothing leaves the browser). Set false when solved.
+export const TAMPER_DEBUG_LOG = false;
 // 5.1.1 — Checkout / cart / payment words in the address (EU+ languages). The address is known before the page's own
 // scripts run, so a word starts the closer watching AT PAGE START (core/tamper-guard.js ARMED_BY.ADDRESS) — before a
 // skimmer loaded later can hook anything. It only raises scrutiny (principle B11): the page does not become a

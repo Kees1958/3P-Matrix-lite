@@ -189,18 +189,19 @@
             const card = cardNumber || !!document.querySelector(CARD_SELECTOR);
             const bank = !!document.querySelector(BANK_SELECTOR);
             const hidden = hasHiddenCredential();                     // 5.1.3
+            // 5.1.6: is THIS frame big enough to be seen? (its own viewport; the top page always is) — the service
+            // worker counts a payment provider's frame host only then. 5.1.7: a frame that cannot be seen reports no
+            // frames inside it either (Stripe's 1-px metrics frame holds a normal-sized m.stripe.network frame).
+            const frameSeen = window === window.top ||
+                (window.innerWidth > INVISIBLE_MAX_PX && window.innerHeight > INVISIBLE_MAX_PX);
             const frames = [];
-            for (const f of document.querySelectorAll(FRAME_SELECTOR)) {
+            for (const f of frameSeen ? document.querySelectorAll(FRAME_SELECTOR) : []) {
                 if (!seen(f)) continue;     // 5.1.6: only frames you can see (not Stripe's hidden 1-px metrics frame)
                 const h = hostOf(f.getAttribute('src'));
                 if (h && h !== location.hostname && !frames.includes(h)) frames.push(h);
                 if (frames.length >= MAX_FRAME_HOSTS) break;
             }
             if (!card && !bank && !hidden && !frames.length) return;
-            // 5.1.6: is THIS frame big enough to be seen? (its own viewport; the top page always is) — the service
-            // worker counts a payment provider's frame host only then.
-            const frameSeen = window === window.top ||
-                (window.innerWidth > INVISIBLE_MAX_PX && window.innerHeight > INVISIBLE_MAX_PX);
             const key = JSON.stringify([card, cardNumber, bank, hidden, frames, frameSeen]);
             if (key === lastSignals) return;
             lastSignals = key;
