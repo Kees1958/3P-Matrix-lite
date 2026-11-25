@@ -1,4 +1,4 @@
-NOTE: TO USE DOWNLOAD PROTECTION FULLY, GET A FREE VIRUSTOTAL API KEY (A REPUTATION CHECK WITH 70+ ANTIVIRUS ENGINES).
+NOTE: TO USE DOWNLOAD PROTECTION, GET A FREE VIRUSTOTAL API KEY (A REPUTATION CHECK WITH 70+ ANTIVIRUS ENGINES).
 
 3P Matrix gives you control over third-party traffic with a simple five-level slider. It is inspired by the classic uMatrix, but built on Chrome's own filtering engine (DNR). Your traffic is never read, and nothing leaves your device.
 
