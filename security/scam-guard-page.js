@@ -6,7 +6,7 @@
  * no variables), in the order they used to run:
  *   browser-locker scams (alertbuster, dialogbuster, browser-locker) · ClickFix · notification prompts without a click ·
  *   fake payment handlers · custom protocol handlers.
- * 5.1.5: the first support-scam sign (dialog loop, keyboard lock, fullscreen re-entry) is reported (LOCKER_SIGN_EVENT →
+ * 5.1.5: the first support-scam sign (dialog loop — 5.1.9: 3 dialogs within 1 s —, keyboard lock, fullscreen re-entry) is reported (LOCKER_SIGN_EVENT →
  * the bridge → the red warning page); "Leave site?" is blocked only after such a sign (typing detector removed). The
  * macOS Script Editor link check moved to security/scam-guard-mac.js, registered on a Mac only.
  * The ISOLATED-world half is security/scam-guard-bridge.js. Scope: level 2 and up on every site (the switch's); the
@@ -55,14 +55,30 @@
             // security/scam-guard-bridge.js, kept equal by tools/check-shipped-terms.mjs): the bridge opens the warning.
             const LOCKER_SIGN_EVENT = '3pmcf-browser-locker';
             const DIALOG_SPAM_MIN = 3;
+            // 5.1.9 (owner, GitHub editor false alarm): a LOOP is DIALOG_SPAM_MIN dialogs within DIALOG_LOOP_WINDOW_MS —
+            // a scam loop fires them back to back (each blocked dialog returns at once); a person clicking Cancel a few
+            // times over minutes (GitHub's "discard changes?") never gets that fast.
+            const DIALOG_LOOP_WINDOW_MS = 1000;
             const dispatch = EventTarget.prototype.dispatchEvent;
             const EventCtor = Event;
-            let dialogs = 0;
+            const nowMs = performance.now.bind(performance);
+            const dialogTimes = [];                 // the last DIALOG_SPAM_MIN dialog times (bounded: shift on overflow)
+            let loopSent = false;                   // the sign is sent once per page
+            function countDialog() {
+                if (loopSent) return;
+                dialogTimes.push(nowMs());
+                if (dialogTimes.length > DIALOG_SPAM_MIN) dialogTimes.shift();
+                if (dialogTimes.length === DIALOG_SPAM_MIN && dialogTimes[DIALOG_SPAM_MIN - 1] - dialogTimes[0] <= DIALOG_LOOP_WINDOW_MS) {
+                    loopSent = true;
+                    dialogTimes.length = 0;         // released — no longer needed
+                    try { Reflect.apply(dispatch, window, [new EventCtor(LOCKER_SIGN_EVENT)]); } catch { /* block stands */ }
+                }
+            }
             window.alert = new Proxy(nativeAlert, {
                 __proto__: null,
                 apply: function(target, thisArg, args) {
                     logInfo(LOG_PREFIX + ' alert blocked:', args[0]);
-                    if (++dialogs === DIALOG_SPAM_MIN) { try { Reflect.apply(dispatch, window, [new EventCtor(LOCKER_SIGN_EVENT)]); } catch { /* block stands */ } }
+                    countDialog();
                 },
                 get(target, prop) {
                     if ( prop === 'toString' ) { return nativeToString; }
@@ -108,9 +124,25 @@
             // 5.1.5: the dialog-loop sign, as in the alert part (same constants, kept equal by check-shipped-terms).
             const LOCKER_SIGN_EVENT = '3pmcf-browser-locker';
             const DIALOG_SPAM_MIN = 3;
+            // 5.1.9 (owner, GitHub editor false alarm): a LOOP is DIALOG_SPAM_MIN dialogs within DIALOG_LOOP_WINDOW_MS —
+            // a scam loop fires them back to back (each blocked dialog returns at once); a person clicking Cancel a few
+            // times over minutes (GitHub's "discard changes?") never gets that fast.
+            const DIALOG_LOOP_WINDOW_MS = 1000;
             const dispatch = EventTarget.prototype.dispatchEvent;
             const EventCtor = Event;
-            let dialogs = 0;
+            const nowMs = performance.now.bind(performance);
+            const dialogTimes = [];                 // the last DIALOG_SPAM_MIN dialog times (bounded: shift on overflow)
+            let loopSent = false;                   // the sign is sent once per page
+            function countDialog() {
+                if (loopSent) return;
+                dialogTimes.push(nowMs());
+                if (dialogTimes.length > DIALOG_SPAM_MIN) dialogTimes.shift();
+                if (dialogTimes.length === DIALOG_SPAM_MIN && dialogTimes[DIALOG_SPAM_MIN - 1] - dialogTimes[0] <= DIALOG_LOOP_WINDOW_MS) {
+                    loopSent = true;
+                    dialogTimes.length = 0;         // released — no longer needed
+                    try { Reflect.apply(dispatch, window, [new EventCtor(LOCKER_SIGN_EVENT)]); } catch { /* block stands */ }
+                }
+            }
             function _makeDialogProxy(native, returnValue, label) {
                 // Bound once, at install — see sec-alertbuster.js.
                 const nativeToString = native.toString.bind(native);
@@ -118,7 +150,7 @@
                     __proto__: null,
                     apply: function(target, thisArg, args) {
                         logInfo(LOG_PREFIX + ' ' + label + ' blocked:', args[0]);
-                        if (++dialogs === DIALOG_SPAM_MIN) { try { Reflect.apply(dispatch, window, [new EventCtor(LOCKER_SIGN_EVENT)]); } catch { /* block stands */ } }
+                        countDialog();
                         return returnValue;
                     },
                     get(target, prop) {
