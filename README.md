@@ -25,7 +25,8 @@ TAMPER PROTECTION
 
 Watches banking, payment and checkout pages. Warns you when a page is secretly changed, or tries to send your password or card number to another site.
 
-HOW THE LEVELS WORK
+
+# HOW THE LEVELS WORK
 
 LEVEL 1 — ALLOW ALL
 
