@@ -1,40 +1,86 @@
-NOTE: TO USE THE NEW DOWNLOAD PROTECTION FEATURE FULLY, YOU MUST REQUEST A FREE VIRUSTOTAL API KEY (FOR A REPUTATION CHECK WITH 70+ ANTIVIRUS ENGINES).
+# 3P MATRIX LITE — content firewall 
 
-3P Matrix gives you control over third-party traffic in your browser using a simple five-level slider. It is inspired by the classic uMatrix extension but built entirely on Chrome's native Declarative Net Request (DNR) API, which means all filtering happens inside the browser engine itself — no background script reading your traffic, no interception, no data leaving your device.
+NOTE: TO USE DOWNLOAD PROTECTION, GET A FREE VIRUSTOTAL API KEY (A REPUTATION CHECK WITH 70+ ANTIVIRUS ENGINES).
 
-The idea is straightforward: most privacy and security problems on the web come from third-party scripts and frames that load silently in the background when you visit a page. Trackers, fingerprinting scripts, ad networks, and malicious injections all arrive this way. 3P-Matrix-lite lets you decide how much of that you allow, and makes it easy to dial it back when something breaks.
+3P Matrix gives you control over third-party traffic with a simple five-level slider. Most privacy and security problems come from third-party scripts and frames that load silently in the background: trackers, fingerprinting, ad networks and malicious injections. 3P Matrix lets you decide how much of that you allow, and makes it easy to dial back when something breaks.
 
-3P Matrix has a killer feature called LOCK PROTECTION (the padlock). When you enable it, the next time you surf to this website the CHOSEN PROTECTION LEVEL WILL BE APPLIED AUTOMATICALLY!
+3P matrix Lite Mv3 is inspired by the classic uMatrix Mv2, but built on Chrome's own filtering engine (DNR). Because it uses a slider, you can change protection on the fly, making it easier to use than uMatrix Mv2 on which 3P Matrix Lite Mv3 is inspired. Another killer feature is the padlock. You can lock a level for a website. On next visits to that website that protection level be automatically applied. Locking protection works great to tune down protection (e.g. allow all) or increase protection (e.g. set adult websites to level 4). 
 
-ON TOP OF THAT, 3P MATRIX CHECKS DOWNLOADS (WHEN YOU ENTER A FREE VIRUSTOTAL API KEY) AND OFFERS MANY BUILT-IN PROTECTIONS TO MAKE SURFING SAFER.
 
-HOW 3P MATRIX WORKS
+# PROTECTIONS
 
-When you install the extension, it starts in Easy mode — allow all, which applies no restrictions and lets you observe the default browsing experience. From there you move the slider right to increase protection.
+FIREWALL PROTECTION
 
-Level 1 — Allow all.
-At first start this extension uses Easy mode (allow all) as startup mode. You can change the startup mode by clicking on the one (1) in the green rounded square/rectangle in the upper right corner.
+Blocks trackers, hidden data leaks and risky scripts before they load.
 
-Level 2 — Mild protection.
-This mode adds 11 security protections. It uses a built-in whitelist to allow 3P frames from payment services, video embeds and CAPTCHAs. This mode increases security but works well on all websites.
+DOWNLOAD PROTECTION
 
-Level 3 — Medium protection.
-This mode adds (on top of the above 11) 5 additional first-party protections and adds third-party script and frame blocking of domains outside the safer regions. The safer regions are a top-level domain list automatically determined based on your browser language settings.
+Checks every download before you open it. Risky files get a warning, or are blocked outside safer regions. With a free VirusTotal key, 70+ virus scanners check the download too.
 
-Level 4 — High mode.
-On top of the 16 protections it blocks ALL third-party scripts and frames EXCEPT domains with CDN (Content Delivery Network) in their name. This mode reduces third-party risk considerably, but works well on 90% of the adult websites (without tweaking).
+SCAM PROTECTION
 
-Level 5 — Strict mode.
-This is the strictest setting. All third-party scripts and frames are blocked. Only domains you have explicitly added to your domain whitelist are allowed through. Use this when you want maximum control and are prepared to whitelist what you need.
+Stops fake "your PC is infected" pages, clipboard tricks and pop-up storms. Warns you before you open a suspicious site or a booby-trapped link.
 
-NOTICE
-The scripting permission is used only to register the extension's own bundled content scripts that implement its security protections: blocking fake payment-handler and protocol-handler registration, alert/confirm dialog spam, ClickFix clipboard hijacking, eval() on high-risk sites, obfuscated eval, and NFC access. The scripts are registered or removed depending on the protection level and the user's settings. No remote code is loaded or executed, and no page data is sent anywhere.
-Tamper Protection (5.1.0) also uses bundled page scripts: they check whether the page's built-in functions were replaced and, on banking, payment and checkout pages, whether a password or card number is about to be sent to another site. For that check the value of a password or card field is compared with the outgoing request inside the page itself; it is never stored or sent anywhere — only the destination's host name is passed to the extension to decide on a warning.
+TAMPER PROTECTION
+
+Watches banking, payment and checkout pages. Warns you when a page is secretly changed, or tries to send your password or card number to another site.
+
+
+# HOW THE LEVELS WORK
+
+LEVEL 1 — ALLOW ALL
+
+No restrictions. Useful to see a site as it normally is.
+
+
+LEVEL 2 — MILD (DEFAULT)
+
+Adds the security protections. Payment services, video embeds and CAPTCHAs stay allowed. Works on all websites.
+
+
+LEVEL 3 — MEDIUM
+
+Adds extra protections and blocks third-party scripts and frames from outside the safer regions. The safer regions are chosen from your browser's language settings.
+
+
+LEVEL 4 — HIGH
+
+Blocks all third-party scripts and frames, except content delivery networks (CDNs). Works on most websites without tweaking.
+
+
+LEVEL 5 — STRICT
+
+Blocks all third-party scripts and frames. Only domains on your allow list get through. For hardcore uMatrix users.
+
+
+You can change the startup level by clicking the number in the green square in the upper right corner.
 
 SUGGESTED USE
-The default startup level is 2. For everyday surfing, choose protection level 3. When surfing to dodgy websites, lock the level to 4; alternatively, lock the protection level to 1 for important websites.
-After a few weeks you can increase the startup level to 3.
-
-Level 5 was only added for hardcore uMatrix users (I never used it when I had uMatrix installed).
+Start at level 2. For everyday surfing, choose level 3. Lock dodgy websites to level 4, and lock important websites to level 1 if they break. After a few weeks, raise the startup level to 3.
 
 Chrome Web Store: https://chromewebstore.google.com/detail/3p-matrix-%E2%80%94-content-firew/oljiiikeojepiiaoaicpddpgpfiloejj?pli=1
+
+# SCREEN PRINTS OF THE EXTENSION
+<img width="1280" height="800" alt="image" src="https://github.com/user-attachments/assets/2fce3374-f25a-4c48-bb82-6916cf48a7c1" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite2" src="https://github.com/user-attachments/assets/51b93470-321e-4d68-81bd-7dacd345f4fa" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite3" src="https://github.com/user-attachments/assets/f1531528-1a4f-404f-b0a6-5ff939834f99" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite4" src="https://github.com/user-attachments/assets/9791fb55-3650-4ce8-9951-08d8919a8dec" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite5" src="https://github.com/user-attachments/assets/cd04ec2f-2bda-49c3-8d96-256910ce3f4e" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite6" src="https://github.com/user-attachments/assets/1620d052-2aef-4f63-951b-49aeb3ff1415" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite7" src="https://github.com/user-attachments/assets/a26ad5ab-28e2-4cef-82af-f03cac03af8c" />
+
+<img width="1280" height="800" alt="3P-Matrix-lite8" src="https://github.com/user-attachments/assets/c5f00ad2-b9b1-4161-8432-093761a95b89" />
+
+
+
+
+
+
+
+
