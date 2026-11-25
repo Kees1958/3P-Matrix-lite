@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "3P Matrix — content firewall",
   "short_name": "3P Matrix",
-  "version": "5.1.5",
+  "version": "5.1.6",
   "description": "Content firewall: levels 1–5 for third-party content, privacy & security protections, and warnings for suspicious sites.",
   "minimum_chrome_version": "120",
   "permissions": [

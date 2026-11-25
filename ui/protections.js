@@ -17,7 +17,7 @@ import { DNS_NONE, VT_JOIN_URL, VT_API_KEY_RE, FP_LEVEL_ORDER, AUTO_ALLOW_THRESH
          AUTO_ALLOW_THRESHOLD_MAX, DOWNLOAD_DEFAULTS, DOWNLOAD_WARNING_TITLE_DEFAULT,
          DOWNLOAD_WARNING_TITLE_MAX, RGB_CHANNEL_MAX, DECIMAL_RADIX,
          IMPORT_FILE_MAX_BYTES, BYTES_PER_MEBIBYTE, LEVEL } from "../data/constants.js";
-import { PROTECTION_TAB, PROTECTION_GROUPS, protectionsInGroup } from "../data/protections.js";
+import { PROTECTION_TAB, PROTECTION_GROUPS, SCAM_LIST_ORDER, protectionsInGroup } from "../data/protections.js";
 import { fillDerivedText } from "./derived-text.js";
 import { showStatus, showError, releaseStatus } from "./status-line.js";
 
@@ -55,6 +55,8 @@ function tamperPointsText(points) { return `${points} points.`; }
 // here; while it is off the whole tab is shown off (TAB_OFF_CLASS on its panel: dependent ticks disabled and unticked,
 // the explanation and lists dimmed). UI only: core/policy.js already makes every dependent protection inactive.
 const SWITCH_CARD_TITLE = Object.freeze({ [PROTECTION_TAB.TAMPER]: "Tamper protection" });
+// 5.1.6 (owner): tabs whose groups stand side by side (first group left, the extra one right) instead of one column.
+const SIDE_BY_SIDE_TABS = Object.freeze([PROTECTION_TAB.DOWNLOAD]);
 const TAB_OFF_CLASS = "tab-off";
 
 // ── Page state (guarded: null until the first model arrives) ─────────────────
@@ -134,7 +136,8 @@ function renderProtList(container, tab) {
     container.replaceChildren(Object.assign(document.createElement("p"), { className: "prot-empty", textContent: "Nothing in this group yet." }));
     return;
   }
-  const col = document.createElement("div"); col.className = "prot-col";
+  const col = document.createElement("div");
+  col.className = SIDE_BY_SIDE_TABS.includes(tab) ? "prot-col prot-row" : "prot-col";
   groups.forEach((g) => col.append(buildProtGroup(g)));
   container.replaceChildren(col);
 }
@@ -163,6 +166,9 @@ function tamperRow(r) {
 function renderScamRules() {
   const rows = PROTECTION_GROUPS.filter((g) => g.tab === PROTECTION_TAB.SCAM).flatMap(protectionsInGroup)
     .filter((p) => p.switchable === false);
+  // 5.1.6: SCAM_LIST_ORDER decides the order; a row not in it (guard) comes after, in registry order.
+  function rank(p) { const i = SCAM_LIST_ORDER.indexOf(p.key); return i < 0 ? SCAM_LIST_ORDER.length : i; }
+  rows.sort((a, b) => rank(a) - rank(b));
   const box = document.createElement("div"); box.className = "prot-group";
   for (const p of rows) {
     const item = document.createElement("div"); item.className = "prot-item tg-item"; item.tabIndex = 0;

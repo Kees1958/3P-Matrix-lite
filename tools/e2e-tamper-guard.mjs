@@ -110,6 +110,12 @@ function buildPages(port) {
     "/checkout-hostile": `<!doctype html><title>checkout</title>${CARD_FORM}
       <script>addEventListener("3pmcf-tg-report", (e) => e.stopImmediatePropagation(), true);${JSON_EDIT}</script>`,
     "/article": `<!doctype html><title>article</title><p>news<script>${JSON_EDIT}</script>`,
+    // 5.1.6 (CNN): a news page with a payment provider's HIDDEN helper frame (like Stripe's 1-px metrics frame), and the
+    // same page with that provider's frame visible (a real card form).
+    "/article-hidden-pay": `<!doctype html><title>article</title><p>news<iframe src="http://${PAY_HOST}:${port}/frame"
+      style="position:fixed;top:0;left:0;width:100%;height:1px;border:0;visibility:hidden"></iframe><script>${JSON_EDIT}</script>`,
+    "/article-pay": `<!doctype html><title>article</title><p>news<iframe src="http://${PAY_HOST}:${port}/frame"
+      width="300" height="80"></iframe><script>${JSON_EDIT}</script>`,
     // 5.1.2: the card field has an ordinary name (only its VALUE says card); the data leaves in an image address.
     "/checkout/image": `<!doctype html><title>pay</title><form onsubmit="return false"><input id="num" name="payment[number]">
       <button id="pay">Pay</button></form>
@@ -287,6 +293,18 @@ try {
   ok("level 2, ordinary page with the same replacement: no warning window", !w);
   const plain = await badgeNow(url(HOST_B, "/article"));
   ok("…and no symbol: the badge is Chrome's own block count", isChromeCount(plain), plain);
+  await pg.close();
+
+  // ── 5.1.6 (CNN): a payment provider's hidden helper frame does not make a news page a payment page ──
+  // (the replaced JSON.parse is Suspicious on a payment page at level 2 — the "?" badge — and only noted elsewhere)
+  pg = await open(HOST_B, "/article-hidden-pay");
+  await sleep(ARM_SETTLE_MS);
+  const hiddenPay = await badgeNow(url(HOST_B, "/article-hidden-pay"));
+  ok("5.1.6: news page with a payment provider's hidden 1-px frame: not a payment page (Chrome's count, no \"?\")", isChromeCount(hiddenPay), hiddenPay);
+  await pg.close();
+  pg = await open(HOST_B, "/article-pay");
+  const shownPay = await badgeOf(url(HOST_B, "/article-pay"), C.BADGE_TEXT.SUSPECT);
+  ok("5.1.6: …the same page with that provider's frame visible (a card form) is one: \"?\"", shownPay === C.BADGE_TEXT.SUSPECT, shownPay);
   await pg.close();
 
   // ── skimmer: a card number to another site ──

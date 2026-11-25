@@ -5,7 +5,9 @@
  *    banking/payment site, "Always watch", or the same site within the cooldown) — core/tamper-guard.js decides.
  * 2. Signals: at DOMContentLoaded, load and SIGNALS_RECHECK_MS after load, looks for card fields, bank-account
  *    fields and frames from other hosts and sends them ONLY when a card or bank field is present or the page
- *    embeds a frame (the service worker scores them against the built-in Payment list). 5.1.3: `hidden` — a password/card
+ *    embeds a frame (the service worker scores them against the built-in Payment list). 5.1.6: only frames you can
+ *    see count (seen()), and `frameSeen` says whether this frame itself is big enough to be seen — a payment
+ *    provider's hidden helper frame (Stripe's 1-px metrics frame on news sites) no longer makes a page a payment page. 5.1.3: `hidden` — a password/card
  *    field HIDDEN AS A TRICK (isTrickHidden: a type=hidden field named like a password or card field, or a field that is
  *    itself invisible while the element around it is visible — not a field inside a closed menu, dialog or step); a
  *    trigger for the closer watching, when the user ticked it. An ordinary page without
@@ -189,15 +191,20 @@
             const hidden = hasHiddenCredential();                     // 5.1.3
             const frames = [];
             for (const f of document.querySelectorAll(FRAME_SELECTOR)) {
+                if (!seen(f)) continue;     // 5.1.6: only frames you can see (not Stripe's hidden 1-px metrics frame)
                 const h = hostOf(f.getAttribute('src'));
                 if (h && h !== location.hostname && !frames.includes(h)) frames.push(h);
                 if (frames.length >= MAX_FRAME_HOSTS) break;
             }
             if (!card && !bank && !hidden && !frames.length) return;
-            const key = JSON.stringify([card, cardNumber, bank, hidden, frames]);
+            // 5.1.6: is THIS frame big enough to be seen? (its own viewport; the top page always is) — the service
+            // worker counts a payment provider's frame host only then.
+            const frameSeen = window === window.top ||
+                (window.innerWidth > INVISIBLE_MAX_PX && window.innerHeight > INVISIBLE_MAX_PX);
+            const key = JSON.stringify([card, cardNumber, bank, hidden, frames, frameSeen]);
             if (key === lastSignals) return;
             lastSignals = key;
-            onReply(chrome.runtime.sendMessage({ type: MSG_TAMPER_SIGNALS, card, cardNumber, bank, hidden, frames }));
+            onReply(chrome.runtime.sendMessage({ type: MSG_TAMPER_SIGNALS, card, cardNumber, bank, hidden, frames, frameSeen }));
         } catch (err) { console.warn(LOG_PREFIX, 'Tamper Guard signals failed', err); }
     }
 

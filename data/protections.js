@@ -249,6 +249,16 @@ export const PROTECTION_KEY = Object.freeze({
 
 // 5.1.0: groups are per tab — a group shows the rows of its tab whose fromLevel is the group's (protectionsInGroup).
 // The order of this list IS the display order (tab order, then level).
+// 5.1.6 (owner) — the order of the Scam protection tab's list: blocks first, then warnings; within each, generic before
+// specific. The level-3 block is the last block; "Warn when opening a site that looks suspicious" is the very last row
+// so people notice it. A Scam row missing here is listed after these (guard in ui/protections.js renderScamRules).
+export const SCAM_LIST_ORDER = Object.freeze([
+  PROTECTION_KEY.BLOCK_NOTIFICATION_PROMPTS, PROTECTION_KEY.BLOCK_PROTOCOL_HANDLERS, PROTECTION_KEY.BLOCK_PAYMENT_HANDLERS,
+  PROTECTION_KEY.BLOCK_DIALOG_SPAM, PROTECTION_KEY.BLOCK_CLICK_FIX, PROTECTION_KEY.BLOCK_CONSENT_FIX,
+  PROTECTION_KEY.BLOCK_SHARED_CODES, PROTECTION_KEY.BLOCK_REDIRECTS_DIALOGS,
+  PROTECTION_KEY.WARN_XSS_LINKS, PROTECTION_KEY.WARN_DEVICE_CODE_PAGES, PROTECTION_KEY.WARN_SUSPICIOUS_SITES,
+]);
+
 export const PROTECTION_GROUPS = Object.freeze([
   Object.freeze({ tab: PROTECTION_TAB.BROWSING, title: "On every site",          fromLevel: LEVEL.MILD }),
   // titleNoSaferRegions: shown at levels where the safer-regions list has no effect (4–5)

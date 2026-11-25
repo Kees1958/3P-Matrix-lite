@@ -273,7 +273,8 @@ export function onSignals(state, msg, sender) {
   const frames = Array.isArray(msg.frames) ? msg.frames.slice(0, TAMPER_FRAME_HOSTS_MAX)
     .map((h) => String(h).toLowerCase()).filter(isValidHost) : [];
   const payFrames = frames.filter((h) => isInDomainList(h, BUILTIN_PAYMENT));
-  if (pages.frameHost !== pages.host && isInDomainList(pages.frameHost, BUILTIN_PAYMENT)) payFrames.push(pages.frameHost);
+  // 5.1.6: the reporting frame's own host counts only when that frame can be seen (msg.frameSeen from the bridge).
+  if (pages.frameHost !== pages.host && msg.frameSeen === true && isInDomainList(pages.frameHost, BUILTIN_PAYMENT)) payFrames.push(pages.frameHost);
   if (payFrames.length) {
     addReason(rec, REASON.PAYMENT_FRAME);
     for (const h of payFrames) if (rec.paymentHosts.size < TAMPER_FRAME_HOSTS_MAX) rec.paymentHosts.add(h);
