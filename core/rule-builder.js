@@ -40,7 +40,6 @@ import { ruleGroups, tabBandGroups, highRiskTabGroups, isProtectionActive, isPro
 import { ALLOW_CATEGORY } from "../data/allow-categories.js";
 import { PROTECTION_KEY, PROTECTION_BY_KEY } from "../data/protections.js";
 import { SPAM_TLDS, SPAM_TLD_EXCEPTIONS } from "../data/spam-tlds.js";
-import { SUSPICIOUS_HOSTING_DOMAINS } from "../data/suspicious-hosting.js";
 import { EXFIL_CHANNELS, EXFIL_GROUP } from "../data/exfil-channels.js";
 import { BUILTIN_BOTH, BUILTIN_SCRIPT_ONLY, BUILTIN_FRAME_ONLY, BUILTIN_ALL } from "../data/builtin-domains.js";
 import {
@@ -166,7 +165,12 @@ function protectionRules(state, group, safeTlds) {
     const tp = cond(sub, { domainType: "thirdParty" });
     rules.push(rule(group, ID.SUSP_IP,         PRIORITY.SECURITY_BLOCK, BLOCK, cond(tp, { regexFilter: IP_LITERAL_REGEX, isUrlFilterCaseSensitive: false })));
     rules.push(rule(group, ID.SUSP_PORT_BLOCK, PRIORITY.SECURITY_BLOCK, BLOCK, cond(tp, { regexFilter: NON_STANDARD_PORT_REGEX, isUrlFilterCaseSensitive: false })));
-    rules.push(rule(group, ID.SUSP_HOSTING,    PRIORITY.SECURITY_BLOCK, BLOCK, cond(tp, { requestDomains: [...SUSPICIOUS_HOSTING_DOMAINS], resourceTypes: [...RT.CODE_AND_LIVE] })));  // Kees1958 hard block — see data/suspicious-hosting.js header for why this is a separate ingestion from HostList's own Kees1958 risk-score entries
+    // Owner decision 2026-11-26 (ported from Safe Surfing Sentinel 1.0.2): the Kees1958-list hard block
+    // (ID.SUSP_HOSTING, data/suspicious-hosting.js) is gone — a domain on that list is now a risk-score
+    // signal ONLY (lib/downloadsentinel/util/HostList.js already scores the same source this way for the
+    // site-visit and download warnings — core/site-scorer.js, core/download-guard.js — unchanged), same
+    // as every other domain-reputation list. A domain-list hit names a shared platform, not something
+    // about this specific request, so it no longer earns an outright block here.
     rules.push(rule(group, ID.SUSP_HOSTING_REGEX, PRIORITY.SECURITY_BLOCK, BLOCK, cond(tp, { regexFilter: BYETHOST_REGEX, isUrlFilterCaseSensitive: false, resourceTypes: [...RT.CODE_AND_LIVE] })));
   }
   if (on(PROTECTION_KEY.BLOCK_3P_HTTP)) {                                               // 7
@@ -184,9 +188,20 @@ function protectionRules(state, group, safeTlds) {
   // 28 (5.0.5): 3P WebAssembly from a dubious host (any TLD) OR from outside the safer regions. Source-based (the
   // requested host), so it applies on every page; a network rule, so it holds inside workers too. The safer-region
   // TLDs and the built-in whitelist exempt the REQUESTED host at the levels where they apply (as for 3P scripts).
+  // Owner decision 2026-11-26 (ported from Safe Surfing Sentinel 1.0.2): ID.WASM_DUBIOUS_HOST
+  // (data/suspicious-hosting.js hard block) is gone — same reasoning as BLOCK_SUSPICIOUS_3P above: a
+  // domain-list hit names a shared platform, not something about this specific request. Note this is the
+  // last consumer of SUSPICIOUS_HOSTING_DOMAINS in this file — data/suspicious-hosting.js now has no
+  // remaining code consumer at all (see that file's own header); flagged to the user rather than deleted,
+  // since it also touches tools/data-sources.json, tools/check-magic-numbers.mjs's DATA_FILES list, the
+  // tools/e2e-worker-blocks.mjs DUBIOUS fixture, and several docs (ARCHITECTURE.md, THIRD_PARTY_LICENSES.md,
+  // HostList.js's header) — a bigger cleanup than this redesign asked for. WASM_DUBIOUS_TLD and
+  // WASM_OUTSIDE_SAFER are structural (TLD, region), not list-driven, and are unaffected. Separately, the
+  // broader BLOCK_WEBASSEMBLY protection (num 14, fromLevel HIGH, outside safer regions, also high-risk
+  // sites) already blocks ALL third-party WebAssembly outright regardless of host reputation, making this
+  // narrower host-list block redundant everywhere except level 3 inside safer regions.
   if (on(PROTECTION_KEY.BLOCK_WASM_DUBIOUS)) {
     const wasm = cond(sub, THIRD_PARTY, WASM_REQUEST);
-    rules.push(rule(group, ID.WASM_DUBIOUS_HOST, PRIORITY.SECURITY_BLOCK, BLOCK, cond(wasm, { requestDomains: [...SUSPICIOUS_HOSTING_DOMAINS] })));
     rules.push(rule(group, ID.WASM_DUBIOUS_TLD,  PRIORITY.SECURITY_BLOCK, BLOCK, cond(wasm, { requestDomains: [...SPAM_TLDS], excludedRequestDomains: [...SPAM_TLD_EXCEPTIONS] })));
     rules.push(rule(group, ID.WASM_OUTSIDE_SAFER, PRIORITY.SECURITY_BLOCK, BLOCK, cond(wasm,
       saferRegionsApply(L) && safeTlds.length ? { excludedRequestDomains: safeTlds } : {},

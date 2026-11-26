@@ -277,7 +277,10 @@ export const PROTECTION_GROUPS = Object.freeze([
 
 export const PROTECTIONS = Object.freeze([
   { key: PROTECTION_KEY.BLOCK_LOCAL_NETWORK,     num: 1,  label: "Block pages from reaching your local network", description: "Stops web pages from probing or connecting to devices on your local network.",          fromLevel: LEVEL.MILD,   scope: SCOPE.EVERY_SITE,        mechanism: [MECH.DNR] },
-  { key: PROTECTION_KEY.BLOCK_SUSPICIOUS_3P,     num: 2,  label: "Block 3P requests to raw IPs, odd ports or DDNS hosts", description: "Blocks third-party requests to raw IPs, odd ports or dynamic-DNS hosts — rare for legitimate services.", fromLevel: LEVEL.MILD,   scope: SCOPE.EVERY_SITE,        mechanism: [MECH.DNR] },
+  // Owner decision 2026-11-26 (ported from Safe Surfing Sentinel 1.0.2): wording no longer mentions DDNS/
+  // free-hosting domains — that hard block (ID.SUSP_HOSTING) is gone; those domains are a risk-score
+  // signal only now (lib/downloadsentinel/util/HostList.js), not blocked outright by this protection.
+  { key: PROTECTION_KEY.BLOCK_SUSPICIOUS_3P,     num: 2,  label: "Block 3P requests to raw IPs or odd ports", description: "Blocks third-party requests to raw IP addresses or sent over an unusual explicit port — rare for legitimate services.", fromLevel: LEVEL.MILD,   scope: SCOPE.EVERY_SITE,        mechanism: [MECH.DNR] },
   { key: PROTECTION_KEY.BLOCK_3P_HTTP,           num: 3,  label: "Block 3P requests sent over plain, unencrypted HTTP", description: "Blocks third-party requests sent over plain, unencrypted HTTP instead of HTTPS.",   fromLevel: LEVEL.MILD,   scope: SCOPE.EVERY_SITE,        mechanism: [MECH.DNR] },
   { key: PROTECTION_KEY.BLOCK_ABUSED_TLDS, num: 4, label: "Block 3P scripts and frames from abused TLDs", description: "Blocks third-party scripts and frames from top-level domains disproportionately used for abuse — at levels 2–3 also their WebSocket and WebTransport connections.", fromLevel: LEVEL.MILD, scope: SCOPE.EVERY_SITE, mechanism: [MECH.DNR] },
   { key: PROTECTION_KEY.BLOCK_WEB_BUNDLES,       num: 5,  label: "Block Web Bundles (bundled resources that hide code)", description: "Blocks Web Bundle (.wbn) files — a packaging format that can hide malicious code from inspection.",  fromLevel: LEVEL.MILD,   scope: SCOPE.EVERY_SITE,        mechanism: [MECH.DNR] },
@@ -315,7 +318,11 @@ export const PROTECTIONS = Object.freeze([
   // on any TLD, or from a host OUTSIDE the safer regions — as a network rule, so it also holds inside workers (page
   // scripts cannot reach them; NoScript's shared-worker work prompted the check). Source-based, so it applies on
   // every page. Matches addresses ending in .wasm (Chrome 120-safe; the content-type label would need Chrome 128).
-  { key: PROTECTION_KEY.BLOCK_WASM_DUBIOUS,      num: 7, label: "Block 3P WebAssembly from dubious or non-safer-region hosts", description: "Blocks WebAssembly (.wasm) that a page or its background workers load from a dubious host or from outside your safer regions.", fromLevel: LEVEL.SMART, scope: SCOPE.EVERY_SITE, mechanism: [MECH.DNR] },
+  // Owner decision 2026-11-26 (ported from Safe Surfing Sentinel 1.0.2): wording no longer mentions
+  // "dubious host" — that hard block (ID.WASM_DUBIOUS_HOST, data/suspicious-hosting.js) is gone; those
+  // domains are a risk-score signal only now (lib/downloadsentinel/util/HostList.js), not blocked
+  // outright by this protection.
+  { key: PROTECTION_KEY.BLOCK_WASM_DUBIOUS,      num: 7, label: "Block 3P WebAssembly from abused TLDs or non-safer-region hosts", description: "Blocks WebAssembly (.wasm) that a page or its background workers load from an abused top-level domain or from outside your safer regions.", fromLevel: LEVEL.SMART, scope: SCOPE.EVERY_SITE, mechanism: [MECH.DNR] },
   { key: PROTECTION_KEY.BLOCK_SCP_PRIVACY,       num: 8, label: "Block camera, mic, screen-share and clipboard reads", description: "Blocks pages from reading your camera, microphone, screen contents or clipboard without asking you.",   fromLevel: LEVEL.SMART, scope: SCOPE.OUTSIDE_SAFER_REGIONS, mechanism: [MECH.HEADER], alsoHighRisk: true },
   { key: PROTECTION_KEY.BLOCK_SCP_SECURITY,      num: 9, label: "Block Bluetooth, Serial, HID, USB and motion-sensor access", description: "Blocks pages from accessing Bluetooth, Serial, HID and USB devices connected to your computer, and from reading motion sensors (a way to fingerprint your device).",    fromLevel: LEVEL.SMART, scope: SCOPE.OUTSIDE_SAFER_REGIONS, mechanism: [MECH.HEADER], alsoHighRisk: true },
   // 5.1.2 (user decision): the former four obfuscation protections (eval, Function, setTimeout, setInterval) are ONE

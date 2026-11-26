@@ -6,8 +6,10 @@
 // WebAssembly got through from both. Covered (each probed from the page, a dedicated worker and a shared worker):
 //   blockWebAssembly (levels 4–5) and blockWebsockets — their network half (and blockWebsockets' CSP on the
 //     worker's own script, which is what reaches a shared worker);
-//   blockWasmDubious (level 3) — 3P .wasm from outside the safer regions or a dubious host, not from
-//     an ordinary safer-region host;
+//   blockWasmDubious (level 3) — 3P .wasm from outside the safer regions, not from an ordinary
+//     safer-region host. (Owner decision 2026-11-26: the host-reputation-list half of this protection
+//     — "dubious host" — was removed; a domain-list hit is a risk-score signal only now, never a
+//     block. This test used to also cover that case with HOST.DUBIOUS; that case is gone with it.)
 //   blockAbusedTlds (level 2) — WebSocket to an abused TLD, not to an ordinary host.
 // KNOWN CHROME LIMITATION (reported as INFO, not pass/fail): Chrome does not show a shared worker's WebSocket to
 // extensions at all (not even webRequest), and CSP cannot say "no WebSocket to *.top" — so blockAbusedTlds's
@@ -30,7 +32,6 @@ const HOST = Object.freeze({
   PAGE:          "www.firstparty.com",
   SAFER:         "cdn.vendor.com",            // a safer-region TLD, on no dubious list
   NOT_SAFER:     "cdn.vendor.de",             // outside the test's safer regions
-  DUBIOUS:       "app.onrender.com",          // on the suspicious-hosting list, on a safer-region TLD
   ABUSED_TLD:    "live.evil.top"              // an abused TLD
 });
 const SAFER_TLDS = Object.freeze(["com", "net", "org", "io", "ai", "edu", "gov", "nl", "uk", "eu"]);   // the user's list
@@ -64,7 +65,6 @@ const CASES = [
   ["blockWebAssembly network half: 3P WebAssembly",            C.LEVEL.HIGH,  KIND.WASM, HOST.SAFER,      EXPECT_ALL(OUTCOME.BLOCKED), []],
   ["blockWebsockets network half + worker CSP: 3P WebSocket", C.LEVEL.HIGH,  KIND.WS,   HOST.SAFER,      EXPECT_ALL(OUTCOME.BLOCKED), []],
   ["blockWasmDubious: 3P WebAssembly from outside safer",      C.LEVEL.SMART, KIND.WASM, HOST.NOT_SAFER,  EXPECT_ALL(OUTCOME.BLOCKED), []],
-  ["blockWasmDubious: 3P WebAssembly from a dubious host",     C.LEVEL.SMART, KIND.WASM, HOST.DUBIOUS,    EXPECT_ALL(OUTCOME.BLOCKED), []],
   ["blockWasmDubious: 3P WebAssembly from a safer host",       C.LEVEL.SMART, KIND.WASM, HOST.SAFER,      EXPECT_ALL(OUTCOME.ALLOWED), []],
   ["blockAbusedTlds: WebSocket to an abused TLD",             C.LEVEL.MILD,  KIND.WS,   HOST.ABUSED_TLD, EXPECT_ALL(OUTCOME.BLOCKED), [WHERE.SHARED]],
   ["blockAbusedTlds: WebSocket to an ordinary host",          C.LEVEL.MILD,  KIND.WS,   HOST.SAFER,      EXPECT_ALL(OUTCOME.ALLOWED), []],

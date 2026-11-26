@@ -20,7 +20,7 @@
 // visit — downloading from it is, and that stays fully scored by the download check (warnRiskyDownloads).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { SCORE, SEVERITY, STANDARD_PORTS, SITE_DIALOG_FROM } from "../data/constants.js";
+import { SCORE, SEVERITY, USUAL_PORTS, SITE_DIALOG_FROM } from "../data/constants.js";
 import { SPAM_TLDS, SPAM_TLD_EXCEPTIONS } from "../data/spam-tlds.js";
 import { matchActiveThreatDelivery, activeThreatLabel, ACTIVE_THREAT_SIGNAL_SOURCE, ACTIVE_THREAT_NOTE_SIGNAL_SOURCE, PLATFORM_SIGNAL_SOURCE } from "../data/active-threat-hosts.js";
 import { parseHttpUrl, registeredDomain, tldOf, isIpHost, isPrivateHost, isInDomainList } from "../util/domain.js";
@@ -166,7 +166,7 @@ export function scoreLocal(url) {
     }
   }
 
-  if (p.port && !STANDARD_PORTS.includes(Number(p.port))) {
+  if (p.port && !USUAL_PORTS.includes(Number(p.port))) {
     entries.push({ score: SCORE.NON_STANDARD_PORT, label: `Unusual port :${p.port}`, source: "NonStandardPort" });
   }
   if (p.protocol === "http:") {

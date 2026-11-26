@@ -3,6 +3,11 @@
 (Started with 4.5.4: earlier docs packages carried no CHANGELOG.md. Technical detail for 4.5.4 is in
 PERF_4.5.3_chrome_engine_and_proposals.md section 6 and the principles doc, v13.)
 
+## 5.1.10
+- **Two domain-list hard blocks are now risk-score signals only, not outright blocks:** "Block 3P requests to raw IPs, odd ports or DDNS hosts" no longer blocks DDNS/free-hosting domains by list membership (raw IPs and odd ports still blocked, unchanged); "Block 3P WebAssembly from dubious or non-safer-region hosts" no longer blocks WebAssembly by that same list. A domain being on a reputation list says something about a shared platform, not about this specific request — so it now only feeds the site-visit and download risk scores, same as every other domain-reputation list already did.
+- **Fixed: an unusual-port block also caught :80 and :8080**, which are common and no longer meant to be flagged (ports 443 and 8443 are the two "usual" explicit ports).
+- **Protection text updated** to match: "Block 3P requests to raw IPs or odd ports" and "Block 3P WebAssembly from abused TLDs or non-safer-region hosts".
+
 ## 5.1.9
 - **Fixed: GitHub's editor went to the "This page tried to lock your browser" warning.** Pressing Cancel a few times asks "Discard your changes?" each time, and three such dialogs counted as a scam loop. Now only three dialogs within one second count — the speed of a scam loop, not of a person clicking.
 

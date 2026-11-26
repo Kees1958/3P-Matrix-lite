@@ -12,6 +12,39 @@ analysis documents in this folder.
 
 ---
 
+## 5.1.10
+Compare at 5.1.9. Changed zips: extension, tools, docs. Ported from Safe Surfing Sentinel 1.0.1→1.0.2.
+
+- **Owner decision 2026-11-26: domain-reputation lists no longer drive hard blocks, only risk scores.**
+  A domain-list hit names a shared platform (a DDNS provider, a free host), not something about the
+  specific request being made — so it stays a signal for core/site-scorer.js and
+  lib/downloadsentinel/util/HostList.js, never an outright DNR block. Two rules removed from
+  core/rule-builder.js: ID.SUSP_HOSTING (the blockSuspicious3p hard block on
+  data/suspicious-hosting.js's DDNS/free-hosting list) and ID.WASM_DUBIOUS_HOST (the same list's
+  narrower WebAssembly-only hard block). ID.SUSP_HOSTING_REGEX (byethost* pattern-match block, not
+  list-driven) and ID.WASM_DUBIOUS_TLD / ID.WASM_OUTSIDE_SAFER (TLD/region-driven, not list-driven) are
+  structural signals and unaffected. data/suspicious-hosting.js now has zero remaining code consumers in
+  this repo — left in place and flagged to the owner rather than deleted, since removing it touches
+  tools/data-sources.json, tools/check-magic-numbers.mjs, tools/e2e-worker-blocks.mjs's fixtures, and
+  several docs; a bigger cleanup than this redesign asked for.
+- **data/constants.js: USUAL_PORTS (renamed from STANDARD_PORTS) is now [443, 8443], not
+  [80, 443, 8080, 8443].** NON_STANDARD_PORT_REGEX's hand-built RE2 digit-exclusion trie was still
+  excluding 80/8080 from the ":<port>" unusual-port block — stale relative to that rename. Rewritten to
+  exclude only 443/8443. core/site-scorer.js's own STANDARD_PORTS references renamed to USUAL_PORTS to
+  match (single source of truth, no behavior change there).
+- **data/protections.js: BLOCK_SUSPICIOUS_3P and BLOCK_WASM_DUBIOUS labels/descriptions updated** to drop
+  "DDNS hosts" / "dubious host" wording now that those hard blocks are gone (BLOCK_WASM_DUBIOUS now says
+  "abused TLDs" instead, matching what it actually still blocks by TLD).
+- **Consistency fix (found during this port): data/suspicious-hosting.js's own header comment** still
+  claimed ID.WASM_DUBIOUS_HOST as "the one remaining consumer" after that rule was removed, contradicting
+  core/rule-builder.js's own comment on the same change. Rewritten to state the file has zero remaining
+  code consumers, matching reality.
+
+**tools 5.1.10:** tools/e2e-worker-blocks.mjs — removed the HOST.DUBIOUS fixture and its
+"blockWasmDubious: 3P WebAssembly from a dubious host" case (asserted the exact behavior just removed;
+caught by consumer-inventory sweep before it could cause a false CI failure). complete-check.mjs re-run
+(e2e-* skipped, sandbox cannot reach Playwright's browser-download CDN): 33 passed, 0 failed, 5 skipped.
+
 ## 5.1.9
 Compare at 5.1.8. Changed zips: extension, tools, docs.
 

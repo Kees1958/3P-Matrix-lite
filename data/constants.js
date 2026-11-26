@@ -99,7 +99,12 @@ export const RULE_LOCAL_ID = Object.freeze({
   LOCALNET_IPV6:        13,  // blockLocalNetwork — private IPv6 literals
   SUSP_IP:              20,  // blockSuspicious3p — bare IP literal host
   SUSP_PORT_BLOCK:      22,  // blockSuspicious3p — explicit non-standard port (one regex, no allow twin)
-  SUSP_HOSTING:         23,  // blockSuspicious3p — DDNS / free-hosting domains
+  // 23 was SUSP_HOSTING (Kees1958-list hard block) — removed (owner decision 2026-11-26, ported from Safe
+  // Surfing Sentinel 1.0.2): a domain-list hit names a shared platform, not something about this specific
+  // request, so it stays a risk-score signal only (lib/downloadsentinel/util/HostList.js, core/site-scorer.js,
+  // core/download-guard.js — unchanged, already scored it this way), never a hard block. See
+  // core/rule-builder.js for where the rule was removed. Left as a gap rather than renumbered or reused,
+  // so no stored/in-flight rule ID from an older build collides.
   SUSP_HOSTING_REGEX:   24,  // blockSuspicious3p — byethost* regex
   HTTP_3P:              30,  // block3pHttp — third-party plain HTTP
   SPAM_TLD_BLOCK:       40,  // blockAbusedTlds (L2+) — 3P scripts/frames from abused TLDs
@@ -151,7 +156,9 @@ export const RULE_LOCAL_ID = Object.freeze({
   NET_HIGH_RISK_WT:          175, // blockWebtransport (alsoHighRisk)
   NET_HIGH_RISK_WASM:        176, // blockWebAssembly (alsoHighRisk)
   // 5.0.5 — blockWasmDubious: 3P WebAssembly from a dubious host (any TLD) or from outside the safer regions
-  WASM_DUBIOUS_HOST:         190, // suspicious-hosting list
+  // 190 was WASM_DUBIOUS_HOST (data/suspicious-hosting.js hard block) — removed (owner decision
+  // 2026-11-26, ported from Safe Surfing Sentinel 1.0.2), see core/rule-builder.js. Left as a gap
+  // rather than renumbered or reused, so no stored/in-flight rule ID from an older build collides.
   WASM_DUBIOUS_TLD:          191, // abused TLDs (their exceptions excluded)
   WASM_OUTSIDE_SAFER:        192  // any host NOT on a safer-region TLD (built-in whitelist exempt at its levels)
 });
@@ -217,21 +224,31 @@ export const RT = Object.freeze({
 export const WASM_URL_REGEX = "^[^?#]*\\.wasm([?#]|$)";
 
 // ── Third-party heuristics for DNR ───────────────────────────────────────────
-export const STANDARD_PORTS = Object.freeze([80, 443, 8080, 8443]);
+// Owner decision 2026-11-26 (ported from Safe Surfing Sentinel 1.0.2): only the two encrypted ports
+// count as "usual" now — 80 and 8080 are plain HTTP and are flagged like any other unusual port
+// (ordinary implicit-port HTTP, i.e. a URL with no ":port" at all, is still caught separately by
+// SCORE.PLAIN_HTTP / BLOCK_3P_HTTP, not by this list — this only judges an EXPLICIT port in the URL).
+// Single source of truth for both the scam-score port check (core/site-scorer.js) and the DNR port
+// block below (NON_STANDARD_PORT_REGEX, hand-derived from this list — see its own comment).
+export const USUAL_PORTS = Object.freeze([443, 8443]);
 export const CDN_HOST_MARKER = "cdn";                                          // L4 cdn allow: substring of the HOST name
 export const CDN_URL_FILTER_FALLBACK = "*" + CDN_HOST_MARKER + "*";               // L4 cdn allow when CDN_HOST_REGEX is unsupported (looser: whole URL)
 export const HTTP_URL_FILTER = "|http://";                                     // block3pHttp: plain-HTTP request URLs
 export const CDN_HOST_REGEX = "^[a-z][a-z0-9+.-]*://[^/]*cdn[^/]*(/|$)";        // "cdn" in host only
 export const IP_LITERAL_REGEX = "^[a-z]+://(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}([:/]|$)|\\[[0-9a-fA-F:]+\\])";
-// Any explicit port EXCEPT 80, 443, 8080, 8443 — one RE2 regex (no look-ahead available), so no
-// high-priority "allow standard ports" twin rule is needed (that twin would also have overridden
-// the TLD and level blocks for URLs written with an explicit :443).
+// Any explicit port EXCEPT those in USUAL_PORTS (443, 8443) — one RE2 regex (no look-ahead available),
+// so no high-priority "allow usual ports" twin rule is needed (that twin would also have overridden
+// the TLD and level blocks for URLs written with an explicit :443). Kept hand-written (not derived
+// from USUAL_PORTS at runtime) because RE2's lack of negative lookahead means "not equal to N" has to
+// be expanded into this digit-by-digit exclusion trie — only worth regenerating if USUAL_PORTS grows
+// past these two values. Owner decision 2026-11-26: 80 and 8080 dropped from the exclusion — an
+// explicit :80 or :8080 is now flagged here too.
 export const NON_STANDARD_PORT_REGEX = "^[a-z]+://[^/:]+:(?:" + [
-  "[0-9]",                                                            // 1 digit
-  "[0-79][0-9]|8[1-9]",                                               // 2 digits, not 80
-  "[0-35-9][0-9]{2}|4[0-35-9][0-9]|44[0-24-9]",                       // 3 digits, not 443
-  "[0-79][0-9]{3}|8[1-35-9][0-9]{2}|80[0-79][0-9]|808[1-9]|84[0-35-9][0-9]|844[0-24-9]", // 4 digits, not 8080/8443
-  "[0-9]{5}"                                                          // 5 digits
+  "[0-9]",                                                  // 1 digit
+  "[0-9]{2}",                                               // 2 digits
+  "[0-35-9][0-9]{2}|4[0-35-9][0-9]|44[0-24-9]",             // 3 digits, not 443
+  "[0-79][0-9]{3}|8[0-35-9][0-9]{2}|84[0-35-9][0-9]|844[0-24-9]", // 4 digits, not 8443
+  "[0-9]{5}"                                                // 5 digits
 ].join("|") + ")(?:[/?#]|$)";
 export const BYETHOST_REGEX   = "^[a-z]+://([a-z0-9-]+\\.)*byethost[a-z0-9-]*\\.com([/:]|$)";
 
@@ -282,7 +299,7 @@ export const SCORE = Object.freeze({
   // 4.4.0: the weights shared with downloads come from DownloadSentinel's SCORING_CONFIG (single source) —
   // they were typed copies here and had drifted (LOOKALIKE_SITE stayed −45 after DS 3.5.0 made it −35).
   IP_HOST:              DS_SCORING.IP_HOST_PENALTY,          // first-party host is a bare public IP address
-  NON_STANDARD_PORT:    -15,   // first-party URL uses a port outside STANDARD_PORTS
+  NON_STANDARD_PORT:    -15,   // first-party URL uses an explicit port outside USUAL_PORTS
   PLAIN_HTTP:           -15,   // first-party page over plain HTTP
   SPAM_TLD_RISK:         60,   // 0-100 risk fed into the TLD family for HaGeZi-listed TLDs (→ −30)
   TLD_BASE:             DS_SCORING.HOST_TLD_BASE_SCORE,

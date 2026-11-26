@@ -1,6 +1,14 @@
 // ── data/suspicious-hosting.js ────────────────────────────────────────────────
-// DDNS / free-hosting domains for blockSuspicious3p ("block suspicious 3P") — a HARD BLOCK
-// (core/rule-builder.js, ID.SUSP_HOSTING), not a risk score.
+// DDNS / free-hosting domains. Owner decision 2026-11-26 (ported from Safe Surfing Sentinel 1.0.2): no
+// longer a hard block anywhere — ID.SUSP_HOSTING (core/rule-builder.js, the general blockSuspicious3p
+// block) and ID.WASM_DUBIOUS_HOST (the narrower WebAssembly-only block) were both removed in the same
+// redesign pass. A domain on this list is scored, not blocked outright, same as every other
+// domain-reputation list (lib/downloadsentinel/util/HostList.js, which ingests the same upstream source
+// independently for that — see its own header). SUSPICIOUS_HOSTING_DOMAINS, this file's export, now has
+// NO remaining code consumer in this repo — flagged to the owner rather than deleted outright, since
+// removing it touches tools/data-sources.json, tools/check-magic-numbers.mjs's DATA_FILES list, the
+// tools/e2e-worker-blocks.mjs fixtures, and docs (ARCHITECTURE.md, THIRD_PARTY_LICENSES.md,
+// HostList.js's header) — a bigger cleanup than this redesign asked for.
 // Source: Kees1958 "W3C_annual_most_used_survey_blocklist" / Suspicious websites.txt,
 // v2027.3 (561 domains) — https://github.com/Kees1958/W3C_annual_most_used_survey_blocklist,
 // fetched directly from upstream (this project's own snapshot).
